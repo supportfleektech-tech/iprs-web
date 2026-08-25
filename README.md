@@ -1,5 +1,7 @@
 # Fleek IPRS
 
+[![CI](https://github.com/fleektech/fleek-iprs/actions/workflows/ci.yml/badge.svg)](https://github.com/fleektech/fleek-iprs/actions/workflows/ci.yml)
+
 **Instant identity verification for Africa — by [Fleektech LTD](https://fleektech.co.ke)**
 
 Fleek IPRS gives lenders, SACCOs, banks and fintechs real-time identity verification against
@@ -67,6 +69,9 @@ pnpm -w typecheck   # tsc --noEmit per package/app
 pnpm -w test        # Vitest unit tests (providers, DTOs)
 pnpm exec playwright test   # E2E: register → verify → result (needs services running)
 ```
+
+CI (`.github/workflows/ci.yml`) runs all four gates on every push/PR, plus a full E2E job
+that boots Postgres → API → dashboard and exercises the happy path in a real browser.
 
 ## Deployment
 

@@ -23,9 +23,27 @@ export class RegisterBody {
   organizationName!: string;
 }
 
-class RefreshDto {
+export class RefreshDto {
   @IsString() @IsNotEmpty()
   refreshToken!: string;
+}
+
+export class LogoutDto {
+  @IsString() @IsNotEmpty()
+  refreshToken!: string;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail()
+  email!: string;
+}
+
+export class ResetPasswordDto {
+  @IsString() @IsNotEmpty()
+  token!: string;
+
+  @IsString() @MinLength(8)
+  newPassword!: string;
 }
 
 @ApiTags('auth')
@@ -47,7 +65,13 @@ export class AuthController {
   @HttpCode(200)
   login(@Body() dto: LoginBody) {
     return this.auth.login(dto.email, dto.password).then(({ user, ...rest }) => ({
-      user: { id: user.id, email: user.email, firstName: user.firstName, role: user.role, isPlatformAdmin: user.isPlatformAdmin },
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        role: user.role,
+        isPlatformAdmin: user.isPlatformAdmin,
+      },
       ...rest,
     }));
   }
@@ -56,6 +80,30 @@ export class AuthController {
   @HttpCode(200)
   refresh(@Body() dto: RefreshDto) {
     return this.auth.refresh(dto.refreshToken);
+  }
+
+  @Post('logout')
+  @HttpCode(204)
+  async logout(@Body() dto: LogoutDto) {
+    await this.auth.logout(dto.refreshToken);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    const result = await this.auth.requestPasswordReset(dto.email);
+    return {
+      ok: true,
+      message: 'If that email exists, a reset link has been sent.',
+      ...(result.devResetToken ? { devResetToken: result.devResetToken } : {}),
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.auth.resetPassword(dto.token, dto.newPassword);
+    return { ok: true, message: 'Password updated. Please sign in again.' };
   }
 
   @Get('me')

@@ -6,6 +6,7 @@ import { ApiKeysController } from '../api-keys/api-keys.controller';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ApiKeyGuard } from './api-key.guard';
 import { RolesGuard } from './roles.guard';
+import { MAILER, ConsoleMailer } from '../common/mailer';
 import { appConfig } from '../config/configuration';
 
 @Module({
@@ -16,7 +17,13 @@ import { appConfig } from '../config/configuration';
     }),
   ],
   controllers: [AuthController, ApiKeysController],
-  providers: [AuthService, JwtAuthGuard, ApiKeyGuard, RolesGuard],
+  providers: [
+    AuthService,
+    JwtAuthGuard,
+    ApiKeyGuard,
+    RolesGuard,
+    { provide: MAILER, useClass: ConsoleMailer },
+  ],
   exports: [AuthService, JwtAuthGuard, ApiKeyGuard, JwtModule],
 })
 export class AuthModule {}

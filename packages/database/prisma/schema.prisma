@@ -61,20 +61,56 @@ model Organization {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   firstName    String
   lastName     String
-  role         UserRole @default(MEMBER)
+  role         UserRole  @default(MEMBER)
   isPlatformAdmin Boolean @default(false)
   organizationId String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  failedLoginAttempts Int  @default(0)
+  lockedUntil   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
+  organization Organization?       @relation(fields: [organizationId], references: [id])
+  refreshTokens RefreshToken[]
+  passwordResets PasswordResetToken[]
 
   @@map("users")
+}
+
+/// Opaque rotating refresh tokens; hashed at rest, single-use,
+/// with reuse detection revoking the whole family.
+model RefreshToken {
+  id           String    @id @default(cuid())
+  userId       String
+  hashedToken  String    @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  /// Audit pointer to the token that superseded this one.
+  rotatedToId  String?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  userId      String
+  hashedToken String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 model ApiKey {

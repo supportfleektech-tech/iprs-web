@@ -1,0 +1,23 @@
+{
+  "name": "fleek-iprs",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.23.0",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @fleek/database migrate",
+    "db:seed": "pnpm --filter @fleek/database seed",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.3"
+  }
+}

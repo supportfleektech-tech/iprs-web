@@ -1,0 +1,23 @@
+{
+  "name": "@fleek/providers",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fleek/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@fleek/tsconfig": "workspace:*",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

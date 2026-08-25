@@ -1,0 +1,35 @@
+{
+  "name": "@fleek/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "prisma"
+  ],
+  "scripts": {
+    "generate": "prisma generate",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "migrate": "prisma migrate dev",
+    "deploy": "prisma migrate deploy",
+    "seed": "tsx prisma/seed.ts",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fleek/types": "workspace:*",
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "@fleek/tsconfig": "workspace:*",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.20.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.6.1",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

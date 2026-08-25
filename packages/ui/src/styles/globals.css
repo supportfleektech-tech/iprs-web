@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy-950: #071120;
+  --navy-900: #0a1628;
+  --navy-800: #10203a;
+  --navy-700: #1a3050;
+  --teal-500: #00d9b5;
+  --teal-400: #2ee6c6;
+  --off-white: #f7f9fb;
+
+  --background: var(--off-white);
+  --foreground: var(--navy-900);
+}
+
+.brand-gradient-text {
+  background: linear-gradient(92deg, #00d9b5 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-grid-bg {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0, 217, 181, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  70% { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid var(--teal-500);
+  animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}

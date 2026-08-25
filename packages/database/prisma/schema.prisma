@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum VerificationType {
+  iprs_id
+  kra_pin
+  phone_ownership
+  sim_swap
+}
+
+enum VerificationStatus {
+  pending
+  success
+  not_found
+  failed
+}
+
+enum TransactionType {
+  topup
+  charge
+  refund
+}
+
+enum TopUpStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ApiKeyEnv {
+  live
+  test
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  apiKeys      ApiKey[]
+  wallet       Wallet?
+  topUpRequests TopUpRequest[]
+  verifications VerificationRequest[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole @default(MEMBER)
+  isPlatformAdmin Boolean @default(false)
+  organizationId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@map("users")
+}
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  name           String
+  prefix         String
+  hashedKey      String    @unique
+  environment    ApiKeyEnv @default(test)
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  organizationId String
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("api_keys")
+}
+
+model Wallet {
+  id             String @id @default(cuid())
+  organizationId String @unique
+  balanceMinor   BigInt @default(0)
+  currency       String @default("KES")
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  type          TransactionType
+  amountMinor   BigInt
+  balanceAfter  BigInt
+  reference     String?
+  description   String?
+  walletId      String
+  verificationId String? @unique
+  createdAt     DateTime        @default(now())
+
+  wallet       Wallet               @relation(fields: [walletId], references: [id])
+  verification VerificationRequest? @relation(fields: [verificationId], references: [id])
+
+  @@index([walletId, createdAt])
+  @@map("transactions")
+}
+
+model TopUpRequest {
+  id             String      @id @default(cuid())
+  organizationId String
+  requestedById  String
+  amountMinor    BigInt
+  status         TopUpStatus @default(pending)
+  adminNote      String?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("top_up_requests")
+}
+
+model VerificationRequest {
+  id             String            @id @default(cuid())
+  type           VerificationType
+  status         VerificationStatus @default(pending)
+  source         String
+  encryptedInput  String
+  encryptedResult String?
+  costMinor      BigInt            @default(0)
+  latencyMs      Int?
+  errorMessage   String?
+  consent        Boolean           @default(false)
+  consentCollectedBy String?
+  organizationId String
+  userId         String?
+  apiKeyId       String?
+  createdAt      DateTime          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction?
+
+  @@index([organizationId, createdAt])
+  @@index([type, status])
+  @@map("verification_requests")
+}
+
+model ProductPricing {
+  id         String           @id @default(cuid())
+  type       VerificationType @unique
+  priceMinor BigInt
+  active     Boolean          @default(true)
+  updatedAt  DateTime         @updatedAt
+
+  @@map("product_pricing")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorType String   @default("user")
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  message   String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}

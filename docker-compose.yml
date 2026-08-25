@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fleek-iprs-postgres
+    environment:
+      POSTGRES_USER: fleek
+      POSTGRES_PASSWORD: fleek_dev_password
+      POSTGRES_DB: fleek_iprs
+    ports:
+      - '5432:5432'
+    volumes:
+      - fleek_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fleek_pgdata:

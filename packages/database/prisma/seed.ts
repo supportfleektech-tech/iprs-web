@@ -20,12 +20,16 @@ async function main() {
     });
   }
 
-  const org = await prisma.organization.create({
-    data: { name: 'Demo Lender Ltd' },
-  });
+  // Idempotent: safe to run repeatedly against an already-seeded database.
+  const org =
+    (await prisma.organization.findFirst({ where: { name: 'Demo Lender Ltd' } })) ??
+    (await prisma.organization.create({ data: { name: 'Demo Lender Ltd' } }));
 
-  await prisma.user.create({
-    data: {
+  // Re-seed resets the documented demo credentials but leaves wallets alone.
+  await prisma.user.upsert({
+    where: { email: 'admin@fleektech.co.ke' },
+    update: { passwordHash: hashSync('Admin123!', 10) },
+    create: {
       email: 'admin@fleektech.co.ke',
       passwordHash: hashSync('Admin123!', 10),
       firstName: 'Fleek',
@@ -36,8 +40,10 @@ async function main() {
     },
   });
 
-  await prisma.wallet.create({
-    data: { organizationId: org.id, balanceMinor: 100_000_000 },
+  await prisma.wallet.upsert({
+    where: { organizationId: org.id },
+    update: {},
+    create: { organizationId: org.id, balanceMinor: 100_000_000 },
   });
 
   console.log('Seed complete. Login: admin@fleektech.co.ke / Admin123!');

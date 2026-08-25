@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { SiteFooter, SiteHeader } from '@/components/site-chrome';
 import { PRODUCTS } from '@/lib/products';
+import { APP_URL } from '@/lib/app-url';
 
 const STATS = [
   { value: '99.9%', label: 'API uptime' },
@@ -46,7 +47,7 @@ export default function HomePage() {
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="http://localhost:3001/register"
+              href={`${APP_URL}/register`}
               className="rounded-xl bg-teal-brand px-7 py-3 font-semibold text-navy-950 transition-colors hover:bg-teal-light"
             >
               Start verifying
@@ -156,7 +157,7 @@ export default function HomePage() {
             Create an organization, request credit, and run your first check today.
           </p>
           <Link
-            href="http://localhost:3001/register"
+            href={`${APP_URL}/register`}
             className="mt-8 inline-block rounded-xl bg-navy-900 px-8 py-3 font-semibold text-white transition-colors hover:bg-navy-800"
           >
             Create free account

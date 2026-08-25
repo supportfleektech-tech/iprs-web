@@ -41,15 +41,25 @@ services:
       DARAJA_PASSKEY: ${DARAJA_PASSKEY:-}
       DARAJA_ENV: ${DARAJA_ENV:-sandbox}
       DARAJA_CALLBACK_URL: ${DARAJA_CALLBACK_URL:-https://api.fleekiprs.co.ke/v1/payments/callback}
+      TRUST_PROXY: 'true'
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/v1/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   web:
     build:
       context: .
+      dockerfile: Dockerfile.next
       args:
         APP: web
+        NEXT_PUBLIC_API_URL: https://api.fleekiprs.co.ke/v1
+        NEXT_PUBLIC_APP_URL: https://app.fleekiprs.co.ke
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: https://api.fleekiprs.co.ke/v1
@@ -60,8 +70,11 @@ services:
   dashboard:
     build:
       context: .
+      dockerfile: Dockerfile.next
       args:
         APP: dashboard
+        NEXT_PUBLIC_API_URL: https://api.fleekiprs.co.ke/v1
+        NEXT_PUBLIC_APP_URL: https://app.fleekiprs.co.ke
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: https://api.fleekiprs.co.ke/v1

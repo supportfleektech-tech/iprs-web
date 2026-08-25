@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteFooter, SiteHeader } from '@/components/site-chrome';
 import { PRODUCTS } from '@/lib/products';
+import { APP_URL } from '@/lib/app-url';
 
 export function generateStaticParams() {
   return PRODUCTS.map((p) => ({ slug: p.slug }));
@@ -64,7 +65,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             <h3 className="font-semibold">Try it now</h3>
             <p className="text-sm text-slate-500">Run this check from the console or via the REST API with a sandbox key.</p>
             <Link
-              href="http://localhost:3001/console"
+              href={`${APP_URL}/console`}
               className="block rounded-lg bg-teal-brand px-4 py-2.5 text-center text-sm font-semibold text-navy-950 hover:bg-teal-light"
             >
               Open console

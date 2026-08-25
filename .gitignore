@@ -11,3 +11,7 @@ coverage/
 playwright-report/
 test-results/
 prisma/migrations/dev.db*
+
+# Deployment runtime artifacts (TLS keys, certbot webroot)
+nginx/
+.playwright-mcp/

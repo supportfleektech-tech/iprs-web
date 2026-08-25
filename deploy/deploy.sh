@@ -13,29 +13,29 @@ case "${1:-deploy}" in
     echo "==> Issuing certificates (standalone HTTP challenge)…"
     # Temporarily serve challenges: nginx must be running with port 80 open.
     mkdir -p nginx/certs nginx/www
-    docker compose -f docker-compose.prod.yml up -d nginx
+    docker compose -p fleek-iprs-prod -f docker-compose.prod.yml up -d nginx
     for domain in fleekiprs.co.ke app.fleekiprs.co.ke api.fleekiprs.co.ke; do
-      docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+      docker compose -p fleek-iprs-prod -f docker-compose.prod.yml run --rm certbot certonly \
         --webroot -w /var/www/certbot \
         -d "$domain" --email "admin@fleektech.co.ke" --agree-tos --no-eff-email || \
         echo "!! Certificate for $domain failed — check DNS A records."
     done
-    docker compose -f docker-compose.prod.yml exec nginx nginx -s reload || true
-    echo "Done. Certificates renew via: docker compose -f docker-compose.prod.yml run --rm certbot renew"
+    docker compose -p fleek-iprs-prod -f docker-compose.prod.yml exec nginx nginx -s reload || true
+    echo "Done. Certificates renew via: docker compose -p fleek-iprs-prod -f docker-compose.prod.yml run --rm certbot renew"
     ;;
 
   deploy)
     echo "==> Building images…"
-    docker compose -f docker-compose.prod.yml build
+    docker compose -p fleek-iprs-prod -f docker-compose.prod.yml build
 
     echo "==> Applying database migrations…"
-    docker compose -f docker-compose.prod.yml run --rm api \
+    docker compose -p fleek-iprs-prod -f docker-compose.prod.yml run --rm api \
       node packages/database/node_modules/prisma/build/index.js migrate deploy --schema packages/database/prisma/schema.prisma \
-      || docker compose -f docker-compose.prod.yml run --rm api \
+      || docker compose -p fleek-iprs-prod -f docker-compose.prod.yml run --rm api \
       npx prisma migrate deploy --schema packages/database/prisma/schema.prisma
 
     echo "==> Starting stack…"
-    docker compose -f docker-compose.prod.yml up -d
+    docker compose -p fleek-iprs-prod -f docker-compose.prod.yml up -d
     echo "==> Deployed. Health: curl https://api.fleekiprs.co.ke/v1/health"
     ;;
 

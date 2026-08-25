@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { APP_URL } from '@/lib/app-url';
 
 const NAV = [
   { href: '/products', label: 'Products' },
@@ -33,13 +34,13 @@ export function SiteHeader({ dark = false }: { dark?: boolean }) {
         </nav>
         <div className="flex items-center gap-3">
           <Link
-            href="http://localhost:3001/login"
+            href={`${APP_URL}/login`}
             className={`hidden text-sm md:inline ${dark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-navy-900'}`}
           >
             Login
           </Link>
           <Link
-            href="http://localhost:3001/register"
+            href={`${APP_URL}/register`}
             className="rounded-lg bg-teal-brand px-4 py-2 text-sm font-semibold text-navy-950 transition-colors hover:bg-teal-light"
           >
             Get Started

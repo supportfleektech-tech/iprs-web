@@ -16,6 +16,12 @@ RUN pnpm install --frozen-lockfile=false
 
 FROM deps AS build
 ENV NEXT_TELEMETRY_DISABLED=1
+# Public envs are inlined into the client bundle at build time:
+ARG APP=web
+ARG NEXT_PUBLIC_API_URL=https://api.fleekiprs.co.ke/v1
+ARG NEXT_PUBLIC_APP_URL=https://app.fleekiprs.co.ke
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 COPY . .
 RUN pnpm --filter @fleek/types build \
  && pnpm --filter "@fleek/$APP" build
@@ -26,6 +32,5 @@ WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 COPY --from=build /app/apps/$APP/.next/standalone ./
 COPY --from=build /app/apps/$APP/.next/static apps/$APP/.next/static
-COPY --from=build /app/apps/$APP/public apps/$APP/public
 EXPOSE 3000
-CMD ["node", "apps/web/server.js"]
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 node apps/${APP}/server.js"]

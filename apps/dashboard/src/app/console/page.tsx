@@ -37,7 +37,6 @@ export default function VerifyPage() {
   // Load once on mount
   useEffect(() => {
     void loadProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onVerify(e: React.FormEvent) {

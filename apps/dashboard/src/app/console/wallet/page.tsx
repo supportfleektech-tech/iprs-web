@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@fleek/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@fleek/ui';
 import { apiFetch, useAuth } from '@/lib/auth';
 
 interface Tx {

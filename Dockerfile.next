@@ -1,0 +1,31 @@
+# Next.js marketing/dashboard (works for both apps via ARG APP)
+FROM node:22-alpine AS base
+RUN corepack enable
+WORKDIR /app
+
+ARG APP=web
+
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json apps/web/
+COPY apps/dashboard/package.json apps/dashboard/
+COPY packages/ui/package.json packages/ui/
+COPY packages/types/package.json packages/types/
+COPY packages/tsconfig/package.json packages/tsconfig/
+RUN pnpm install --frozen-lockfile=false
+
+FROM deps AS build
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY . .
+RUN pnpm --filter @fleek/types build \
+ && pnpm --filter "@fleek/$APP" build
+
+FROM node:22-alpine AS runner
+ARG APP=web
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+COPY --from=build /app/apps/$APP/.next/standalone ./
+COPY --from=build /app/apps/$APP/.next/static apps/$APP/.next/static
+COPY --from=build /app/apps/$APP/public apps/$APP/public
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]

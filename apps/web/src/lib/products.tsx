@@ -1,6 +1,3 @@
-import type { ReactNode } from 'react';
-import Link from 'next/link';
-
 export interface ProductInfo {
   slug: string;
   title: string;

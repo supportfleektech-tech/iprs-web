@@ -43,7 +43,20 @@ export class AuthService {
 
     const result = await this.prisma.client.$transaction(async (tx) => {
       const org = await tx.organization.create({ data: { name: dto.organizationName } });
-      await tx.wallet.create({ data: { organizationId: org.id } });
+      // Welcome credit lets new clients try the platform before their first invoice.
+      const STARTING_CREDIT = BigInt(500_000); // KES 5,000 in minor units
+      const wallet = await tx.wallet.create({
+        data: { organizationId: org.id, balanceMinor: STARTING_CREDIT },
+      });
+      await tx.transaction.create({
+        data: {
+          type: 'topup',
+          amountMinor: STARTING_CREDIT,
+          balanceAfter: STARTING_CREDIT,
+          description: 'Welcome credit',
+          walletId: wallet.id,
+        },
+      });
       const user = await tx.user.create({
         data: {
           email: dto.email,

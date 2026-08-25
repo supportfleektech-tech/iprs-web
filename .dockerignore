@@ -1,0 +1,11 @@
+node_modules
+.next
+.turbo
+dist
+*.log
+.env
+.env.*
+test-results
+playwright-report
+docs
+e2e

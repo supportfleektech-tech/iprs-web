@@ -4,8 +4,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { VerificationType, type VerificationResponse } from '@fleek/types';
 import { Auth, CurrentUser } from '../auth/auth.decorators';
 import { AnyAuthGuard } from '../auth/api-key.guard';
-import { JwtAuthGuard, type JwtPayload } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { VerificationsService } from './verifications.service';
 import { ListVerificationsQuery, RunVerificationDto } from './dto';
 

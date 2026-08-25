@@ -21,7 +21,7 @@ export class VerificationsService {
     );
   }
 
-  async products(organizationId?: string) {
+  async products() {
     const pricing = await this.prisma.client.productPricing.findMany();
     const priceByType = new Map(pricing.map((p) => [p.type, p.priceMinor.toString()]));
     return VERIFICATION_TYPES.map((type) => ({

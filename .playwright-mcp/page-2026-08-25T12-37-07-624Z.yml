@@ -1,0 +1,163 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "FleekIPRS" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=f1e5]:
+        - link "Products" [ref=f1e6] [cursor=pointer]:
+          - /url: /products
+        - link "Developers" [ref=f1e7] [cursor=pointer]:
+          - /url: /developers
+        - link "About" [ref=f1e8] [cursor=pointer]:
+          - /url: /about
+        - link "Contact" [ref=f1e9] [cursor=pointer]:
+          - /url: /contact
+      - generic [ref=f1e10]:
+        - link "Login" [ref=f1e11] [cursor=pointer]:
+          - /url: http://localhost:3001/login
+        - link "Get Started" [ref=f1e12] [cursor=pointer]:
+          - /url: http://localhost:3001/register
+  - generic [ref=f1e14]:
+    - generic [ref=f1e15]: Live in Kenya — powered by Fleektech LTD
+    - heading "Verify anyone. Instantly." [level=1] [ref=f1e17]
+    - paragraph [ref=f1e18]: Fleek IPRS gives lenders, SACCOs and fintechs real-time identity verification against IPRS, KRA, telecom and mobile-money records — through one clean API.
+    - generic [ref=f1e19]:
+      - link "Start verifying" [ref=f1e20] [cursor=pointer]:
+        - /url: http://localhost:3001/register
+      - link "Read the docs" [ref=f1e21] [cursor=pointer]:
+        - /url: /developers
+    - generic [ref=f1e22]:
+      - generic [ref=f1e23]: POST /v1/verifications
+      - code [ref=f1e29]: "curl https://api.fleekiprs.co.ke/v1/verifications \\ -H \"Authorization: Bearer flk_live_…\" \\ -d '{\"type\": \"iprs_id\", \"idNumber\": \"12345678\"}' # → {\"status\":\"success\", # \"result\":{\"fullName\":\"FAITH SAMUEL KAMAU\", # \"dateOfBirth\":\"1982-01-18\"}}"
+  - generic [ref=f1e31]:
+    - generic [ref=f1e32]:
+      - generic [ref=f1e33]: 99.9%
+      - generic [ref=f1e34]: API uptime
+    - generic [ref=f1e35]:
+      - generic [ref=f1e36]: <2s
+      - generic [ref=f1e37]: Average response
+    - generic [ref=f1e38]:
+      - generic [ref=f1e39]: 4+
+      - generic [ref=f1e40]: Data sources integrated
+    - generic [ref=f1e41]:
+      - generic [ref=f1e42]: 24/7
+      - generic [ref=f1e43]: Support & monitoring
+  - generic [ref=f1e45]:
+    - heading "Powerful verification tools" [level=2] [ref=f1e46]
+    - paragraph [ref=f1e47]: One platform, multiple authoritative data sources.
+    - generic [ref=f1e48]:
+      - link "IPRS ID Verification Instant National ID validation against the government registry. Learn more →" [ref=f1e49] [cursor=pointer]:
+        - /url: /products/iprs-id
+        - heading "IPRS ID Verification" [level=3] [ref=f1e50]
+        - paragraph [ref=f1e51]: Instant National ID validation against the government registry.
+        - generic [ref=f1e52]: Learn more →
+      - link "KRA PIN Checker Validate KRA PINs and tax compliance status. Learn more →" [ref=f1e53] [cursor=pointer]:
+        - /url: /products/kra-pin
+        - heading "KRA PIN Checker" [level=3] [ref=f1e54]
+        - paragraph [ref=f1e55]: Validate KRA PINs and tax compliance status.
+        - generic [ref=f1e56]: Learn more →
+      - link "Hakikisha / Phone Check Phone ownership and M-Pesa KYC matching. Learn more →" [ref=f1e57] [cursor=pointer]:
+        - /url: /products/hakikisha
+        - heading "Hakikisha / Phone Check" [level=3] [ref=f1e58]
+        - paragraph [ref=f1e59]: Phone ownership and M-Pesa KYC matching.
+        - generic [ref=f1e60]: Learn more →
+      - link "SIM-swap Detection Detect recent SIM changes before fraud happens. Learn more →" [ref=f1e61] [cursor=pointer]:
+        - /url: /products/sim-swap
+        - heading "SIM-swap Detection" [level=3] [ref=f1e62]
+        - paragraph [ref=f1e63]: Detect recent SIM changes before fraud happens.
+        - generic [ref=f1e64]: Learn more →
+  - generic [ref=f1e66]:
+    - heading "Why Fleek IPRS" [level=2] [ref=f1e67]
+    - generic [ref=f1e68]:
+      - generic [ref=f1e69]:
+        - generic [ref=f1e70]: ✓
+        - heading "Real-time IPRS access" [level=3] [ref=f1e71]
+        - paragraph [ref=f1e72]: Validate identities against the national registry in milliseconds.
+      - generic [ref=f1e73]:
+        - generic [ref=f1e74]: ✓
+        - heading "Fraud prevention" [level=3] [ref=f1e75]
+        - paragraph [ref=f1e76]: SIM-swap and ownership checks stop account takeovers early.
+      - generic [ref=f1e77]:
+        - generic [ref=f1e78]: ✓
+        - heading "Compliance-ready" [level=3] [ref=f1e79]
+        - paragraph [ref=f1e80]: Consent capture and audit trails built into every verification.
+      - generic [ref=f1e81]:
+        - generic [ref=f1e82]: ✓
+        - heading "Developer-first" [level=3] [ref=f1e83]
+        - paragraph [ref=f1e84]: Clean REST APIs with sandbox keys from day one.
+      - generic [ref=f1e85]:
+        - generic [ref=f1e86]: ✓
+        - heading "Bank-grade security" [level=3] [ref=f1e87]
+        - paragraph [ref=f1e88]: PII encrypted at rest; no sensitive data in logs.
+      - generic [ref=f1e89]:
+        - generic [ref=f1e90]: ✓
+        - heading "Built for scale" [level=3] [ref=f1e91]
+        - paragraph [ref=f1e92]: From a first loan to millions of checks without re-architecture.
+  - generic [ref=f1e94]:
+    - heading "Built for every institution that needs to know" [level=2] [ref=f1e95]
+    - generic [ref=f1e96]:
+      - generic [ref=f1e97]:
+        - heading "Digital Lenders" [level=3] [ref=f1e98]
+        - paragraph [ref=f1e99]: Disburse confidently with instant identity and fraud screening.
+      - generic [ref=f1e100]:
+        - heading "Banks & MFBs" [level=3] [ref=f1e101]
+        - paragraph [ref=f1e102]: Strengthen onboarding KYC with government-backed data.
+      - generic [ref=f1e103]:
+        - heading "SACCOs" [level=3] [ref=f1e104]
+        - paragraph [ref=f1e105]: Know your members with reliable, affordable checks.
+      - generic [ref=f1e106]:
+        - heading "Fintechs" [level=3] [ref=f1e107]
+        - paragraph [ref=f1e108]: Embed verified identity into any product via one API.
+  - generic [ref=f1e110]:
+    - heading "Start verifying in minutes" [level=2] [ref=f1e111]
+    - paragraph [ref=f1e112]: Create an organization, request credit, and run your first check today.
+    - link "Create free account" [ref=f1e113] [cursor=pointer]:
+      - /url: http://localhost:3001/register
+  - contentinfo [ref=f1e114]:
+    - generic [ref=f1e115]:
+      - generic [ref=f1e116]:
+        - link "FleekIPRS" [ref=f1e117] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=f1e118]:
+          - text: Identity intelligence for Africa. A product of
+          - link "Fleektech LTD" [ref=f1e119] [cursor=pointer]:
+            - /url: https://fleektech.co.ke
+          - text: .
+        - paragraph [ref=f1e120]: Nairobi, Kenya · support@fleektech.co.ke
+      - generic [ref=f1e121]:
+        - heading "Products" [level=4] [ref=f1e122]
+        - list [ref=f1e123]:
+          - listitem [ref=f1e124]:
+            - link "IPRS ID Verification" [ref=f1e125] [cursor=pointer]:
+              - /url: /products/iprs-id
+          - listitem [ref=f1e126]:
+            - link "KRA PIN Checker" [ref=f1e127] [cursor=pointer]:
+              - /url: /products/kra-pin
+          - listitem [ref=f1e128]:
+            - link "Hakikisha / Phone Check" [ref=f1e129] [cursor=pointer]:
+              - /url: /products/hakikisha
+          - listitem [ref=f1e130]:
+            - link "SIM-swap Detection" [ref=f1e131] [cursor=pointer]:
+              - /url: /products/sim-swap
+      - generic [ref=f1e132]:
+        - heading "Company" [level=4] [ref=f1e133]
+        - list [ref=f1e134]:
+          - listitem [ref=f1e135]:
+            - link "About" [ref=f1e136] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=f1e137]:
+            - link "Developers" [ref=f1e138] [cursor=pointer]:
+              - /url: /developers
+          - listitem [ref=f1e139]:
+            - link "Contact" [ref=f1e140] [cursor=pointer]:
+              - /url: /contact
+      - generic [ref=f1e141]:
+        - heading "Legal" [level=4] [ref=f1e142]
+        - list [ref=f1e143]:
+          - listitem [ref=f1e144]:
+            - link "Privacy Policy" [ref=f1e145] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=f1e146]:
+            - link "Terms of Service" [ref=f1e147] [cursor=pointer]:
+              - /url: /terms
+    - generic [ref=f1e148]: © 2026 Fleektech LTD. All rights reserved.

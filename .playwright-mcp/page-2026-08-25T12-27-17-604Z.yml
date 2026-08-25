@@ -1,0 +1,59 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e16]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]: FleekIPRS
+      - navigation [ref=e20]:
+        - link "🔍 Verify" [ref=e21] [cursor=pointer]:
+          - /url: /console
+          - generic [ref=e22]: 🔍
+          - text: Verify
+        - link "📋 History" [ref=e23] [cursor=pointer]:
+          - /url: /console/history
+          - generic [ref=e24]: 📋
+          - text: History
+        - link "💰 Wallet" [ref=e25] [cursor=pointer]:
+          - /url: /console/wallet
+          - generic [ref=e26]: 💰
+          - text: Wallet
+        - link "🔑 API Keys" [ref=e27] [cursor=pointer]:
+          - /url: /console/keys
+          - generic [ref=e28]: 🔑
+          - text: API Keys
+        - link "⚙️ Admin" [ref=e29] [cursor=pointer]:
+          - /url: /admin
+          - generic [ref=e30]: ⚙️
+          - text: Admin
+      - generic [ref=e31]:
+        - generic "admin@fleektech.co.ke" [ref=e32]
+        - button "Sign out" [ref=e33] [cursor=pointer]
+    - generic [ref=e35]:
+      - heading "Run a verification" [level=1] [ref=e36]
+      - paragraph [ref=e37]: Sandbox mode — results come from the mock provider at zero cost until live keys are enabled.
+      - generic [ref=e38]:
+        - button "IPRS ID Verification National identity lookup" [ref=e39] [cursor=pointer]:
+          - generic [ref=e40]: IPRS ID Verification
+          - generic [ref=e41]: National identity lookup
+        - button "KRA PIN Checker PIN validity & compliance" [ref=e42] [cursor=pointer]:
+          - generic [ref=e43]: KRA PIN Checker
+          - generic [ref=e44]: PIN validity & compliance
+        - button "Hakikisha / Phone Check Number ownership & M-Pesa KYC" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]: Hakikisha / Phone Check
+          - generic [ref=e47]: Number ownership & M-Pesa KYC
+        - button "SIM-swap Detection Fraud risk from SIM changes" [ref=e48] [cursor=pointer]:
+          - generic [ref=e49]: SIM-swap Detection
+          - generic [ref=e50]: Fraud risk from SIM changes
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - heading "IPRS ID Verification" [level=3] [ref=e54]
+            - paragraph [ref=e55]: "Price: KES 50 per successful check"
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - generic [ref=e59]: National ID number
+              - textbox "National ID number" [ref=e60]:
+                - /placeholder: "12345678"
+            - button "Verify now" [ref=e61] [cursor=pointer]
+        - generic [ref=e62]:
+          - heading "Result" [level=3] [ref=e64]
+          - generic [ref=e65]: Run a check to see the result here

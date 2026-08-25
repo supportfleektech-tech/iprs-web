@@ -15,3 +15,6 @@ prisma/migrations/dev.db*
 # Deployment runtime artifacts (TLS keys, certbot webroot)
 nginx/
 .playwright-mcp/
+.vercel
+.env*
+.vercel/

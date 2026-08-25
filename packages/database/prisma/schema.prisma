@@ -56,6 +56,7 @@ model Organization {
   wallet       Wallet?
   topUpRequests TopUpRequest[]
   verifications VerificationRequest[]
+  batches       VerificationBatch[]
 
   @@map("organizations")
 }
@@ -193,14 +194,41 @@ model VerificationRequest {
   organizationId String
   userId         String?
   apiKeyId       String?
+  batchId        String?
   createdAt      DateTime          @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transaction  Transaction?
+  batch        VerificationBatch? @relation(fields: [batchId], references: [id])
 
   @@index([organizationId, createdAt])
   @@index([type, status])
+  @@index([batchId])
   @@map("verification_requests")
+}
+
+/// A bulk CSV run. Processing happens in-process; rows are individual
+/// VerificationRequests linked back to this batch.
+model VerificationBatch {
+  id             String           @id @default(cuid())
+  type           VerificationType
+  status         String           @default("processing")
+  totalRows      Int
+  processedRows  Int              @default(0)
+  successCount   Int              @default(0)
+  failedCount    Int              @default(0)
+  notFoundCount  Int              @default(0)
+  errorMessage   String?
+  organizationId String
+  userId         String?
+  createdAt      DateTime         @default(now())
+  completedAt    DateTime?
+
+  organization Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requests     VerificationRequest[]
+
+  @@index([organizationId, createdAt])
+  @@map("verification_batches")
 }
 
 model ProductPricing {

@@ -37,6 +37,7 @@ export class VerificationsService {
     source: 'dashboard' | 'api',
     userId?: string | null,
     apiKeyId?: string | null,
+    batchId?: string | null,
   ) {
     if (!this.registry.isEnabled(dto.type)) {
       throw new BadRequestException(`Check "${dto.type}" is not available yet`);
@@ -120,6 +121,7 @@ export class VerificationsService {
           organizationId,
           userId: userId ?? null,
           apiKeyId: apiKeyId ?? null,
+          batchId: batchId ?? null,
         },
       });
     });

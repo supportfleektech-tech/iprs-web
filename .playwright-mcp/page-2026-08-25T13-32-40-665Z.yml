@@ -1,0 +1,22 @@
+- main [ref=f3e2]:
+  - generic [ref=f3e3]:
+    - link "FleekIPRS" [ref=f3e4] [cursor=pointer]:
+      - /url: /
+    - heading "Sign in to your console" [level=1] [ref=f3e5]
+    - paragraph [ref=f3e6]:
+      - text: Verify identities in seconds. New here?
+      - link "Create an account" [ref=f3e7] [cursor=pointer]:
+        - /url: /register
+    - generic [ref=f3e8]:
+      - generic [ref=f3e9]:
+        - generic [ref=f3e10]: Work email
+        - textbox "Work email" [ref=f3e11]:
+          - /placeholder: you@company.co.ke
+      - generic [ref=f3e12]:
+        - generic [ref=f3e13]: Password
+        - textbox "Password" [ref=f3e14]:
+          - /placeholder: ••••••••
+      - button "Sign in" [ref=f3e15] [cursor=pointer]
+    - paragraph [ref=f3e16]:
+      - link "Forgot your password?" [ref=f3e17] [cursor=pointer]:
+        - /url: /forgot-password

@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 
 const NAV = [
   { href: '/console', label: 'Verify', icon: '🔍' },
+  { href: '/console/bulk', label: 'Bulk', icon: '📦' },
   { href: '/console/history', label: 'History', icon: '📋' },
   { href: '/console/wallet', label: 'Wallet', icon: '💰' },
   { href: '/console/keys', label: 'API Keys', icon: '🔑' },

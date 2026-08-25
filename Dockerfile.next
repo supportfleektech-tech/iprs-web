@@ -1,18 +1,29 @@
+# syntax=docker/dockerfile:1
 # Next.js marketing/dashboard (works for both apps via ARG APP)
 FROM node:22-alpine AS base
 RUN corepack enable
+# Tolerate slow/flaky registry links during installs (pnpm ignores
+# NPM_CONFIG_* uppercase env forms — use .npmrc):
+RUN printf 'fetch-timeout=600000\nfetch-retries=5\nfetch-retry-mintimeout=10000\nfetch-retry-maxtimeout=90000\nnetwork-concurrency=8\n' > /root/.npmrc
 WORKDIR /app
 
 ARG APP=web
 
 FROM base AS deps
-COPY pnpm-workspace.yaml package.json ./
+# Copy EVERY workspace manifest so the install covers the full workspace —
+# a partial set goes stale when `COPY . .` adds the rest and pnpm triggers
+# an implicit reinstall at build time:
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
 COPY apps/web/package.json apps/web/
 COPY apps/dashboard/package.json apps/dashboard/
+COPY apps/api/package.json apps/api/
 COPY packages/ui/package.json packages/ui/
 COPY packages/types/package.json packages/types/
+COPY packages/providers/package.json packages/providers/
+COPY packages/database/package.json packages/database/
 COPY packages/tsconfig/package.json packages/tsconfig/
-RUN pnpm install --frozen-lockfile=false
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile=false
 
 FROM deps AS build
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -28,6 +39,8 @@ RUN pnpm --filter @fleek/types build \
 
 FROM node:22-alpine AS runner
 ARG APP=web
+# ARGs are not env vars at runtime — export so the CMD shell can expand ${APP}:
+ENV APP=$APP
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 COPY --from=build /app/apps/$APP/.next/standalone ./

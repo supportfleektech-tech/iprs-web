@@ -1,6 +1,9 @@
+# Production stack: Postgres + API + web + dashboard behind nginx/TLS.
+# Copy deploy/.env.prod.example to .env and fill in secrets before first run.
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fleek}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
@@ -8,34 +11,49 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U fleek']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-fleek}']
       interval: 5s
       retries: 10
 
   api:
     build:
       context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fleek}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fleek_iprs}
       JWT_SECRET: ${JWT_SECRET:?set in .env}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set in .env}
       PORT: 4000
+      NODE_ENV: production
       CORS_ORIGINS: https://fleekiprs.co.ke,https://app.fleekiprs.co.ke
+      PASSWORD_RESET_URL: https://app.fleekiprs.co.ke/reset-password
+      ENABLED_CHECKS: iprs_id,kra_pin,phone_ownership,sim_swap
+      # Live verification upstream (optional — sandbox when empty):
+      USE_LIVE_UPSTREAM: ${USE_LIVE_UPSTREAM:-false}
+      UPSTREAM_BASE_URL: ${UPSTREAM_BASE_URL:-}
+      UPSTREAM_API_KEY: ${UPSTREAM_API_KEY:-}
+      LIVE_CHECKS: ${LIVE_CHECKS:-iprs_id,kra_pin}
+      # M-Pesa Daraja (optional — mock gateway when empty):
+      DARAJA_CONSUMER_KEY: ${DARAJA_CONSUMER_KEY:-}
+      DARAJA_CONSUMER_SECRET: ${DARAJA_CONSUMER_SECRET:-}
+      DARAJA_SHORTCODE: ${DARAJA_SHORTCODE:-}
+      DARAJA_PASSKEY: ${DARAJA_PASSKEY:-}
+      DARAJA_ENV: ${DARAJA_ENV:-sandbox}
+      DARAJA_CALLBACK_URL: ${DARAJA_CALLBACK_URL:-https://api.fleekiprs.co.ke/v1/payments/callback}
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - '4000:4000'
 
   web:
     build:
       context: .
       args:
         APP: web
+    restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000/v1
-    ports:
-      - '3000:3000'
+      NEXT_PUBLIC_API_URL: https://api.fleekiprs.co.ke/v1
+      NODE_ENV: production
     depends_on:
       - api
 
@@ -44,12 +62,35 @@ services:
       context: .
       args:
         APP: dashboard
+    restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000/v1
-    ports:
-      - '3001:3000'
+      NEXT_PUBLIC_API_URL: https://api.fleekiprs.co.ke/v1
+      NODE_ENV: production
     depends_on:
       - api
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/nginx:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/shared:/etc/nginx/conf.d/shared:ro
+      - ./nginx/certs:/etc/letsencrypt:ro
+      - ./nginx/www:/var/www/certbot
+    depends_on:
+      - web
+      - dashboard
+      - api
+
+  certbot:
+    image: certbot/certbot
+    profiles: ['tls']
+    volumes:
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/www:/var/www/certbot
 
 volumes:
   pgdata:

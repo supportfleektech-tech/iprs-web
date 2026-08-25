@@ -82,6 +82,27 @@ that boots Postgres → API → dashboard and exercises the happy path in a real
 Required production env (see `.env.example`s): `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY`,
 `CORS_ORIGINS`, `ENABLED_CHECKS`, `NEXT_PUBLIC_API_URL`.
 
+## Integrations — all credential-gated
+
+Every third-party integration reads credentials from env. **The platform is fully functional
+without any of them** (mock providers + sandbox gateways), and real services activate by
+configuration only:
+
+| Integration | Env vars | While empty |
+|---|---|---|
+| Live IPRS/KRA data (`packages/providers` → `AggregatorAdapter`) | `USE_LIVE_UPSTREAM`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS` | Deterministic mock provider; per-type live routing |
+| M-Pesa STK top-ups (`apps/api/src/payments` → `DarajaGateway`) | `DARAJA_CONSUMER_KEY/SECRET/SHORTCODE/PASSKEY`, `DARAJA_ENV`, `DARAJA_CALLBACK_URL` | Mock gateway auto-completes after ~3s |
+| Reset emails | swap `ConsoleMailer` for SES/Postmark | Links logged server-side |
+
+Bulk CSV verification, wallet billing, audit trails and admin approvals all work end-to-end
+in sandbox mode today.
+
+## Deployment
+
+See [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) — DNS records, TLS via certbot,
+`deploy/deploy.sh`, nginx configs for all three domains, backups.
+Quick path: `cp deploy/.env.prod.example .env && ./deploy/deploy.sh tls && ./deploy/deploy.sh`
+
 ## Compliance posture (Kenya DPA 2019)
 
 - Explicit consent + collector recorded on every verification

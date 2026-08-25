@@ -266,3 +266,24 @@ model ContactMessage {
 
   @@map("contact_messages")
 }
+
+/// M-Pesa STK Push initiated by an org user. On success (callback or poll)
+/// the wallet is credited and a ledger entry written.
+model StkPayment {
+  id                String    @id @default(cuid())
+  organizationId    String
+  userId            String
+  amountMinor       BigInt
+  phone             String
+  status            String    @default("pending")
+  merchantRequestId String?
+  checkoutRequestId String?   @unique
+  mpesaReceipt      String?
+  resultDesc        String?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  @@index([organizationId, createdAt])
+  @@index([checkoutRequestId])
+  @@map("stk_payments")
+}

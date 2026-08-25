@@ -4,22 +4,38 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { VerificationType, VERIFICATION_TYPES } from '@fleek/types';
-import { ProviderRegistry, ProviderError } from '@fleek/providers';
+import { AggregatorAdapter, ProviderRegistry, ProviderError } from '@fleek/providers';
 import { PrismaService } from '../prisma/prisma.service';
 import { InsufficientFundsException } from '../common/exceptions';
 import { appConfig } from '../config/configuration';
 import { RunVerificationDto } from './dto';
 
+/** Live upstream wiring — credential-gated; absent config = full sandbox. */
+function buildRegistry(): ProviderRegistry {
+  const enabled = new Set(appConfig.enabledChecks);
+  const { UPSTREAM_BASE_URL, UPSTREAM_API_KEY, LIVE_CHECKS } = process.env;
+
+  if (!appConfig.useLiveUpstream || !UPSTREAM_BASE_URL || !UPSTREAM_API_KEY) {
+    return new ProviderRegistry(enabled);
+  }
+  const liveTypes = new Set(
+    (LIVE_CHECKS ?? '')
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t): t is VerificationType => (VERIFICATION_TYPES as string[]).includes(t)),
+  );
+  return new ProviderRegistry(
+    enabled,
+    new AggregatorAdapter({ baseUrl: UPSTREAM_BASE_URL, apiKey: UPSTREAM_API_KEY }),
+    liveTypes,
+  );
+}
+
 @Injectable()
 export class VerificationsService {
-  readonly registry: ProviderRegistry;
+  readonly registry: ProviderRegistry = buildRegistry();
 
-  constructor(private readonly prisma: PrismaService) {
-    this.registry = new ProviderRegistry(
-      new Set(appConfig.enabledChecks),
-      appConfig.useLiveUpstream,
-    );
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async products() {
     const pricing = await this.prisma.client.productPricing.findMany();
@@ -27,6 +43,7 @@ export class VerificationsService {
     return VERIFICATION_TYPES.map((type) => ({
       type,
       enabled: this.registry.isEnabled(type),
+      live: this.registry.isLive(type),
       priceMinor: priceByType.get(type) ?? null,
     }));
   }

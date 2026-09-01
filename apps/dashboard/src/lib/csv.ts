@@ -2,6 +2,21 @@ export interface CsvRow {
   idNumber?: string;
   kraPin?: string;
   phoneNumber?: string;
+  alienId?: string;
+  passportNumber?: string;
+  nationality?: string;
+  bankCode?: string;
+  accountNumber?: string;
+  employerName?: string;
+  meterNumber?: string;
+  vehicleRegNumber?: string;
+  dlNumber?: string;
+  businessRegNumber?: string;
+  faceImageBase64?: string;
+  statementPages?: string;
+  statementFileBase64?: string;
+  cbConsent?: boolean;
+  useBackup?: boolean;
 }
 
 /** Minimal quoted-CSV parser; first non-empty line must be a header row. */
@@ -48,7 +63,7 @@ export function parseCsv(text: string): Record<string, string>[] {
   });
 }
 
-const HEADER_ALIASES: Record<string, keyof CsvRow> = {
+const HEADER_ALIASEES: Record<string, keyof CsvRow> = {
   id_number: 'idNumber',
   idnumber: 'idNumber',
   id: 'idNumber',
@@ -60,14 +75,53 @@ const HEADER_ALIASES: Record<string, keyof CsvRow> = {
   phonenumber: 'phoneNumber',
   phone: 'phoneNumber',
   msisdn: 'phoneNumber',
+  alien_id: 'alienId',
+  alienid: 'alienId',
+  passport_number: 'passportNumber',
+  passportnumber: 'passportNumber',
+  passport: 'passportNumber',
+  nationality: 'nationality',
+  bank_code: 'bankCode',
+  bankcode: 'bankCode',
+  bank: 'bankCode',
+  account_number: 'accountNumber',
+  accountnumber: 'accountNumber',
+  account: 'accountNumber',
+  employer_name: 'employerName',
+  employername: 'employerName',
+  employer: 'employerName',
+  meter_number: 'meterNumber',
+  meternumber: 'meterNumber',
+  meter: 'meterNumber',
+  vehicle_reg_number: 'vehicleRegNumber',
+  vehicleregnumber: 'vehicleRegNumber',
+  vehicle_reg: 'vehicleRegNumber',
+  dl_number: 'dlNumber',
+  dlnumber: 'dlNumber',
+  dl: 'dlNumber',
+  drivers_license: 'dlNumber',
+  business_reg_number: 'businessRegNumber',
+  businessregnumber: 'businessRegNumber',
+  business_reg: 'businessRegNumber',
+  br_number: 'businessRegNumber',
+  face_image_base64: 'faceImageBase64',
+  faceimagebase64: 'faceImageBase64',
+  statement_pages: 'statementPages',
+  statementpages: 'statementPages',
+  statement_file_base64: 'statementFileBase64',
+  statementfilebase64: 'statementFileBase64',
+  cb_consent: 'cbConsent',
+  cbconsent: 'cbConsent',
+  use_backup: 'useBackup',
+  usebackup: 'useBackup',
 };
 
 export function csvRowsToInputs(records: Record<string, string>[]): CsvRow[] {
   return records.map((rec) => {
     const row: CsvRow = {};
     for (const [header, value] of Object.entries(rec)) {
-      const key = HEADER_ALIASES[header.toLowerCase().replace(/\s+/g, '_')];
-      if (key && value) row[key] = value.replace(/\s+/g, '');
+      const key = HEADER_ALIASEES[header.toLowerCase().replace(/\s+/g, '_')] as keyof CsvRow | undefined;
+      if (key && value) (row as Record<string, string>)[key] = value.replace(/\s+/g, '');
     }
     return row;
   });

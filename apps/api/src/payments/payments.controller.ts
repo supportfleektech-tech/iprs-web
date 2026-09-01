@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Logger, NotFoundException, Param, Post, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { IsNumber, IsString, Matches, Min } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Matches, Min } from 'class-validator';
 import { Auth, CurrentUser } from '../auth/auth.decorators';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
@@ -15,6 +15,31 @@ export class InitiateStkDto {
   /** Kenyan mobile number that will receive the STK push. */
   @IsString() @Matches(/^(\+?254|0)7\d{8}$/, { message: 'phone must be a Kenyan mobile number' })
   phone!: string;
+}
+
+export class ConfirmBankTransferDto {
+  /** Amount in KES (e.g. 5000). Minimum 100. */
+  @IsNumber() @Min(100)
+  amount!: number;
+
+  /** Kenyan mobile number */
+  @IsString() @Matches(/^(\+?254|0)7\d{8}$/, { message: 'phone must be a Kenyan mobile number' })
+  phone!: string;
+
+  /** Paybill reference from M-Pesa confirmation SMS */
+  @IsString() @Min(5)
+  paybillRef!: string;
+}
+
+export class ConfirmBankPaymentDto {
+  @IsBoolean()
+  success!: boolean;
+
+  @IsOptional() @IsString()
+  receipt?: string;
+
+  @IsOptional() @IsString()
+  resultDesc?: string;
 }
 
 @ApiTags('payments')
@@ -58,7 +83,6 @@ export class PaymentsController {
     });
     if (!payment) throw new NotFoundException('Payment not found');
     const settled = await this.payments.syncStatus(payment);
-    // Map explicitly: BigInt columns are not JSON-serializable.
     return {
       id: settled.id,
       status: settled.status,
@@ -68,6 +92,57 @@ export class PaymentsController {
       resultDesc: settled.resultDesc,
       createdAt: settled.createdAt.toISOString(),
       completedAt: settled.completedAt?.toISOString() ?? null,
+    };
+  }
+
+  /** Get bank/paybill details for manual transfer */
+  @Get('bank-details')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  getBankDetails() {
+    return this.payments.getBankDetails();
+  }
+
+  /** Record a bank/paybill transfer initiated by user */
+  @Post('bank/confirm')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  async confirmBankTransfer(@CurrentUser() user: JwtPayload, @Body() dto: ConfirmBankTransferDto) {
+    const payment = await this.payments.confirmBankTransfer(
+      user.organizationId!,
+      user.sub!,
+      dto.amount,
+      dto.paybillRef,
+      dto.phone,
+    );
+    return {
+      id: payment.id,
+      status: payment.status,
+      amount: Number(payment.amountMinor) / 100,
+      phone: payment.phone,
+      paybillRef: payment.paybillRef,
+      message: 'Bank/Paybill transfer recorded. Wallet will be credited on confirmation.',
+    };
+  }
+
+  /** Admin confirms bank payment */
+  @Post('bank/:id/confirm')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  async confirmBankPayment(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: ConfirmBankPaymentDto,
+  ) {
+    if (!user.isPlatformAdmin) {
+      throw new NotFoundException('Only platform admins can confirm bank payments');
+    }
+    const payment = await this.payments.confirmBankPayment(id, dto.success, dto.receipt, dto.resultDesc);
+    return {
+      id: payment.id,
+      status: payment.status,
+      amount: Number(payment.amountMinor) / 100,
+      message: dto.success ? 'Bank payment confirmed and wallet credited' : 'Bank payment rejected',
     };
   }
 
@@ -103,7 +178,6 @@ export class PaymentsController {
         resultDesc: cb.ResultDesc,
       });
     } catch (err) {
-      // Always ACK to Daraja so it does not retry indefinitely; log for follow-up.
       this.logger.warn(`callback error: ${err instanceof Error ? err.message : err}`);
     }
     return { ResultCode: 0, ResultDesc: 'Accepted' };

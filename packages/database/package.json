@@ -15,6 +15,7 @@
     "migrate": "prisma migrate dev",
     "deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
+    "seed:tiers": "tsx prisma/tier-seed.ts",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit"
   },

@@ -13,7 +13,7 @@ async function validateBody(body: object) {
 describe('RunVerificationDto', () => {
   it('accepts a valid IPRS request with consent', async () => {
     const errors = await validateBody({
-      type: 'iprs_id',
+      type: 'iprs_standard',
       idNumber: '12345678',
       consent: true,
       consentCollectedBy: 'Acme Ltd',
@@ -23,7 +23,7 @@ describe('RunVerificationDto', () => {
 
   it('rejects malformed ID numbers', async () => {
     const errors = await validateBody({
-      type: 'iprs_id',
+      type: 'iprs_standard',
       idNumber: 'abc123',
       consent: true,
       consentCollectedBy: 'Acme Ltd',
@@ -41,20 +41,22 @@ describe('RunVerificationDto', () => {
   });
 
   it('requires consent fields (DPA compliance)', async () => {
-    const errors = await validateBody({ type: 'sim_swap', phoneNumber: '0712345678' });
+    const errors = await validateBody({ type: 'sim_swap_check', phoneNumber: '0712345678' });
     expect(errors.length).toBeGreaterThanOrEqual(2); // consent + consentCollectedBy
   });
 
-  it('ignores extra properties at DTO level (HTTP pipe strips/rejects them)', async () => {
-    // forbidNonWhitelisted lives on the global ValidationPipe, not on validate().
+  it('allows extra properties at DTO level (forbidNonWhitelisted is HTTP pipe level)', async () => {
+    // class-validator's validate() allows extra properties by default.
+    // The global ValidationPipe enforces forbidNonWhitelisted at HTTP layer.
     const errors = await validateBody({
-      type: 'iprs_id',
+      type: 'iprs_standard',
       idNumber: '12345678',
       consent: true,
       consentCollectedBy: 'Acme',
       hackerField: 'nope',
     });
-    expect(errors.filter((e) => e.property !== 'hackerField')).toHaveLength(0);
+    // DTO validation passes; extra property is stripped at HTTP layer
+    expect(errors).toHaveLength(0);
   });
 });
 

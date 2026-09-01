@@ -34,11 +34,19 @@ function makeDeps() {
   const prisma = { client, encrypt: (v: string) => v, decrypt: (v: string) => v } as never;
   const run = vi.fn();
   const isEnabled = vi.fn().mockReturnValue(true);
+  const getCurrentTier = vi.fn().mockResolvedValue({
+    minVolume: 0,
+    maxVolume: 500,
+    unitPriceMinor: 5000n,
+    backupPriceMinor: null,
+    vatExclusive: true,
+  });
   const verifications = {
     registry: { isEnabled },
     run,
+    getCurrentTier,
   } as never;
-  return { service: new BatchesService(prisma, verifications), client, run, isEnabled };
+  return { service: new BatchesService(prisma, verifications), client, run, isEnabled, getCurrentTier };
 }
 
 /** Lets fire-and-forget background processing settle before assertions. */

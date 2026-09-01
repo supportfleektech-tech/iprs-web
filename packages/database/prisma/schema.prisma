@@ -14,10 +14,30 @@ enum UserRole {
 }
 
 enum VerificationType {
-  iprs_id
-  kra_pin
-  phone_ownership
-  sim_swap
+  iprs_standard
+  match_id_phone
+  employer_verification
+  face_id_match
+  bank_account_verification
+  alien_id
+  aml_pep_screen
+  passport_check
+  sim_swap_check
+  kplc_location_checker
+  kra_pin_verification
+  search_name_by_phone
+  search_phones_by_id
+  motor_vehicle_ownership
+  drivers_license_verification
+  metropol_score_only
+  metropol_standard_report
+  metropol_full_report
+  creditinfo_score_only
+  creditinfo_comprehensive
+  creditinfo_crb_status
+  brs
+  spin_score_only
+  scanned_statement
 }
 
 enum VerificationStatus {
@@ -42,6 +62,12 @@ enum TopUpStatus {
 enum ApiKeyEnv {
   live
   test
+}
+
+enum PaymentMethod {
+  stk
+  bank
+  card
 }
 
 model Organization {
@@ -180,22 +206,24 @@ model TopUpRequest {
 }
 
 model VerificationRequest {
-  id             String            @id @default(cuid())
-  type           VerificationType
-  status         VerificationStatus @default(pending)
-  source         String
-  encryptedInput  String
-  encryptedResult String?
-  costMinor      BigInt            @default(0)
-  latencyMs      Int?
-  errorMessage   String?
-  consent        Boolean           @default(false)
+  id                 String            @id @default(cuid())
+  type               VerificationType
+  status             VerificationStatus @default(pending)
+  source             String
+  encryptedInput     String
+  encryptedResult    String?
+  costMinor          BigInt            @default(0)
+  latencyMs          Int?
+  errorMessage       String?
+  consent            Boolean           @default(false)
   consentCollectedBy String?
-  organizationId String
-  userId         String?
-  apiKeyId       String?
-  batchId        String?
-  createdAt      DateTime          @default(now())
+  cbConsent          Boolean           @default(false)
+  isBackup           Boolean           @default(false)
+  organizationId     String
+  userId             String?
+  apiKeyId           String?
+  batchId            String?
+  createdAt          DateTime          @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transaction  Transaction?
@@ -219,6 +247,7 @@ model VerificationBatch {
   failedCount    Int              @default(0)
   notFoundCount  Int              @default(0)
   errorMessage   String?
+  isBackup       Boolean          @default(false)
   organizationId String
   userId         String?
   createdAt      DateTime         @default(now())
@@ -239,6 +268,31 @@ model ProductPricing {
   updatedAt  DateTime         @updatedAt
 
   @@map("product_pricing")
+}
+
+model ProductPricingTier {
+  id                String           @id @default(cuid())
+  productType       VerificationType @map("product_type")
+  minVolume         Int              @map("min_volume")
+  maxVolume         Int?             @map("max_volume")
+  unitPriceMinor    BigInt           @map("unit_price_minor")
+  backupPriceMinor  BigInt?          @map("backup_price_minor")
+  vatExclusive      Boolean          @default(true) @map("vat_exclusive")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@unique([productType, minVolume])
+  @@index([productType])
+  @@map("product_pricing_tiers")
+}
+
+model OrganizationMonthlyUsage {
+  orgId        String           @map("org_id")
+  month        String           // "2026-08"
+  productType  VerificationType @map("product_type")
+  successCount Int              @default(0) @map("success_count")
+
+  @@id([orgId, month, productType])
+  @@map("organization_monthly_usage")
 }
 
 model AuditLog {
@@ -267,20 +321,22 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
-/// M-Pesa STK Push initiated by an org user. On success (callback or poll)
-/// the wallet is credited and a ledger entry written.
+/// M-Pesa STK Push / Bank Transfer / Card initiated by an org user.
+/// On success (callback or poll) the wallet is credited and a ledger entry written.
 model StkPayment {
-  id                String    @id @default(cuid())
+  id                String         @id @default(cuid())
   organizationId    String
   userId            String
   amountMinor       BigInt
   phone             String
-  status            String    @default("pending")
+  method            PaymentMethod  @default(stk)
+  status            String         @default("pending")
   merchantRequestId String?
-  checkoutRequestId String?   @unique
+  checkoutRequestId String?        @unique
   mpesaReceipt      String?
   resultDesc        String?
-  createdAt         DateTime  @default(now())
+  paybillRef        String?        // For bank transfer confirmations
+  createdAt         DateTime       @default(now())
   completedAt       DateTime?
 
   @@index([organizationId, createdAt])

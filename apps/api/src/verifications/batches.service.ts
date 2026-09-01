@@ -3,9 +3,7 @@ import { Logger } from '@nestjs/common';
 import { VerificationType } from '@fleek/types';
 import type { VerificationBatch } from '@fleek/database';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  InsufficientFundsException,
-} from '../common/exceptions';
+import { InsufficientFundsException } from '../common/exceptions';
 import { VerificationsService } from './verifications.service';
 import type { CreateBatchDto, CsvRow } from './bulk.dto';
 
@@ -39,7 +37,9 @@ export class BatchesService {
     if (!this.verifications.registry.isEnabled(dto.type)) {
       throw new BadRequestException(`Check "${dto.type}" is not available`);
     }
-    const rows = dto.rows.filter((r) => r.idNumber || r.phoneNumber || r.kraPin);
+    
+    // Filter rows with at least one identifier
+    const rows = dto.rows.filter((r) => r.idNumber || r.phoneNumber || r.kraPin || r.alienId || r.passportNumber || r.meterNumber || r.vehicleRegNumber || r.dlNumber || r.businessRegNumber);
     if (rows.length === 0) {
       throw new BadRequestException('No usable rows found — expected columns like id_number or phone_number');
     }
@@ -47,14 +47,18 @@ export class BatchesService {
       throw new BadRequestException(`A batch may contain at most ${MAX_ROWS} rows (got ${rows.length})`);
     }
 
-    // Refuse to start a batch the wallet cannot finish.
-    const pricing = await this.prisma.client.productPricing.findUnique({ where: { type: dto.type } });
+    // For batch, we estimate cost using the base tier price (will be actual per-row at runtime)
+    const productPricing = await this.prisma.client.productPricing.findUnique({ where: { type: dto.type } });
     const wallet = await this.prisma.client.wallet.findUnique({ where: { organizationId: orgId } });
-    const priceMinor = pricing?.priceMinor ?? BigInt(0);
-    if (!pricing?.active) throw new BadRequestException('Product not priced/inactive');
-    if (!wallet || wallet.balanceMinor < priceMinor * BigInt(rows.length)) {
+    const basePriceMinor = productPricing?.priceMinor ?? BigInt(0);
+    if (!productPricing?.active) throw new BadRequestException('Product not priced/inactive');
+    // Estimate max cost (all rows succeed at highest tier - conservative)
+    const tier = await this.verifications.getCurrentTier(dto.type, 0);
+    const estimatedPriceMinor = tier?.unitPriceMinor ?? basePriceMinor;
+    
+    if (!wallet || wallet.balanceMinor < estimatedPriceMinor * BigInt(rows.length)) {
       throw new InsufficientFundsException(
-        `Estimated cost KES ${(Number(priceMinor * BigInt(rows.length)) / 100).toLocaleString()} exceeds wallet balance` +
+        `Estimated cost KES ${(Number(estimatedPriceMinor * BigInt(rows.length)) / 100).toLocaleString()} exceeds wallet balance` +
           (wallet ? ` (KES ${(Number(wallet.balanceMinor) / 100).toLocaleString()})` : ''),
       );
     }
@@ -217,8 +221,9 @@ export class BatchesService {
 
   private subjectOf(encryptedInput: string): string {
     try {
-      const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<string, string | null>;
-      return input.kraPin ?? input.phoneNumber ?? input.idNumber ?? '—';
+      const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<string, string | number | null | undefined>;
+      const subject = input.kraPin ?? input.phoneNumber ?? input.idNumber ?? input.alienId ?? input.passportNumber ?? input.vehicleRegNumber ?? input.dlNumber ?? input.businessRegNumber ?? input.meterNumber ?? (input.statementPages ? String(input.statementPages) : '—');
+      return String(subject);
     } catch {
       return '—';
     }
@@ -236,13 +241,39 @@ export class BatchesService {
   private nameOf(type: VerificationType, encryptedResult: string | null): string {
     const res = this.resultOf(encryptedResult);
     if (!res) return '';
+    const r = res as Record<string, unknown>;
     switch (type) {
-      case VerificationType.IPRS_ID:
-        return String(res.fullName ?? '');
-      case VerificationType.KRA_PIN:
-        return String(res.taxpayerName ?? '');
-      case VerificationType.PHONE_OWNERSHIP:
-        return String(res.ownerName ?? '');
+      case VerificationType.IPRS_STANDARD:
+      case VerificationType.MATCH_ID_PHONE:
+      case VerificationType.EMPLOYER_VERIFICATION:
+      case VerificationType.FACE_ID_MATCH:
+      case VerificationType.ALIEN_ID:
+      case VerificationType.AML_PEP_SCREEN:
+      case VerificationType.PASSPORT_CHECK:
+      case VerificationType.SEARCH_NAME_BY_PHONE:
+      case VerificationType.MOTOR_VEHICLE_OWNERSHIP:
+      case VerificationType.DRIVERS_LICENSE_VERIFICATION:
+      case VerificationType.BRS:
+        return String(r.fullName ?? r.ownerName ?? r.taxpayerName ?? r.customerName ?? r.businessName ?? '');
+      case VerificationType.KRA_PIN_VERIFICATION:
+        return String(r.taxpayerName ?? '');
+      case VerificationType.SEARCH_PHONES_BY_ID:
+        return '';
+      case VerificationType.BANK_ACCOUNT_VERIFICATION:
+        return String(r.accountName ?? '');
+      case VerificationType.KPLC_LOCATION_CHECKER:
+        return String(r.customerName ?? '');
+      case VerificationType.SIM_SWAP_CHECK:
+        return '';
+      case VerificationType.METROPOL_SCORE_ONLY:
+      case VerificationType.METROPOL_STANDARD_REPORT:
+      case VerificationType.METROPOL_FULL_REPORT:
+      case VerificationType.CREDITINFO_SCORE_ONLY:
+      case VerificationType.CREDITINFO_COMPREHENSIVE:
+      case VerificationType.CREDITINFO_CRB_STATUS:
+      case VerificationType.SPIN_SCORE_ONLY:
+      case VerificationType.SCANNED_STATEMENT:
+        return '';
       default:
         return '';
     }
@@ -251,15 +282,39 @@ export class BatchesService {
   private detailOf(type: VerificationType, encryptedResult: string | null): string {
     const res = this.resultOf(encryptedResult);
     if (!res) return '';
+    const r = res as Record<string, unknown>;
     switch (type) {
-      case VerificationType.IPRS_ID:
-        return String(res.dateOfBirth ?? '');
-      case VerificationType.KRA_PIN:
-        return String(res.status ?? '');
-      case VerificationType.PHONE_OWNERSHIP:
-        return (res.registeredNumbers as string[] | undefined)?.join('; ') ?? '';
-      case VerificationType.SIM_SWAP:
-        return `risk=${res.riskLevel ?? ''} lastSwap=${res.lastSwapDate ?? ''}`;
+      case VerificationType.IPRS_STANDARD:
+        return String(r.dateOfBirth ?? '');
+      case VerificationType.KRA_PIN_VERIFICATION:
+        return String(r.status ?? '');
+      case VerificationType.SEARCH_PHONES_BY_ID:
+        return (r.registeredNumbers as string[] | undefined)?.join('; ') ?? '';
+      case VerificationType.SIM_SWAP_CHECK:
+        return `risk=${r.riskLevel ?? ''} lastSwap=${r.lastSwapDate ?? ''}`;
+      case VerificationType.BANK_ACCOUNT_VERIFICATION:
+        return String(r.accountStatus ?? '');
+      case VerificationType.METROPOL_SCORE_ONLY:
+      case VerificationType.CREDITINFO_SCORE_ONLY:
+      case VerificationType.SPIN_SCORE_ONLY:
+        return `score=${r.score ?? ''} band=${r.scoreBand ?? ''}`;
+      case VerificationType.METROPOL_STANDARD_REPORT:
+      case VerificationType.METROPOL_FULL_REPORT:
+        return `score=${r.score ?? ''} accounts=${(r.accounts as unknown[] | undefined)?.length ?? 0}`;
+      case VerificationType.CREDITINFO_COMPREHENSIVE:
+        return `accounts=${(r.creditAccounts as unknown[] | undefined)?.length ?? 0}`;
+      case VerificationType.CREDITINFO_CRB_STATUS:
+        return String(r.status ?? '');
+      case VerificationType.BRS:
+        return String(r.status ?? '');
+      case VerificationType.MOTOR_VEHICLE_OWNERSHIP:
+        return `${r.make ?? ''} ${r.model ?? ''} (${r.year ?? ''})`;
+      case VerificationType.DRIVERS_LICENSE_VERIFICATION:
+        return String(r.status ?? '');
+      case VerificationType.KPLC_LOCATION_CHECKER:
+        return String(r.location ?? '');
+      case VerificationType.SCANNED_STATEMENT:
+        return `pages=${r.pagesProcessed ?? ''} txns=${(r.summary as Record<string, unknown> | undefined)?.transactionCount ?? ''}`;
       default:
         return '';
     }

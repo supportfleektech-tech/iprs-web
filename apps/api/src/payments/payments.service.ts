@@ -1,26 +1,40 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { StkPayment } from '@fleek/database';
+import { StkPayment, PaymentMethod } from '@fleek/database';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   DarajaGateway,
   MockGateway,
   type PaymentGateway,
 } from './gateway';
+import { normalizeKePhone } from '../common/phone';
 
 /**
- * Orchestrates STK top-ups: initiation, status sync, callback handling and
- * wallet crediting. Gateway selection is automatic:
- *   DARAJA_CONSUMER_KEY + DARAJA_CONSUMER_SECRET set → real Daraja
- *   otherwise                                        → MockGateway (dev/CI)
+ * Orchestrates wallet top-ups via multiple rails:
+ *   - M-Pesa STK Push (DarajaGateway / MockGateway)
+ *   - Bank Transfer / Paybill (manual confirm)
+ *   - Card (future: Pesapal/Stripe)
  */
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger('Payments');
   readonly gateway: PaymentGateway;
 
+  // Paybill constants
+  static readonly PAYBILL_NUMBER = process.env.PAYBILL_NUMBER ?? '880100';
+  static readonly PAYBILL_ACCOUNT = process.env.PAYBILL_ACCOUNT ?? '8402250011';
+  static readonly BANK_NAME = process.env.BANK_NAME ?? 'NCBA';
+  static readonly BANK_BRANCH = process.env.BANK_BRANCH ?? 'Uphill';
+  static readonly ACCOUNT_NAME = process.env.ACCOUNT_NAME ?? 'SPIN MOBILE LIMITED';
+
   constructor(private readonly prisma: PrismaService) {
-    const { DARAJA_CONSUMER_KEY, DARAJA_CONSUMER_SECRET, DARAJA_SHORTCODE, DARAJA_PASSKEY, DARAJA_ENV, DARAJA_CALLBACK_URL } =
-      process.env;
+    const {
+      DARAJA_CONSUMER_KEY,
+      DARAJA_CONSUMER_SECRET,
+      DARAJA_SHORTCODE,
+      DARAJA_PASSKEY,
+      DARAJA_ENV,
+      DARAJA_CALLBACK_URL,
+    } = process.env;
 
     if (DARAJA_CONSUMER_KEY && DARAJA_CONSUMER_SECRET && DARAJA_SHORTCODE && DARAJA_PASSKEY) {
       this.gateway = new DarajaGateway({
@@ -44,6 +58,19 @@ export class PaymentsService {
     return this.gateway.name;
   }
 
+  /** Get paybill/bank details for manual transfer */
+  getBankDetails() {
+    return {
+      paybillNumber: PaymentsService.PAYBILL_NUMBER,
+      paybillAccount: PaymentsService.PAYBILL_ACCOUNT,
+      bankName: PaymentsService.BANK_NAME,
+      bankBranch: PaymentsService.BANK_BRANCH,
+      accountName: PaymentsService.ACCOUNT_NAME,
+    };
+  }
+
+  // ===== M-Pesa STK Push =====
+
   async initiateStkPush(orgId: string, userId: string, amountKes: number, phone: string): Promise<StkPayment> {
     if (!Number.isFinite(amountKes) || amountKes < 100) {
       throw new Error('Minimum M-Pesa top-up is KES 100');
@@ -54,7 +81,8 @@ export class PaymentsService {
         organizationId: orgId,
         userId,
         amountMinor: BigInt(Math.round(amountKes * 100)),
-        phone: phone.replace(/^(\+254|0)/, '254'),
+        phone: normalizeKePhone(phone).replace(/^\+/, ''),
+        method: PaymentMethod.stk,
       },
     });
 
@@ -76,6 +104,8 @@ export class PaymentsService {
   /** Pull-based status check; complements the Daraja push callback. */
   async syncStatus(payment: StkPayment): Promise<StkPayment> {
     if (payment.status !== 'pending' || !payment.checkoutRequestId) return payment;
+    if (payment.method !== PaymentMethod.stk) return payment;
+    
     if (!this.gateway.live) {
       // Mock gateway auto-completes on its own timer.
       await this.autoComplete(payment.checkoutRequestId);
@@ -100,11 +130,10 @@ export class PaymentsService {
     resultDesc?: string;
   }): Promise<void> {
     const payment = await this.prisma.client.stkPayment.findUnique({ where: { id: input.reference } });
-    // Validate that Daraja's checkout id matches what we stored — prevents spoofing.
     if (!payment || payment.checkoutRequestId !== input.checkoutRequestId) {
       throw new Error('Callback reference/checkout mismatch');
     }
-    if (payment.status !== 'pending') return; // already finalized
+    if (payment.status !== 'pending') return;
     await this.finalize(payment.id, input.success, input.mpesaReceipt, input.resultDesc);
   }
 
@@ -122,6 +151,50 @@ export class PaymentsService {
       this.logger.warn(`auto-complete failed: ${err instanceof Error ? err.message : err}`);
     }
   }
+
+  // ===== Bank Transfer / Paybill (Manual Confirm) =====
+
+  /** Record a bank/paybill payment that was made externally.
+   * User provides the paybill reference from their M-Pesa confirmation SMS. */
+  async confirmBankTransfer(
+    orgId: string,
+    userId: string,
+    amountKes: number,
+    paybillRef: string,
+    phone: string,
+  ): Promise<StkPayment> {
+    if (!Number.isFinite(amountKes) || amountKes < 100) {
+      throw new Error('Minimum top-up is KES 100');
+    }
+    if (!paybillRef || paybillRef.trim().length < 5) {
+      throw new Error('Paybill reference is required (from M-Pesa confirmation SMS)');
+    }
+
+    const payment = await this.prisma.client.stkPayment.create({
+      data: {
+        organizationId: orgId,
+        userId,
+        amountMinor: BigInt(Math.round(amountKes * 100)),
+        phone: normalizeKePhone(phone).replace(/^\+/, ''),
+        method: PaymentMethod.bank,
+        status: 'pending',
+        paybillRef: paybillRef.trim(),
+        merchantRequestId: `PAYBILL_${paybillRef.trim()}`,
+      },
+    });
+
+    // For bank transfer, we don't have real-time callback - admin or user can confirm
+    // For now, we'll mark as pending and let admin approve, or auto-approve if we trust the reference
+    // In production, you'd verify with bank API or C2B callback
+    return payment;
+  }
+
+  /** Admin or auto-confirmation of bank transfer */
+  async confirmBankPayment(paymentId: string, success: boolean, receipt?: string, resultDesc?: string): Promise<StkPayment> {
+    return this.finalize(paymentId, success, receipt, resultDesc);
+  }
+
+  // ===== Unified Finalize =====
 
   /** Single place where a payment is settled and the wallet credited — atomically. */
   private async finalize(
@@ -158,7 +231,7 @@ export class PaymentsService {
             type: 'topup',
             amountMinor: payment.amountMinor,
             balanceAfter: wallet.balanceMinor,
-            description: `M-Pesa top-up (${receipt ?? payment.checkoutRequestId ?? ''})`,
+            description: this.getTopupDescription(payment.method, receipt ?? payment.checkoutRequestId ?? payment.paybillRef ?? ''),
             walletId: wallet.id,
           },
         });
@@ -168,5 +241,18 @@ export class PaymentsService {
       this.logger.error(`finalize failed for ${paymentId}: ${err instanceof Error ? err.message : err}`);
       throw err;
     });
+  }
+
+  private getTopupDescription(method: PaymentMethod, reference: string): string {
+    switch (method) {
+      case PaymentMethod.stk:
+        return `M-Pesa STK top-up (${reference})`;
+      case PaymentMethod.bank:
+        return `Bank/Paybill top-up (${reference})`;
+      case PaymentMethod.card:
+        return `Card top-up (${reference})`;
+      default:
+        return `Wallet top-up (${reference})`;
+    }
   }
 }

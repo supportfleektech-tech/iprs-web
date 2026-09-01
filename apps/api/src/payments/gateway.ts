@@ -10,6 +10,8 @@
  * Add real credentials later via env; nothing else changes.
  */
 
+import { normalizeKePhone } from '../common/phone';
+
 export interface StkInitiation {
   merchantRequestId: string;
   checkoutRequestId: string;
@@ -95,7 +97,7 @@ export class DarajaGateway implements PaymentGateway {
     const timestamp = this.timestamp();
 
     // Daraja expects 2547XXXXXXXX and whole KES amounts.
-    const msisdn = input.phone.replace(/^0/, '254').replace(/^\+/, '');
+    const msisdn = normalizeKePhone(input.phone).replace(/^\+/, '');
     const amount = Number(input.amountMinor / BigInt(100));
 
     const res = await fetch(`${this.baseUrl}/mpesa/stkpush/v1/processrequest`, {

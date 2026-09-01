@@ -1,6 +1,7 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { VerificationType, type VerificationResponse } from '@fleek/types';
 import { Auth, CurrentUser } from '../auth/auth.decorators';
 import { AnyAuthGuard } from '../auth/api-key.guard';
@@ -21,12 +22,19 @@ export class VerificationsController {
 
   @Get('products')
   @ApiOperation({ summary: 'List verification products with pricing & availability' })
-  products() {
-    return this.verifications.products();
+  async products(@CurrentUser() user: JwtPayload | null) {
+    return this.verifications.products(user?.organizationId ?? undefined);
   }
 
   @Post()
   @UseGuards(AnyAuthGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'faceImage', maxCount: 1 },
+      { name: 'statementFile', maxCount: 1 },
+    ]),
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Run a verification (dashboard JWT session or API key)' })
   async run(
     @Body() dto: RunVerificationDto,
@@ -48,6 +56,9 @@ export class VerificationsController {
       result: res.result,
       cost: res.cost,
       createdAt: res.createdAt,
+      isBackup: res.isBackup,
+      backupAvailable: res.backupAvailable,
+      backupPrice: res.backupPrice,
     };
   }
 
@@ -58,6 +69,9 @@ export class VerificationsController {
       type: query.type as VerificationType | undefined,
       limit: query.limit ?? 50,
       offset: query.offset ?? 0,
+      from: query.from,
+      to: query.to,
+      status: query.status,
     });
   }
 

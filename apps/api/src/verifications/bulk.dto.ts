@@ -7,6 +7,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -16,11 +17,41 @@ export class BulkRowDto {
   @IsOptional() @IsNumberString({}, { message: 'idNumber must be digits' })
   idNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional() @IsString() @Matches(/^[AP]\d{9}[A-Z]$/, { message: 'Invalid KRA PIN format' })
   kraPin?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional() @IsString() @Matches(/^(\+?254|0)7\d{8}$/, { message: 'Invalid phone number format' })
   phoneNumber?: string;
+
+  @IsOptional() @IsString()
+  alienId?: string;
+
+  @IsOptional() @IsString()
+  passportNumber?: string;
+
+  @IsOptional() @IsString()
+  nationality?: string;
+
+  @IsOptional() @IsString()
+  bankCode?: string;
+
+  @IsOptional() @IsString()
+  accountNumber?: string;
+
+  @IsOptional() @IsString()
+  employerName?: string;
+
+  @IsOptional() @IsString()
+  meterNumber?: string;
+
+  @IsOptional() @IsString()
+  vehicleRegNumber?: string;
+
+  @IsOptional() @IsString()
+  dlNumber?: string;
+
+  @IsOptional() @IsString()
+  businessRegNumber?: string;
 }
 
 export class CreateBatchDto {
@@ -42,6 +73,16 @@ export interface CsvRow {
   idNumber?: string;
   kraPin?: string;
   phoneNumber?: string;
+  alienId?: string;
+  passportNumber?: string;
+  nationality?: string;
+  bankCode?: string;
+  accountNumber?: string;
+  employerName?: string;
+  meterNumber?: string;
+  vehicleRegNumber?: string;
+  dlNumber?: string;
+  businessRegNumber?: string;
 }
 
 /**
@@ -110,6 +151,35 @@ const HEADER_ALIASES: Record<string, keyof CsvRow> = {
   phonenumber: 'phoneNumber',
   phone: 'phoneNumber',
   msisdn: 'phoneNumber',
+  alien_id: 'alienId',
+  alienid: 'alienId',
+  passport_number: 'passportNumber',
+  passportnumber: 'passportNumber',
+  passport: 'passportNumber',
+  nationality: 'nationality',
+  bank_code: 'bankCode',
+  bankcode: 'bankCode',
+  bank: 'bankCode',
+  account_number: 'accountNumber',
+  accountnumber: 'accountNumber',
+  account: 'accountNumber',
+  employer_name: 'employerName',
+  employername: 'employerName',
+  employer: 'employerName',
+  meter_number: 'meterNumber',
+  meternumber: 'meterNumber',
+  meter: 'meterNumber',
+  vehicle_reg_number: 'vehicleRegNumber',
+  vehicleregnumber: 'vehicleRegNumber',
+  vehicle_reg: 'vehicleRegNumber',
+  dl_number: 'dlNumber',
+  dlnumber: 'dlNumber',
+  dl: 'dlNumber',
+  drivers_license: 'dlNumber',
+  business_reg_number: 'businessRegNumber',
+  businessregnumber: 'businessRegNumber',
+  business_reg: 'businessRegNumber',
+  br_number: 'businessRegNumber',
 };
 
 /** Maps parsed CSV objects to verification inputs based on known headers. */

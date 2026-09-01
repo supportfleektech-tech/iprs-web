@@ -5,6 +5,8 @@ import {
   Get,
   Param,
   Post,
+  Put,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
@@ -31,6 +33,45 @@ export class SetPricingDto {
   price!: number;
 }
 
+export class SetProductActiveDto {
+  @IsBoolean()
+  active!: boolean;
+}
+
+export class CreateTierDto {
+  @IsEnum(VerificationType)
+  productType!: VerificationType;
+
+  @IsNumber() @Min(0)
+  minVolume!: number;
+
+  @IsOptional() @IsNumber() @Min(1)
+  maxVolume?: number | null;
+
+  @IsNumber() @Min(1)
+  unitPriceMinor!: number;
+
+  @IsOptional() @IsNumber() @Min(1)
+  backupPriceMinor?: number | null;
+
+  @IsOptional() @IsBoolean()
+  vatExclusive?: boolean = true;
+}
+
+export class UpdateTierDto {
+  @IsOptional() @IsNumber() @Min(1)
+  maxVolume?: number | null;
+
+  @IsOptional() @IsNumber() @Min(1)
+  unitPriceMinor?: number;
+
+  @IsOptional() @IsNumber() @Min(1)
+  backupPriceMinor?: number | null;
+
+  @IsOptional() @IsBoolean()
+  vatExclusive?: boolean;
+}
+
 @ApiTags('admin')
 @ApiBearerAuth('jwt')
 @Controller('admin')
@@ -43,7 +84,6 @@ export class AdminController {
 
   private assertPlatform(user: JwtPayload) {
     if (!user.isPlatformAdmin) {
-      // Org OWNERs can manage their org; only platform admins manage everything.
       return user.organizationId;
     }
     return undefined;
@@ -75,7 +115,7 @@ export class AdminController {
   @Get('top-ups')
   allTopUps(
     @CurrentUser() user: JwtPayload,
-    @Param('status') status?: 'pending' | 'approved' | 'rejected',
+    @Query('status') status?: 'pending' | 'approved' | 'rejected',
   ) {
     const orgId = user.isPlatformAdmin ? undefined : user.organizationId!;
     return this.wallet.listTopUps(orgId, status);
@@ -105,6 +145,82 @@ export class AdminController {
       where: { type: dto.type },
       update: { priceMinor: BigInt(Math.round(dto.price * 100)) },
       create: { type: dto.type, priceMinor: BigInt(Math.round(dto.price * 100)) },
+    });
+  }
+
+  // Product active toggle
+  @Get('products')
+  async listProducts(@CurrentUser() user: JwtPayload) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform admins can manage products');
+    }
+    return this.prisma.client.productPricing.findMany({
+      orderBy: { type: 'asc' },
+    });
+  }
+
+  @Put('products/:type/active')
+  async setProductActive(
+    @CurrentUser() user: JwtPayload,
+    @Param('type') type: VerificationType,
+    @Body() dto: SetProductActiveDto,
+  ) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform admins can change product availability');
+    }
+    return this.prisma.client.productPricing.upsert({
+      where: { type },
+      update: { active: dto.active },
+      create: { type, active: dto.active, priceMinor: BigInt(0) },
+    });
+  }
+
+  // Tier pricing CRUD
+  @Get('pricing/tiers')
+  async listTiers(@CurrentUser() user: JwtPayload, @Query('type') type?: VerificationType) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform admins can view pricing tiers');
+    }
+    return this.prisma.client.productPricingTier.findMany({
+      where: type ? { productType: type } : {},
+      orderBy: [{ productType: 'asc' }, { minVolume: 'asc' }],
+    });
+  }
+
+  @Post('pricing/tiers')
+  async createTier(@CurrentUser() user: JwtPayload, @Body() dto: CreateTierDto) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform admins can create pricing tiers');
+    }
+    return this.prisma.client.productPricingTier.create({
+      data: {
+        productType: dto.productType,
+        minVolume: dto.minVolume,
+        maxVolume: dto.maxVolume ?? null,
+        unitPriceMinor: BigInt(dto.unitPriceMinor),
+        backupPriceMinor: dto.backupPriceMinor ? BigInt(dto.backupPriceMinor) : null,
+        vatExclusive: dto.vatExclusive ?? true,
+      },
+    });
+  }
+
+  @Put('pricing/tiers/:id')
+  async updateTier(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateTierDto,
+  ) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform admins can update pricing tiers');
+    }
+    return this.prisma.client.productPricingTier.update({
+      where: { id },
+      data: {
+        maxVolume: dto.maxVolume ?? undefined,
+        unitPriceMinor: dto.unitPriceMinor ? BigInt(dto.unitPriceMinor) : undefined,
+        backupPriceMinor: dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ? BigInt(dto.backupPriceMinor) : null) : undefined,
+        vatExclusive: dto.vatExclusive ?? undefined,
+      },
     });
   }
 }

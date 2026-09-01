@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fleek/ui';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { parseCsv, csvRowsToInputs, toCsv, type CsvRow } from '@/lib/csv';
-
+import { VerificationType, PRODUCT_LABELS, PRODUCT_CATEGORIES, CB_CONSENT_REQUIRED_TYPES } from '@fleek/types';
 
 interface BatchSummary {
   id: string;
-  type: string;
+  type: VerificationType;
   status: 'processing' | 'completed' | 'failed';
   totalRows: number;
   processedRows: number;
@@ -18,6 +18,7 @@ interface BatchSummary {
   notFoundCount: number;
   errorMessage: string | null;
   createdAt: string;
+  completedAt: string | null;
 }
 
 interface BatchResultRow {
@@ -28,16 +29,36 @@ interface BatchResultRow {
   cost: number;
 }
 
-const PRODUCT_FIELDS: Record<string, { label: string; columnHint: string; price: number }> = {
-  iprs_id: { label: 'IPRS ID Verification', columnHint: 'id_number', price: 50 },
-  kra_pin: { label: 'KRA PIN Checker', columnHint: 'kra_pin', price: 30 },
-  phone_ownership: { label: 'Hakikisha / Phone Check', columnHint: 'phone_number', price: 20 },
-  sim_swap: { label: 'SIM-swap Detection', columnHint: 'phone_number', price: 20 },
+const PRODUCT_HINTS: Record<VerificationType, { hint: string; cbRequired: boolean }> = {
+  [VerificationType.IPRS_STANDARD]: { hint: 'id_number', cbRequired: false },
+  [VerificationType.MATCH_ID_PHONE]: { hint: 'id_number, phone_number', cbRequired: false },
+  [VerificationType.EMPLOYER_VERIFICATION]: { hint: 'id_number, employer_name', cbRequired: false },
+  [VerificationType.FACE_ID_MATCH]: { hint: 'id_number, face_image_base64', cbRequired: false },
+  [VerificationType.BANK_ACCOUNT_VERIFICATION]: { hint: 'account_number, bank_code, id_number', cbRequired: false },
+  [VerificationType.ALIEN_ID]: { hint: 'alien_id', cbRequired: false },
+  [VerificationType.AML_PEP_SCREEN]: { hint: 'id_number', cbRequired: false },
+  [VerificationType.PASSPORT_CHECK]: { hint: 'passport_number, nationality', cbRequired: false },
+  [VerificationType.SIM_SWAP_CHECK]: { hint: 'phone_number', cbRequired: false },
+  [VerificationType.KPLC_LOCATION_CHECKER]: { hint: 'meter_number', cbRequired: false },
+  [VerificationType.KRA_PIN_VERIFICATION]: { hint: 'kra_pin, id_number', cbRequired: false },
+  [VerificationType.SEARCH_NAME_BY_PHONE]: { hint: 'phone_number', cbRequired: false },
+  [VerificationType.SEARCH_PHONES_BY_ID]: { hint: 'id_number', cbRequired: false },
+  [VerificationType.MOTOR_VEHICLE_OWNERSHIP]: { hint: 'vehicle_reg_number', cbRequired: true },
+  [VerificationType.DRIVERS_LICENSE_VERIFICATION]: { hint: 'dl_number', cbRequired: false },
+  [VerificationType.METROPOL_SCORE_ONLY]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.METROPOL_STANDARD_REPORT]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.METROPOL_FULL_REPORT]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.CREDITINFO_SCORE_ONLY]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.CREDITINFO_COMPREHENSIVE]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.CREDITINFO_CRB_STATUS]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.BRS]: { hint: 'business_reg_number', cbRequired: true },
+  [VerificationType.SPIN_SCORE_ONLY]: { hint: 'id_number', cbRequired: true },
+  [VerificationType.SCANNED_STATEMENT]: { hint: 'statement_pages, statement_file_base64', cbRequired: false },
 };
 
 export default function BulkPage() {
   const { token } = useAuth();
-  const [type, setType] = useState('iprs_id');
+  const [type, setType] = useState<VerificationType>(VerificationType.IPRS_STANDARD);
   const [rows, setRows] = useState<CsvRow[] | null>(null);
   const [fileName, setFileName] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
@@ -72,7 +93,10 @@ export default function BulkPage() {
     reader.onload = () => {
       try {
         const records = parseCsv(String(reader.result ?? ''));
-        const inputs = csvRowsToInputs(records).filter((r) => r.idNumber || r.phoneNumber || r.kraPin);
+        const inputs = csvRowsToInputs(records).filter((r) => 
+          r.idNumber || r.phoneNumber || r.kraPin || r.alienId || r.passportNumber || 
+          r.meterNumber || r.vehicleRegNumber || r.dlNumber || r.businessRegNumber
+        );
         if (inputs.length === 0) throw new Error('No usable rows found — include a header like id_number or phone_number');
         if (inputs.length > 1000) throw new Error(`Too many rows (${inputs.length}) — max is 1000 per batch`);
         setRows(inputs);
@@ -125,17 +149,18 @@ export default function BulkPage() {
     URL.revokeObjectURL(url);
   }
 
-  const meta = PRODUCT_FIELDS[type];
-  const estimated = rows ? (rows.length * meta.price).toLocaleString() : '0';
+  const hint = PRODUCT_HINTS[type];
+  const allTypes = Object.values(VerificationType);
+  const productOptions = allTypes.map((t) => ({
+    value: t,
+    label: PRODUCT_LABELS[t],
+  }));
 
   return (
     <div className="mx-auto max-w-4xl p-8">
       <h1 className="mb-1 text-2xl font-bold font-display">Bulk verification</h1>
       <p className="mb-6 text-sm text-slate-500">
-        Upload a CSV of up to 1,000 rows. Include a header row with{' '}
-        <code className="rounded bg-slate-100 px-1">id_number</code>,{' '}
-        <code className="rounded bg-slate-100 px-1">phone_number</code> or{' '}
-        <code className="rounded bg-slate-100 px-1">kra_pin</code>.
+        Upload a CSV of up to 1,000 rows. Include a header row with the required columns for your selected product.
       </p>
 
       <Card>
@@ -151,13 +176,17 @@ export default function BulkPage() {
               <label className="mb-1.5 block text-sm font-medium">Product</label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => setType(e.target.value as VerificationType)}
                 className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm cursor-pointer"
               >
-                {Object.entries(PRODUCT_FIELDS).map(([value, m]) => (
-                  <option key={value} value={value}>
-                    {m.label} — KES {m.price}/check
-                  </option>
+                {Object.entries(PRODUCT_CATEGORIES).map(([category, types]) => (
+                  <optgroup key={category} label={category}>
+                    {types.map((t) => (
+                      <option key={t} value={t}>
+                        {PRODUCT_LABELS[t]}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -175,19 +204,20 @@ export default function BulkPage() {
           {parseError && <p className="mt-3 text-xs text-red-500">{parseError}</p>}
           {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
 
+          {!rows && !parseError && (
+            <p className="mt-4 text-xs text-slate-400">
+              Expected columns for this product: <strong>{hint.hint}</strong>
+              {hint.cbRequired && <span className="ml-2 text-amber-600">(CB consent required per row)</span>}
+            </p>
+          )}
+
           {rows && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-teal-brand/5 border border-teal-brand/30 px-4 py-3">
               <div className="text-sm">
-                <span className="font-medium">{fileName}</span> — {rows.length.toLocaleString()} rows ·
-                estimated cost <span className="font-semibold">KES {estimated}</span>
+                <span className="font-medium">{fileName}</span> — {rows.length.toLocaleString()} rows
               </div>
               <Button onClick={() => void startBatch()}>Start batch</Button>
             </div>
-          )}
-          {!rows && !parseError && (
-            <p className="mt-4 text-xs text-slate-400">
-              Expected column for this product: <strong>{meta.columnHint}</strong>
-            </p>
           )}
 
           {activeBatch && (
@@ -253,7 +283,7 @@ export default function BulkPage() {
                 {batches.map((b) => (
                   <tr key={b.id} className="border-b border-slate-100 last:border-0">
                     <td className="py-2.5 font-mono text-xs">…{b.id.slice(-8)}</td>
-                    <td className="py-2.5">{PRODUCT_FIELDS[b.type]?.label ?? b.type}</td>
+                    <td className="py-2.5">{PRODUCT_LABELS[b.type] ?? b.type}</td>
                     <td className="py-2.5 text-right">{b.totalRows}</td>
                     <td className="py-2.5 text-right">
                       {b.successCount} / {b.notFoundCount} / {b.failedCount}

@@ -110,8 +110,10 @@ export async function apiFetch<T>(
         ? body.message
         : Array.isArray(body?.message)
           ? body.message.join('; ')
+          : body?.message
+          ? String(body.message)
           : `Request failed (${res.status})`;
-    throw new Error(msg);
+    throw new Error(msg ?? 'Request failed');
   }
   return body as T;
 }

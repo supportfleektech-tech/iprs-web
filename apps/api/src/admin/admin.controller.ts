@@ -72,6 +72,48 @@ export class UpdateTierDto {
   vatExclusive?: boolean;
 }
 
+export class CreateOrgPricingTierDto {
+  @IsEnum(VerificationType)
+  productType!: VerificationType;
+
+  @IsNumber() @Min(0)
+  minVolume!: number;
+
+  @IsOptional() @IsNumber() @Min(1)
+  maxVolume?: number | null;
+
+  @IsNumber() @Min(1)
+  unitPriceMinor!: number;
+
+  @IsOptional() @IsNumber() @Min(1)
+  backupPriceMinor?: number | null;
+
+  @IsOptional() @IsBoolean()
+  vatExclusive?: boolean = true;
+}
+
+export class UpdateOrgPricingTierDto {
+  @IsOptional() @IsNumber() @Min(1)
+  maxVolume?: number | null;
+
+  @IsOptional() @IsNumber() @Min(1)
+  unitPriceMinor?: number;
+
+  @IsOptional() @IsNumber() @Min(1)
+  backupPriceMinor?: number | null;
+
+  @IsOptional() @IsBoolean()
+  vatExclusive?: boolean;
+}
+
+export class OrgEnabledChecksDto {
+  @IsEnum(VerificationType)
+  productType!: VerificationType;
+
+  @IsBoolean()
+  enabled!: boolean;
+}
+
 @ApiTags('admin')
 @ApiBearerAuth('jwt')
 @Controller('admin')
@@ -143,8 +185,8 @@ export class AdminController {
     }
     return this.prisma.client.productPricing.upsert({
       where: { type: dto.type },
-      update: { priceMinor: BigInt(Math.round(dto.price * 100)) },
-      create: { type: dto.type, priceMinor: BigInt(Math.round(dto.price * 100)) },
+      update: { priceMinor: Math.round(dto.price * 100) },
+      create: { type: dto.type, priceMinor: Math.round(dto.price * 100) },
     });
   }
 
@@ -171,7 +213,7 @@ export class AdminController {
     return this.prisma.client.productPricing.upsert({
       where: { type },
       update: { active: dto.active },
-      create: { type, active: dto.active, priceMinor: BigInt(0) },
+      create: { type, active: dto.active, priceMinor: 0 },
     });
   }
 
@@ -197,8 +239,8 @@ export class AdminController {
         productType: dto.productType,
         minVolume: dto.minVolume,
         maxVolume: dto.maxVolume ?? null,
-        unitPriceMinor: BigInt(dto.unitPriceMinor),
-        backupPriceMinor: dto.backupPriceMinor ? BigInt(dto.backupPriceMinor) : null,
+        unitPriceMinor: dto.unitPriceMinor,
+        backupPriceMinor: dto.backupPriceMinor ?? null,
         vatExclusive: dto.vatExclusive ?? true,
       },
     });
@@ -217,8 +259,107 @@ export class AdminController {
       where: { id },
       data: {
         maxVolume: dto.maxVolume ?? undefined,
-        unitPriceMinor: dto.unitPriceMinor ? BigInt(dto.unitPriceMinor) : undefined,
-        backupPriceMinor: dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ? BigInt(dto.backupPriceMinor) : null) : undefined,
+        unitPriceMinor: dto.unitPriceMinor ?? undefined,
+        backupPriceMinor: dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ?? null) : undefined,
+        vatExclusive: dto.vatExclusive ?? undefined,
+      },
+    });
+  }
+
+  // Org enabled checks
+  @Get('organizations/:id/enabled-checks')
+  async getOrgEnabledChecks(@CurrentUser() user: JwtPayload, @Param('id') orgId: string) {
+    const platformAdmin = user.isPlatformAdmin;
+    const targetOrgId = platformAdmin ? orgId : user.organizationId!;
+    if (!platformAdmin && targetOrgId !== user.organizationId!) {
+      throw new ForbiddenException('Access denied');
+    }
+    return this.prisma.client.orgEnabledChecks.findMany({
+      where: { orgId: targetOrgId },
+      orderBy: [{ productType: 'asc' }],
+    });
+  }
+
+  @Put('organizations/:id/enabled-checks')
+  async setOrgEnabledChecks(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') orgId: string,
+    @Body() dto: OrgEnabledChecksDto,
+  ) {
+    const platformAdmin = user.isPlatformAdmin;
+    const targetOrgId = platformAdmin ? orgId : user.organizationId!;
+    if (!platformAdmin && targetOrgId !== user.organizationId!) {
+      throw new ForbiddenException('Access denied');
+    }
+    await this.prisma.client.orgEnabledChecks.deleteMany({
+      where: { orgId: targetOrgId, productType: dto.productType },
+    });
+    await this.prisma.client.orgEnabledChecks.create({
+      data: {
+        orgId: targetOrgId,
+        productType: dto.productType,
+        enabled: dto.enabled,
+      },
+    });
+    return { success: true, productType: dto.productType, enabled: dto.enabled };
+  }
+
+  // Org pricing tiers
+  @Get('organizations/:id/pricing-tiers')
+  async getOrgPricingTiers(@CurrentUser() user: JwtPayload, @Param('id') orgId: string) {
+    const platformAdmin = user.isPlatformAdmin;
+    const targetOrgId = platformAdmin ? orgId : user.organizationId!;
+    if (!platformAdmin && targetOrgId !== user.organizationId!) {
+      throw new ForbiddenException('Access denied');
+    }
+    return this.prisma.client.orgPricingTier.findMany({
+      where: { orgId: targetOrgId },
+      orderBy: [{ minVolume: 'asc' }],
+    });
+  }
+
+  @Post('organizations/:id/pricing-tiers')
+  async createOrgPricingTier(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') orgId: string,
+    @Body() dto: CreateOrgPricingTierDto,
+  ) {
+    const platformAdmin = user.isPlatformAdmin;
+    const targetOrgId = platformAdmin ? orgId : user.organizationId!;
+    if (!platformAdmin && targetOrgId !== user.organizationId!) {
+      throw new ForbiddenException('Access denied');
+    }
+    return this.prisma.client.orgPricingTier.create({
+      data: {
+        orgId: targetOrgId,
+        productType: dto.productType,
+        minVolume: dto.minVolume,
+        maxVolume: dto.maxVolume ?? null,
+        unitPriceMinor: dto.unitPriceMinor,
+        backupPriceMinor: dto.backupPriceMinor ?? null,
+        vatExclusive: dto.vatExclusive ?? true,
+      },
+    });
+  }
+
+  @Put('organizations/:id/pricing-tiers/:tierId')
+  async updateOrgPricingTier(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') orgId: string,
+    @Param('tierId') tierId: string,
+    @Body() dto: UpdateOrgPricingTierDto,
+  ) {
+    const platformAdmin = user.isPlatformAdmin;
+    const targetOrgId = platformAdmin ? orgId : user.organizationId!;
+    if (!platformAdmin && targetOrgId !== user.organizationId!) {
+      throw new ForbiddenException('Access denied');
+    }
+    return this.prisma.client.orgPricingTier.update({
+      where: { id: tierId },
+      data: {
+        maxVolume: dto.maxVolume ?? undefined,
+        unitPriceMinor: dto.unitPriceMinor ?? undefined,
+        backupPriceMinor: dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ?? null) : undefined,
         vatExclusive: dto.vatExclusive ?? undefined,
       },
     });

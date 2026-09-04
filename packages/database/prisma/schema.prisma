@@ -83,6 +83,8 @@ model Organization {
   topUpRequests TopUpRequest[]
   verifications VerificationRequest[]
   batches       VerificationBatch[]
+  orgEnabledChecks OrgEnabledChecks[]
+  orgPricingTiers  OrgPricingTier[]
 
   @@map("organizations")
 }
@@ -293,6 +295,32 @@ model OrganizationMonthlyUsage {
 
   @@id([orgId, month, productType])
   @@map("organization_monthly_usage")
+}
+
+model OrgEnabledChecks {
+  id        String   @id @default(cuid())
+  orgId     String
+  productType VerificationType
+  enabled   Boolean  @default(true)
+
+  org       Organization @relation(fields: [orgId], references: [id])
+  @@unique([orgId, productType])
+  @@map("org_enabled_checks")
+}
+
+model OrgPricingTier {
+  id              String   @id @default(cuid())
+  orgId           String
+  productType     VerificationType
+  minVolume       Int
+  maxVolume       Int?
+  unitPriceMinor  Int
+  backupPriceMinor Int?
+  vatExclusive    Boolean  @default(true)
+
+  org       Organization @relation(fields: [orgId], references: [id])
+  @@unique([orgId, productType])
+  @@map("org_pricing_tiers")
 }
 
 model AuditLog {

@@ -496,6 +496,45 @@ export class VerificationsService {
     }
   }
 
+  /**
+   * Select a pricing tier in memory from a pre-sorted desc-by-minVolume list.
+   * Tiers: { minVolume, maxVolume, unitPriceMinor, backupPriceMinor, vatExclusive }
+   * Returns the first tier where minVolume <= volume AND (maxVolume is null OR maxVolume >= volume).
+   * Falls through to the topmost open-ended tier if no tighter match.
+   * Returns null if volume is below the smallest tier's minVolume.
+   */
+  static selectTierInMemory(tiers: { minVolume: number; maxVolume: number | null; unitPriceMinor: bigint; backupPriceMinor: bigint | null; vatExclusive: boolean }[], volume: number): { unitPriceMinor: bigint; backupPriceMinor: bigint | null; minVolume: number; maxVolume: number | null; vatExclusive: boolean } | null {
+    // Primary loop: find first tier where minVolume <= volume <= maxVolume (or null maxVolume)
+    for (const tier of tiers) {
+      if (tier.minVolume <= volume && (tier.maxVolume === null || tier.maxVolume >= volume)) {
+        return {
+          unitPriceMinor: tier.unitPriceMinor,
+          backupPriceMinor: tier.backupPriceMinor,
+          minVolume: tier.minVolume,
+          maxVolume: tier.maxVolume,
+          vatExclusive: tier.vatExclusive,
+        };
+      }
+    }
+    // Volume is below all tiers' minVolume → return null
+    if (tiers.length > 0 && volume < tiers[tiers.length - 1].minVolume) {
+      return null;
+    }
+    // Fallback: return the first tier (highest minVolume = "topmost open-ended")
+    // since volume >= all minVolumes and no tighter match was found
+    const fallback = tiers[0];
+    if (fallback) {
+      return {
+        unitPriceMinor: fallback.unitPriceMinor,
+        backupPriceMinor: fallback.backupPriceMinor,
+        minVolume: fallback.minVolume,
+        maxVolume: fallback.maxVolume,
+        vatExclusive: fallback.vatExclusive,
+      };
+    }
+    return null;
+  }
+
   private summarizeSubject(encryptedInput: string): string {
     try {
       const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<string, string | number | null | undefined>;

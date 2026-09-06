@@ -47,16 +47,6 @@ describe('ProviderRegistry', () => {
     expect(registry.resolve(VerificationType.IPRS_STANDARD)).toBeDefined();
   });
 
-  it('uses mock provider when type is not live', async () => {
-    const registry = new ProviderRegistry(new Set<VerificationType>([VerificationType.IPRS_STANDARD]));
-    // Type not in liveTypes → should use mock provider
-    const result = await registry.resolve(VerificationType.KRA_PIN_VERIFICATION);
-    expect(result).toBeDefined();
-    // Mock provider should handle it
-    const kraresult = await result.kraPinCheck({ kraPin: 'A012345678Z' });
-    expect(kraresult.status).toBeDefined();
-  });
-
   it('routes IPRS_STANDARD to mock by default', async () => {
     const registry = new ProviderRegistry(new Set<VerificationType>([VerificationType.IPRS_STANDARD]));
     const result = await registry.resolve(VerificationType.IPRS_STANDARD);

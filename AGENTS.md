@@ -1,29 +1,28 @@
 # AGENTS.md
 
 Fleek IPRS — identity verification platform (Kenyan IPRS/KRA/phone/SIM-swap + 24 SPIN Kenya products).
+
 Monorepo: pnpm workspaces + Turborepo, Node ≥ 22, TypeScript strict.
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm -w build            # ALWAYS first from clean checkout or after touching packages/* or prisma schema
+pnpm -w build                            # ALWAYS first from clean checkout or after touching packages/* or prisma schema
 pnpm -w lint && pnpm -w typecheck && pnpm -w test   # quality gates, same order as CI
-pnpm exec playwright test                           # E2E (see prerequisites below)
+pnpm exec playwright test                # E2E (see prerequisites below)
 ```
 
 - Run one package: `pnpm --filter @fleek/api <script>` (names: `@fleek/{web,dashboard,api,types,providers,database,ui}`).
 - Unit tests (Vitest) exist only in `apps/api` and `packages/providers`.
-- API runs **from compiled output**: `node apps/api/dist/main.js`. Use `scripts/start-api.sh` /
-  `scripts/start-dashboard.sh` — detached, idempotent, logs+pids under `/tmp/opencode/`.
+- API runs **from compiled output**: `node apps/api/dist/main.js`. Use `scripts/start-api.sh` / `scripts/start-dashboard.sh` — detached, idempotent, logs+pids under `/tmp/opencode/`.
 
 ## E2E prerequisites
 
 Playwright has **no webServer config** and retries=0 — all services must already be up:
 
 1. `docker compose up -d postgres`
-2. `pnpm -w build && pnpm --filter @fleek/database exec prisma migrate deploy && pnpm --filter @fleek/database seed`
-   (seed is idempotent — safe to re-run against a seeded DB)
+2. `pnpm -w build && pnpm --filter @fleek/database exec prisma migrate deploy && pnpm --filter @fleek/database seed` (seed is idempotent — safe to re-run against a seeded DB)
 3. API on :4000 (`scripts/start-api.sh`) and dashboard on :3001 (`scripts/start-dashboard.sh`)
 
 Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflows/ci.yml`) shows the canonical boot order.
@@ -40,8 +39,7 @@ Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflo
 | `packages/database` | Prisma schema/client + field-level AES-256-GCM encryption |
 | `packages/ui` | Shared UI components (Button, Card, Badge, Input, Label, StatCard) |
 
-API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`,
-`FIELD_ENCRYPTION_KEY` or it won't start (see `apps/api/.env.example`).
+API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY` or it won't start (see `apps/api/.env.example`).
 
 ## Verification Products (24)
 
@@ -81,6 +79,8 @@ GET    /v1/exports/wallet/statement
 GET    /v1/verifications/:id/certificate  # PDF certificate
 GET/PUT /admin/products/:type/active    # Live product gating (platformAdmin only)
 GET/POST/PUT /admin/pricing/tiers       # Full tier CRUD
+GET/PUT /admin/organizations/:id/enabled-checks  # Enable/disable verification types per org
+GET/POST/PUT /admin/organizations/:id/pricing-tiers # Org-level pricing overrides
 ```
 
 ## Key DTOs (`apps/api/src/verifications/dto.ts`)
@@ -134,7 +134,7 @@ AggregatorAdapter expects SPIN-compatible endpoints under `/kenya/*`.
 
 Dashboard uses Next.js 14.2.33 but requires `@next/swc-linux-x64-gnu@14.2.33` binary. Network issues prevent pnpm install of correct binary. Workaround when network available:
 ```bash
-cd apps/dashboard && pnpm add -D @next/swc-linux-x64-gnu@14.2.33
+cd apps/dashboard && pnpm add -D @next/swx-linux-x64-gnu@14.2.33
 NEXT_IGNORE_INCORRECT_LOCKFILE=1 pnpm build
 ```
 
@@ -158,3 +158,36 @@ Two targets coexist:
 ## Git
 
 CI gates every push to `main` and PRs; direct pushes to `main` are the current norm.
+
+## Recent Fixes (verified)
+
+- All workspace `pnpm -w typecheck` passes (10/10 packages)
+- All workspace `pnpm -w lint` passes with 0 errors
+- Admin org UI implemented: `GET/PUT /admin/organizations/:id/enabled-checks` and `GET/POST/PUT /admin/organizations/:id/pricing-tiers`
+- Provider test spec fixed: corrected method names and enum references
+- API payments gateway lint fixes: removed unused variables, prefixed unused params
+- Dashboard console lint fixes: removed unused imports
+- Web pricing page lint fix: removed unused import
+
+## Architecture
+
+This is a credential-gated monorepo: all third-party integrations are disabled by default. Empty env vars ⇒ sandbox/mock behavior. Real services activate by configuration only. The `ProviderRegistry` in `packages/providers` routes each verification type to live upstream, backup provider, or the deterministic `MockProvider` based on `ENABLED_CHECKS`, `LIVE_CHECKS`, and `BACKUP_CHECKS` env vars.
+
+Field-level AES-256-GCM encryption via Prisma means rotating `FIELD_ENCRYPTION_KEY` silently breaks decryption of existing data (key format: `v1:iv:tag:data`). The `ProviderError` codes (`NOT_FOUND`, `UPSTREAM_DOWN`, `INVALID_INPUT`, `UNKNOWN`) map upstream HTTP statuses consistently.
+
+CB consent is required for 8 verification types (Metropol, CreditInfo, BRS, Motor Vehicle). Backup is an explicit opt-in — the API returns `backupAvailable: true, backupPrice` on primary failure; user must click "Retry with backup" to activate.
+
+No other API keys (ANTHROPIC, OPENAI, etc.) are read. If Gemini semantic extraction is needed, set `GEMINI_API_KEY` or `GOOGLE_API_KEY`.
+
+## Compliance posture (Kenya DPA 2019)
+
+- Explicit consent + collector recorded on every verification
+- PII results encrypted at rest (AES-256-GCM field-level)
+- Role-based access control, full audit log, no PII in logs
+
+## Roadmap
+
+M-Pesa Daraja wallet top-ups · CRB checks · KYB (business registry) · face match + liveness ·
+bulk CSV verification runs · live NRB/aggregator adapters.
+
+© 2026 Fleektech LTD

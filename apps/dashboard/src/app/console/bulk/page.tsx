@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fleek/ui';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { parseCsv, csvRowsToInputs, toCsv, type CsvRow } from '@/lib/csv';
-import { VerificationType, PRODUCT_LABELS, PRODUCT_CATEGORIES, CB_CONSENT_REQUIRED_TYPES } from '@fleek/types';
+import { VerificationType, PRODUCT_LABELS, PRODUCT_CATEGORIES } from '@fleek/types';
 
 interface BatchSummary {
   id: string;
@@ -150,11 +150,6 @@ export default function BulkPage() {
   }
 
   const hint = PRODUCT_HINTS[type];
-  const allTypes = Object.values(VerificationType);
-  const productOptions = allTypes.map((t) => ({
-    value: t,
-    label: PRODUCT_LABELS[t],
-  }));
 
   return (
     <div className="mx-auto max-w-4xl p-8">

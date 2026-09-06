@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@fleek/ui';
 import { apiFetch, useAuth } from '@/lib/auth';
+import { VERIFICATION_TYPES } from '@fleek/types';
 
 interface TopUp {
   id: string;
@@ -21,6 +22,21 @@ interface Pricing {
   active: boolean;
 }
 
+interface OrgPricingTier {
+  id: string;
+  productType: string;
+  minVolume: number;
+  maxVolume: number | null;
+  unitPriceMinor: number;
+  backupPriceMinor: number | null;
+  vatExclusive: boolean;
+}
+
+interface OrgEnabledCheck {
+  productType: string;
+  enabled: boolean;
+}
+
 interface Org {
   id: string;
   name: string;
@@ -35,6 +51,10 @@ export default function AdminPage() {
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [priceEdits, setPriceEdits] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [enabledChecks, setEnabledChecks] = useState<OrgEnabledCheck[]>([]);
+  const [pricingEdits, setPricingEdits] = useState<Record<string, string>>({});
+  const [pricingMsg, setPricingMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -76,6 +96,42 @@ export default function AdminPage() {
     await load();
   }
 
+  async function loadOrgDetails(orgId: string) {
+    const [enabled, pricing] = await Promise.all([
+      apiFetch<OrgEnabledCheck[]>(`/admin/organizations/${orgId}/enabled-checks`, { token }),
+      apiFetch<OrgPricingTier[]>(`/admin/organizations/${orgId}/pricing-tiers`, { token }),
+    ]);
+    setEnabledChecks(enabled);
+    setPricingEdits(
+      pricing.reduce((acc, tier) => {
+        acc[tier.productType] = tier.unitPriceMinor.toString();
+        return acc;
+      }, {} as Record<string, string>)
+    );
+    setSelectedOrgId(orgId);
+  }
+
+  async function updateEnabledChecks(orgId: string, productType: string, enabled: boolean) {
+    await apiFetch(`/admin/organizations/${orgId}/enabled-checks`, {
+      method: 'PUT',
+      body: JSON.stringify({ productType, enabled }),
+      token,
+    });
+    await loadOrgDetails(orgId);
+  }
+
+  async function savePricing(type: string) {
+    const value = pricingEdits[type];
+    if (!value) return;
+    await apiFetch('/admin/organizations/' + selectedOrgId + '/pricing-tiers', {
+      method: 'POST',
+      body: JSON.stringify({ type, unitPriceMinor: Number(value) }),
+      token,
+    });
+    setPricingMsg(`Pricing updated for ${type}`);
+    await loadOrgDetails(selectedOrgId!);
+  }
+
   if (!user?.isPlatformAdmin && user?.role !== 'OWNER') {
     return (
       <main className="flex min-h-screen items-center justify-center text-slate-400">
@@ -115,7 +171,7 @@ export default function AdminPage() {
                     {t.status === 'pending' && (
                       <div className="mt-2 flex gap-2">
                         <Button size="sm" onClick={() => void review(t.id, true)}>
-                          Approve &amp; credit
+                          Approve & credit
                         </Button>
                         <Button size="sm" variant="danger" onClick={() => void review(t.id, false)}>
                           Reject
@@ -158,7 +214,83 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {orgs.length > 0 && (
+      {selectedOrgId && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Organization: {selectedOrgId}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <CardHeader>
+                  <CardTitle>Enabled Verification Types</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-slate-500 mb-3">
+                    Select which verification types are available for this organization:
+                  </p>
+                  <div className="space-y-2">
+                    {VERIFICATION_TYPES.map((type) => {
+                      const isEnabled = enabledChecks.some((check) => check.productType === type);
+                      return (
+                        <div key={type} className="flex items-center gap-2">
+                          <Input
+                            type="checkbox"
+                            checked={isEnabled}
+                            onChange={(e) => updateEnabledChecks(selectedOrgId!, type, e.target.checked)}
+                            className="form-checkbox form-checkbox-success w-4 h-4"
+                          />
+                          <span className="text-sm font-medium">{type}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </div>
+
+              <div>
+                <CardHeader>
+                  <CardTitle>Pricing Tiers</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-slate-500 mb-3">
+                    Set org-specific pricing (overrides global pricing):
+                  </p>
+                  <div className="space-y-3">
+                    {VERIFICATION_TYPES.map((type) => {
+                      const currentPrice = pricingEdits[type] ?? '';
+                      return (
+                        <div key={type} className="flex items-center gap-3">
+                          <span className="w-40 truncate text-sm">{type}</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            step={10}
+                            placeholder="0"
+                            value={currentPrice}
+                            onChange={(e) => setPricingEdits((v) => ({ ...v, [type]: e.target.value }))}
+                            className="w-28"
+                          />
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => void savePricing(type)}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {pricingMsg && <p className="mt-3 text-xs text-teal-brand">{pricingMsg}</p>}
+                </CardContent>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {orgs.length > 0 && !selectedOrgId && (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Organizations</CardTitle>
@@ -170,6 +302,7 @@ export default function AdminPage() {
                   <th className="pb-2">Name</th>
                   <th className="pb-2 text-right">Users</th>
                   <th className="pb-2 text-right">Balance</th>
+                  <th className="pb-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,6 +312,15 @@ export default function AdminPage() {
                     <td className="py-2.5 text-right">{o._count?.users ?? '—'}</td>
                     <td className="py-2.5 text-right">
                       KES {(Number(o.wallet?.balanceMinor ?? 0) / 100).toLocaleString()}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => void loadOrgDetails(o.id)}
+                      >
+                        Manage
+                      </Button>
                     </td>
                   </tr>
                 ))}

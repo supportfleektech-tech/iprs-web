@@ -28,7 +28,6 @@ import type {
 import { ProviderError } from './provider';
 import type {
   KraInput,
-  PhoneInput,
   FaceIdInput,
   BankAccountInput,
   AlienIdInput,

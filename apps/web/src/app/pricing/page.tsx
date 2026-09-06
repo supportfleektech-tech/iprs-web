@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { PRODUCTS, PRODUCT_CATEGORIES, getProductsByCategory } from '@/lib/products';
+import { PRODUCT_CATEGORIES, getProductsByCategory } from '@/lib/products';
 import { SiteFooter, SiteHeader } from '@/components/site-chrome';
 
 export const metadata: Metadata = {

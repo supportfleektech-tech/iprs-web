@@ -1,9 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Textarea } from '@fleek/ui';
-import { apiFetch, useAuth } from '@/lib/auth';
-
 export default function VerifyPage() {
   return (
     <div className="mx-auto max-w-4xl p-8">

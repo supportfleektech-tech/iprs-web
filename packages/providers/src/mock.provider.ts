@@ -29,7 +29,6 @@ import {
   ProviderError,
   assertSupported,
   type KraInput,
-  type PhoneInput,
   type FaceIdInput,
   type BankAccountInput,
   type AlienIdInput,
@@ -235,7 +234,6 @@ export class MockProvider implements VerificationProvider {
 
     const amlMatch = hash(`aml${idNumber}`) % 20 === 0; // 5% match
     const pepMatch = hash(`pep${idNumber}`) % 50 === 0; // 2% match
-    const riskLevels: ('low' | 'medium' | 'high' | 'critical')[] = ['low', 'medium', 'high', 'critical'];
     const watchlists = ['UN Sanctions', 'OFAC', 'EU Consolidated', 'UK HMT', 'Local Watchlist'];
 
     return {
@@ -244,7 +242,7 @@ export class MockProvider implements VerificationProvider {
       amlMatch,
       pepMatch,
       watchlistMatches: amlMatch || pepMatch ? [pick(watchlists, `wl${idNumber}`)] : [],
-      riskLevel: amlMatch || pepMatch ? pick(riskLevels, `rl${idNumber}`) : 'low',
+      riskLevel: amlMatch || pepMatch ? pick(['low', 'medium', 'high', 'critical'], `rl${idNumber}`) : 'low',
     };
   }
 
@@ -412,7 +410,6 @@ export class MockProvider implements VerificationProvider {
 
     const score = 300 + (hash(`ms${idNumber}`) % 550); // 300-850
     const bands = ['Poor (300-499)', 'Fair (500-599)', 'Good (600-699)', 'Very Good (700-749)', 'Excellent (750-850)'];
-    const riskLevels: ('low' | 'medium' | 'high')[] = ['high', 'medium', 'low'];
 
     return {
       score,

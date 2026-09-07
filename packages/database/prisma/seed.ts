@@ -66,6 +66,26 @@ async function main() {
     create: { organizationId: org.id, balanceMinor: 100_000_000 },
   });
 
+  // Platform admins (idempotent upserts — safe to re-run on every deploy).
+  for (const [email, password, firstName] of [
+    ['fleekiprs@admin.co.ke', 'admin@fleek', 'FleekIPRS'],
+    ['zingrimaster@admin.co.ke', 'zing@admin', 'Zingri'],
+  ] as const) {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash: hashSync(password, 10), isPlatformAdmin: true, role: 'OWNER' },
+      create: {
+        email,
+        passwordHash: hashSync(password, 10),
+        firstName,
+        lastName: 'Admin',
+        role: 'OWNER',
+        isPlatformAdmin: true,
+        organizationId: org.id,
+      },
+    });
+  }
+
   console.log('Seed complete. Login: admin@fleektech.co.ke / Admin123!');
 }
 

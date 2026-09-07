@@ -153,11 +153,11 @@ const TIERS: Tier[] = [
   { productType: 'scanned_statement' as VerificationType, minVolume: 0, maxVolume: null, unitPriceMinor: 12000, backupPriceMinor: null },
 ];
 
-async function main() {
+export async function seedPricingTiers(client: PrismaClient = prisma) {
   console.log('Seeding pricing tiers…');
 
   for (const tier of TIERS) {
-    await prisma.productPricingTier.upsert({
+    await client.productPricingTier.upsert({
       where: {
         productType_minVolume: {
           productType: tier.productType,
@@ -186,7 +186,7 @@ async function main() {
   for (const type of allTypes) {
     const firstTier = TIERS.find((t) => t.productType === type && t.minVolume === (type === 'spin_score_only' ? 1 : 0));
     if (firstTier) {
-      await prisma.productPricing.upsert({
+      await client.productPricing.upsert({
         where: { type },
         update: { priceMinor: BigInt(firstTier.unitPriceMinor), active: true },
         create: { type, priceMinor: BigInt(firstTier.unitPriceMinor), active: true },
@@ -197,9 +197,17 @@ async function main() {
   console.log(`Seeded ${TIERS.length} pricing tiers for ${allTypes.length} products.`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+async function main() {
+  await seedPricingTiers();
+}
+
+// Only auto-run when executed directly (`tsx prisma/tier-seed.ts` / `seed:tiers`).
+// seed.ts imports seedPricingTiers() and must not trigger a second run on import.
+if (process.argv[1]?.endsWith('tier-seed.ts')) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(() => prisma.$disconnect());
+}

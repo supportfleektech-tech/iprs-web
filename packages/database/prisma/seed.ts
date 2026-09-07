@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaClient, VerificationType } from '@prisma/client';
 import { hashSync } from 'bcryptjs';
+import { seedPricingTiers } from './tier-seed';
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,10 @@ async function main() {
       create: { type, priceMinor: BigInt(price), active: true },
     });
   }
+
+  // Tiered pricing (PDF-exact, VAT-exclusive) — verifications require a tier
+  // row per product, so this must run wherever seed.ts runs (CI, Render, local).
+  await seedPricingTiers(prisma);
 
   // Idempotent: safe to run repeatedly against an already-seeded database.
   const org =

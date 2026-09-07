@@ -68,6 +68,7 @@ enum PaymentMethod {
   stk
   bank
   card
+  paypal
 }
 
 model Organization {

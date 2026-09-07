@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Badge,
@@ -46,6 +46,15 @@ export default function VerifyPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<VerificationDetail | null>(null);
+  const [available, setAvailable] = useState<boolean | null>(null);
+
+  // Respect per-organization availability set in admin.
+  useEffect(() => {
+    if (!token) return;
+    apiFetch<Array<{ type: string; enabled: boolean }>>('/verifications/products', { token })
+      .then((list) => setAvailable(list.find((p) => p.type === 'iprs_standard')?.enabled ?? true))
+      .catch(() => setAvailable(true));
+  }, [token]);
 
   async function runCheck(e: React.FormEvent) {
     e.preventDefault();
@@ -87,6 +96,11 @@ export default function VerifyPage() {
           <CardDescription>Look up a national ID number against the registry.</CardDescription>
         </CardHeader>
         <CardContent>
+          {available === false ? (
+            <p className="text-sm text-slate-500">
+              IPRS checks are not enabled for your organization. Contact your administrator.
+            </p>
+          ) : (
           <form onSubmit={runCheck} className="flex flex-wrap items-end gap-3">
             <div className="w-64">
               <Label htmlFor="idNumber">National ID number</Label>
@@ -103,6 +117,7 @@ export default function VerifyPage() {
               {busy ? 'Verifying…' : 'Verify now'}
             </Button>
           </form>
+          )}
           {error && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
               {error}

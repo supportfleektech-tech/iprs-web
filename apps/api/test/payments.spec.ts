@@ -147,3 +147,60 @@ describe('MockGateway timing', () => {
     vi.useRealTimers();
   });
 });
+
+describe('PaymentsService card + PayPal rails (sandbox)', () => {
+  let deps: ReturnType<typeof makeDeps>;
+
+  beforeEach(() => {
+    deps = makeDeps();
+  });
+
+  it('starts a card top-up as pending with mock references', async () => {
+    const { payment, sandbox } = await deps.service.initiateCardTopUp('org1', 'u1', 1000);
+    expect(sandbox).toBe(true);
+    expect(payment.status).toBe('pending');
+    expect(payment.checkoutRequestId).toMatch(/^card_MOCK_/);
+    expect(payment.method).toBe('card');
+  });
+
+  it('settles a sandbox card payment on confirm and credits once', async () => {
+    const { payment } = await deps.service.initiateCardTopUp('org1', 'u1', 1000);
+    const settled = await deps.service.confirmCardPayment(payment.id);
+    expect(settled.status).toBe('paid');
+    expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
+    expect(deps.client.transaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ type: 'topup', description: expect.stringContaining('Card') }),
+    });
+    // Second confirm is a no-op
+    await deps.service.confirmCardPayment(payment.id);
+    expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects card top-ups below the KES 100 minimum', async () => {
+    await expect(deps.service.initiateCardTopUp('org1', 'u1', 50)).rejects.toThrow(/KES 100/);
+  });
+
+  it('starts a PayPal top-up as pending with mock references', async () => {
+    const { payment, sandbox } = await deps.service.initiatePayPalTopUp('org1', 'u1', 2500);
+    expect(sandbox).toBe(true);
+    expect(payment.status).toBe('pending');
+    expect(payment.checkoutRequestId).toMatch(/^pp_MOCK_/);
+    expect(payment.method).toBe('paypal');
+  });
+
+  it('settles a sandbox PayPal payment on capture and credits once', async () => {
+    const { payment } = await deps.service.initiatePayPalTopUp('org1', 'u1', 2500);
+    const settled = await deps.service.capturePayPalPayment(payment.id);
+    expect(settled.status).toBe('paid');
+    expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
+    expect(deps.client.transaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ type: 'topup', description: expect.stringContaining('PayPal') }),
+    });
+    await deps.service.capturePayPalPayment(payment.id);
+    expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects PayPal top-ups below the KES 100 minimum', async () => {
+    await expect(deps.service.initiatePayPalTopUp('org1', 'u1', 50)).rejects.toThrow(/KES 100/);
+  });
+});

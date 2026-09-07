@@ -42,6 +42,12 @@ export class ConfirmBankPaymentDto {
   resultDesc?: string;
 }
 
+export class InitiateOnlineTopUpDto {
+  /** Amount in KES (e.g. 5000). Minimum 100. */
+  @IsNumber() @Min(100)
+  amount!: number;
+}
+
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
@@ -143,6 +149,88 @@ export class PaymentsController {
       status: payment.status,
       amount: Number(payment.amountMinor) / 100,
       message: dto.success ? 'Bank payment confirmed and wallet credited' : 'Bank payment rejected',
+    };
+  }
+
+  /** Start a card top-up (Stripe PaymentIntent when STRIPE_SECRET_KEY is set, else sandbox). */
+  @Post('card')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  async initiateCard(@CurrentUser() user: JwtPayload, @Body() dto: InitiateOnlineTopUpDto) {
+    const { payment, clientSecret, sandbox } = await this.payments.initiateCardTopUp(
+      user.organizationId!,
+      user.sub!,
+      dto.amount,
+    );
+    return {
+      id: payment.id,
+      status: payment.status,
+      clientSecret: clientSecret ?? null,
+      sandbox,
+      message: sandbox
+        ? 'SANDBOX MODE — card payment auto-completes in a few seconds'
+        : 'Card payment intent created — complete it, then confirm.',
+    };
+  }
+
+  /** Confirm a card top-up (checks the PaymentIntent when live; settles sandbox). */
+  @Post('card/:id/confirm')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  async confirmCard(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    const existing = await this.prisma.client.stkPayment.findFirst({
+      where: { id, organizationId: user.organizationId ?? '' },
+    });
+    if (!existing) throw new NotFoundException('Payment not found');
+    const settled = await this.payments.confirmCardPayment(id);
+    return {
+      id: settled.id,
+      status: settled.status,
+      amount: Number(settled.amountMinor) / 100,
+      mpesaReceipt: settled.mpesaReceipt,
+      resultDesc: settled.resultDesc,
+      completedAt: settled.completedAt?.toISOString() ?? null,
+    };
+  }
+
+  /** Start a PayPal top-up (Orders v2 approval URL when keys are set, else sandbox). */
+  @Post('paypal')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  async initiatePayPal(@CurrentUser() user: JwtPayload, @Body() dto: InitiateOnlineTopUpDto) {
+    const { payment, approvalUrl, sandbox } = await this.payments.initiatePayPalTopUp(
+      user.organizationId!,
+      user.sub!,
+      dto.amount,
+    );
+    return {
+      id: payment.id,
+      status: payment.status,
+      approvalUrl: approvalUrl ?? null,
+      sandbox,
+      message: sandbox
+        ? 'SANDBOX MODE — PayPal payment auto-completes in a few seconds'
+        : 'PayPal order created — approve it, then capture.',
+    };
+  }
+
+  /** Capture an approved PayPal order (settles sandbox immediately). */
+  @Post('paypal/:id/capture')
+  @Auth('OWNER', 'ADMIN')
+  @ApiBearerAuth('jwt')
+  async capturePayPal(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    const existing = await this.prisma.client.stkPayment.findFirst({
+      where: { id, organizationId: user.organizationId ?? '' },
+    });
+    if (!existing) throw new NotFoundException('Payment not found');
+    const settled = await this.payments.capturePayPalPayment(id);
+    return {
+      id: settled.id,
+      status: settled.status,
+      amount: Number(settled.amountMinor) / 100,
+      mpesaReceipt: settled.mpesaReceipt,
+      resultDesc: settled.resultDesc,
+      completedAt: settled.completedAt?.toISOString() ?? null,
     };
   }
 

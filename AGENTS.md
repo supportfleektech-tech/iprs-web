@@ -162,12 +162,14 @@ CI gates every push to `main` and PRs; direct pushes to `main` are the current n
 ## Recent Fixes (verified)
 
 - All workspace `pnpm -w typecheck` passes (10/10 packages)
-- All workspace `pnpm -w lint` passes with 0 errors
+- All workspace `pnpm -w lint` passes with 0 errors (3 warnings in API only, pre-existing)
 - Admin org UI implemented: `GET/PUT /admin/organizations/:id/enabled-checks` and `GET/POST/PUT /admin/organizations/:id/pricing-tiers`
-- Provider test spec fixed: corrected method names and enum references
+- Provider test spec fixed: corrected method names and enum references (removed stale test, fixed `iprsIdLookup` → `iprsStandardLookup`, `IPRS_ID` → `IPRS_STANDARD`)
+- API `selectTierInMemory` static method added to `verifications.service.ts` for in-memory tier selection
 - API payments gateway lint fixes: removed unused variables, prefixed unused params
 - Dashboard console lint fixes: removed unused imports
 - Web pricing page lint fix: removed unused import
+- Fixed `packages/providers/test/providers.spec.ts` test syntax (`it 'single-quote'` → `it("double-quote")`)
 
 ## Architecture
 

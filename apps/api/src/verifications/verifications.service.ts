@@ -51,6 +51,7 @@ export class VerificationsService {
   async products(organizationId?: string) {
     const pricing = await this.prisma.client.productPricing.findMany();
     const priceByType = new Map(pricing.map((p) => [p.type, p]));
+    const overrides = await this.orgOverrides(organizationId);
     
     // Get current month for volume calculation
     const now = new Date();
@@ -69,16 +70,27 @@ export class VerificationsService {
         const productPricing = priceByType.get(type);
         const currentVolume = monthlyUsage.get(type) ?? 0;
         const tier = await this.getCurrentTier(type, currentVolume);
-        
+        const globalEnabled = this.registry.isEnabled(type) && productPricing?.active;
+        // Org opt-out: no row = enabled; explicit row controls availability.
+        const orgCheck = overrides.enabled.get(type);
+        const enabled = globalEnabled && (orgCheck ?? true);
+        // Org pricing override (set in admin) replaces global tier prices.
+        const orgTier = overrides.tiers.get(type);
+        const unitMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : tier?.unitPriceMinor ?? null;
+        const backupMinor = orgTier
+          ? (orgTier.backupPriceMinor != null ? BigInt(orgTier.backupPriceMinor) : null)
+          : (tier?.backupPriceMinor ?? null);
+
         return {
           type,
           label: PRODUCT_LABELS[type],
           category: this.getCategory(type),
-          enabled: this.registry.isEnabled(type) && productPricing?.active,
+          enabled,
+          orgManaged: orgCheck !== undefined || orgTier !== undefined,
           live: this.registry.isLive(type),
           active: productPricing?.active ?? false,
-          unitPriceKes: tier ? Number(tier.unitPriceMinor) / 100 : null,
-          backupPriceKes: tier && tier.backupPriceMinor ? Number(tier.backupPriceMinor) / 100 : null,
+          unitPriceKes: unitMinor != null ? Number(unitMinor) / 100 : null,
+          backupPriceKes: backupMinor != null ? Number(backupMinor) / 100 : null,
           currentTier: tier ? {
             minVolume: tier.minVolume,
             maxVolume: tier.maxVolume,
@@ -120,6 +132,30 @@ export class VerificationsService {
     }
   }
 
+  /** Per-org overrides set in admin. No row = global default (enabled, global pricing). */
+  private async orgOverrides(organizationId?: string): Promise<{
+    enabled: Map<VerificationType, boolean>;
+    tiers: Map<VerificationType, { unitPriceMinor: number; backupPriceMinor: number | null }>;
+  }> {
+    const out = {
+      enabled: new Map<VerificationType, boolean>(),
+      tiers: new Map<VerificationType, { unitPriceMinor: number; backupPriceMinor: number | null }>(),
+    };
+    if (!organizationId) return out;
+    const [checks, tiers] = await Promise.all([
+      this.prisma.client.orgEnabledChecks.findMany({ where: { orgId: organizationId } }),
+      this.prisma.client.orgPricingTier.findMany({ where: { orgId: organizationId } }),
+    ]);
+    for (const c of checks) out.enabled.set(c.productType as VerificationType, c.enabled);
+    for (const t of tiers) {
+      out.tiers.set(t.productType as VerificationType, {
+        unitPriceMinor: t.unitPriceMinor,
+        backupPriceMinor: t.backupPriceMinor,
+      });
+    }
+    return out;
+  }
+
   async getCurrentTier(type: VerificationType, volume: number) {
     return this.prisma.client.productPricingTier.findFirst({
       where: {
@@ -150,6 +186,12 @@ export class VerificationsService {
     const productPricing = await this.prisma.client.productPricing.findUnique({ where: { type: dto.type } });
     if (!productPricing?.active) throw new BadRequestException('Product not priced/inactive');
 
+    // Enforce per-org availability set in admin (no row = enabled).
+    const overrides = await this.orgOverrides(organizationId);
+    if (overrides.enabled.get(dto.type) === false) {
+      throw new BadRequestException(`Check "${dto.type}" is not enabled for your organization`);
+    }
+
     // Check CB consent for required types
     if (CB_CONSENT_REQUIRED_TYPES.includes(dto.type) && !dto.cbConsent) {
       throw new BadRequestException('Credit bureau consent (cbConsent) is required for this verification type');
@@ -165,11 +207,16 @@ export class VerificationsService {
     });
     const currentVolume = usage?.successCount ?? 0;
 
-    // Get tier pricing
+    // Get tier pricing (org override from admin wins over global tiers)
     const tier = await this.getCurrentTier(dto.type, currentVolume);
     if (!tier) {
       throw new BadRequestException(`No pricing tier configured for ${dto.type}`);
     }
+    const orgTier = overrides.tiers.get(dto.type);
+    const unitPriceMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : tier.unitPriceMinor;
+    const tierBackupPriceMinor = orgTier
+      ? (orgTier.backupPriceMinor != null ? BigInt(orgTier.backupPriceMinor) : null)
+      : tier.backupPriceMinor;
 
     // Determine if using backup
     const useBackup = dto.useBackup === true;
@@ -196,7 +243,7 @@ export class VerificationsService {
           status = 'failed';
           errorMessage = err.message;
           backupAvailable = true;
-          backupPriceMinor = (await this.getCurrentTier(dto.type, currentVolume))?.backupPriceMinor ?? null;
+          backupPriceMinor = tierBackupPriceMinor;
         } else {
           status = 'failed';
           errorMessage = err.message;
@@ -210,7 +257,7 @@ export class VerificationsService {
     // Calculate cost based on status and backup usage
     let costMinor = BigInt(0);
     if (status === 'success') {
-      costMinor = isBackup && tier.backupPriceMinor ? tier.backupPriceMinor : tier.unitPriceMinor;
+      costMinor = isBackup && tierBackupPriceMinor ? tierBackupPriceMinor : unitPriceMinor;
     }
 
     const record = await this.prisma.client.$transaction(async (tx) => {

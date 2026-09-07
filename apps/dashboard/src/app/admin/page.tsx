@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@fleek/ui';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { VERIFICATION_TYPES } from '@fleek/types';
+import ApiKeysSection from '@/components/api-keys';
 
 interface TopUp {
   id: string;
@@ -52,8 +53,13 @@ export default function AdminPage() {
   const [priceEdits, setPriceEdits] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [selectedOrgName, setSelectedOrgName] = useState<string | null>(null);
   const [enabledChecks, setEnabledChecks] = useState<OrgEnabledCheck[]>([]);
+  const [checkEdits, setCheckEdits] = useState<Record<string, boolean>>({});
+  const [checksMsg, setChecksMsg] = useState<string | null>(null);
+  const [checksBusy, setChecksBusy] = useState(false);
   const [pricingEdits, setPricingEdits] = useState<Record<string, string>>({});
+  const [pricingTierIds, setPricingTierIds] = useState<Record<string, string>>({});
   const [pricingMsg, setPricingMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -102,34 +108,70 @@ export default function AdminPage() {
       apiFetch<OrgPricingTier[]>(`/admin/organizations/${orgId}/pricing-tiers`, { token }),
     ]);
     setEnabledChecks(enabled);
+    // No row = enabled (global default); explicit row controls availability.
+    const byType = new Map(enabled.map((c) => [c.productType, c.enabled]));
+    setCheckEdits(
+      Object.fromEntries(VERIFICATION_TYPES.map((t) => [t, byType.get(t) ?? true]))
+    );
     setPricingEdits(
       pricing.reduce((acc, tier) => {
         acc[tier.productType] = tier.unitPriceMinor.toString();
         return acc;
       }, {} as Record<string, string>)
     );
+    setPricingTierIds(
+      pricing.reduce((acc, tier) => {
+        acc[tier.productType] = tier.id;
+        return acc;
+      }, {} as Record<string, string>)
+    );
     setSelectedOrgId(orgId);
+    setSelectedOrgName(orgs.find((o) => o.id === orgId)?.name ?? orgId);
+    setChecksMsg(null);
   }
 
-  async function updateEnabledChecks(orgId: string, productType: string, enabled: boolean) {
-    await apiFetch(`/admin/organizations/${orgId}/enabled-checks`, {
-      method: 'PUT',
-      body: JSON.stringify({ productType, enabled }),
-      token,
-    });
-    await loadOrgDetails(orgId);
+  async function saveEnabledChecks() {
+    if (!selectedOrgId) return;
+    setChecksBusy(true);
+    setChecksMsg(null);
+    try {
+      const byType = new Map(enabledChecks.map((c) => [c.productType, c.enabled]));
+      for (const [productType, enabled] of Object.entries(checkEdits)) {
+        if (byType.get(productType) === enabled) continue; // unchanged
+        await apiFetch(`/admin/organizations/${selectedOrgId}/enabled-checks`, {
+          method: 'PUT',
+          body: JSON.stringify({ productType, enabled }),
+          token,
+        });
+      }
+      setChecksMsg('Availability saved — the organization dashboard reflects this immediately.');
+      await loadOrgDetails(selectedOrgId);
+    } catch (err) {
+      setChecksMsg(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setChecksBusy(false);
+    }
   }
 
   async function savePricing(type: string) {
     const value = pricingEdits[type];
-    if (!value) return;
-    await apiFetch('/admin/organizations/' + selectedOrgId + '/pricing-tiers', {
-      method: 'POST',
-      body: JSON.stringify({ type, unitPriceMinor: Number(value) }),
-      token,
-    });
+    if (!value || !selectedOrgId) return;
+    const existingId = pricingTierIds[type];
+    if (existingId) {
+      await apiFetch(`/admin/organizations/${selectedOrgId}/pricing-tiers/${existingId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ unitPriceMinor: Number(value) }),
+        token,
+      });
+    } else {
+      await apiFetch('/admin/organizations/' + selectedOrgId + '/pricing-tiers', {
+        method: 'POST',
+        body: JSON.stringify({ productType: type, minVolume: 0, maxVolume: null, unitPriceMinor: Number(value) }),
+        token,
+      });
+    }
     setPricingMsg(`Pricing updated for ${type}`);
-    await loadOrgDetails(selectedOrgId!);
+    await loadOrgDetails(selectedOrgId);
   }
 
   if (!user?.isPlatformAdmin && user?.role !== 'OWNER') {
@@ -217,7 +259,7 @@ export default function AdminPage() {
       {selectedOrgId && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Organization: {selectedOrgId}</CardTitle>
+            <CardTitle>Organization: {selectedOrgName ?? selectedOrgId}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -227,24 +269,33 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-xs text-slate-500 mb-3">
-                    Select which verification types are available for this organization:
+                    Tick the lookups this organization may use, then save. The change applies
+                    to their dashboard immediately.
                   </p>
                   <div className="space-y-2">
-                    {VERIFICATION_TYPES.map((type) => {
-                      const isEnabled = enabledChecks.some((check) => check.productType === type);
-                      return (
-                        <div key={type} className="flex items-center gap-2">
-                          <Input
-                            type="checkbox"
-                            checked={isEnabled}
-                            onChange={(e) => updateEnabledChecks(selectedOrgId!, type, e.target.checked)}
-                            className="form-checkbox form-checkbox-success w-4 h-4"
-                          />
-                          <span className="text-sm font-medium">{type}</span>
-                        </div>
-                      );
-                    })}
+                    {VERIFICATION_TYPES.map((type) => (
+                      <div key={type} className="flex items-center gap-2">
+                        <Input
+                          type="checkbox"
+                          checked={checkEdits[type] ?? true}
+                          onChange={(e) =>
+                            setCheckEdits((v) => ({ ...v, [type]: e.target.checked }))
+                          }
+                          className="form-checkbox form-checkbox-success w-4 h-4"
+                        />
+                        <span className="text-sm font-medium">{type}</span>
+                      </div>
+                    ))}
                   </div>
+                  <Button
+                    size="sm"
+                    className="mt-4"
+                    disabled={checksBusy}
+                    onClick={() => void saveEnabledChecks()}
+                  >
+                    {checksBusy ? 'Saving…' : 'Save changes'}
+                  </Button>
+                  {checksMsg && <p className="mt-3 text-xs text-teal-brand">{checksMsg}</p>}
                 </CardContent>
               </div>
 
@@ -290,7 +341,7 @@ export default function AdminPage() {
         </Card>
       )}
 
-      {orgs.length > 0 && !selectedOrgId && (
+{orgs.length > 0 && !selectedOrgId && (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Organizations</CardTitle>
@@ -329,6 +380,7 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       )}
+      <ApiKeysSection token={token} />
     </div>
   );
 }

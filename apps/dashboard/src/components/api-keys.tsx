@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@fleek/ui';
-import { apiFetch, useAuth } from '@/lib/auth';
+import { apiFetch } from '@/lib/auth';
 
 interface KeyItem {
   id: string;
@@ -14,8 +14,8 @@ interface KeyItem {
   createdAt: string;
 }
 
-export default function KeysPage() {
-  const { token } = useAuth();
+/** Organization API-key management. Rendered on the admin page only. */
+export default function ApiKeysSection({ token }: { token: string | null }) {
   const [keys, setKeys] = useState<KeyItem[]>([]);
   const [name, setName] = useState('');
   const [env, setEnv] = useState<'live' | 'test'>('test');
@@ -54,12 +54,7 @@ export default function KeysPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="mb-1 text-2xl font-bold font-display">API keys</h1>
-      <p className="mb-6 text-sm text-slate-500">
-        Machine credentials for the REST API. Keys are shown once — store them securely.
-      </p>
-
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Create key</CardTitle>
@@ -96,9 +91,9 @@ export default function KeysPage() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
+      <Card>
         <CardHeader>
-          <CardTitle>Your keys</CardTitle>
+          <CardTitle>Organization keys</CardTitle>
         </CardHeader>
         <CardContent>
           {keys.length === 0 ? (

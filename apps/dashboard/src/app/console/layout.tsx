@@ -10,7 +10,6 @@ const NAV = [
   { href: '/console/bulk', label: 'Bulk', icon: '📦' },
   { href: '/console/history', label: 'History', icon: '📋' },
   { href: '/console/wallet', label: 'Wallet', icon: '💰' },
-  { href: '/console/keys', label: 'API Keys', icon: '🔑' },
 ];
 
 export default function ConsoleLayout({ children }: { children: React.ReactNode }) {

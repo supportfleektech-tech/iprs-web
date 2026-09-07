@@ -89,7 +89,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @fleek/dashboard build
+      - run: pnpm --filter @fleek/dashboard... build
       - uses: actions/upload-artifact@v4
         with:
           name: dashboard-build

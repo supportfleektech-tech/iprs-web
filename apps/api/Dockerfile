@@ -60,5 +60,6 @@ COPY --from=build /app/apps/api/node_modules apps/api/node_modules
 COPY --from=build /app/packages/types/node_modules packages/types/node_modules
 COPY --from=build /app/packages/providers/node_modules packages/providers/node_modules
 COPY --from=build /app/packages/database/node_modules packages/database/node_modules
+COPY --from=build /app/apps/api/docker-entrypoint.sh apps/api/docker-entrypoint.sh
 EXPOSE 4000
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["sh", "apps/api/docker-entrypoint.sh"]

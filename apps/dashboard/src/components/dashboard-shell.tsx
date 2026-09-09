@@ -67,7 +67,7 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-4 flex h-11 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+            className="mt-4 flex h-11 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
             <DashboardIcon name="logout" className="h-4 w-4" aria-hidden="true" />
             Sign out
@@ -94,7 +94,7 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
             onClick={handleLogout}
             aria-label="Sign out"
             title="Sign out"
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
             <DashboardIcon name="logout" className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -134,7 +134,7 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
                 type="button"
                 aria-label="Close navigation"
                 onClick={() => setMobileOpen(false)}
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
               >
                 <DashboardIcon name="close" className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -145,7 +145,7 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex h-11 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+                className="flex h-11 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
               >
                 <DashboardIcon name="logout" className="h-4 w-4" aria-hidden="true" /> Sign out
               </button>

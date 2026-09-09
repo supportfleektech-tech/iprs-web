@@ -38,7 +38,7 @@ export default {
         },
       },
       animation: {
-        dashIn: 'dash-in 240ms ease-out both',
+        dashIn: 'dashIn 240ms ease-out both',
       },
     },
   },

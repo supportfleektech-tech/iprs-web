@@ -1,14 +1,6 @@
 import { Badge, type BadgeTone } from '@fleek/ui';
 import { DashboardIcon, type DashboardIconName } from './dashboard-icons';
 
-const labelByTone: Record<BadgeTone, string> = {
-  green: 'Success',
-  red: 'Failed',
-  amber: 'Attention',
-  blue: 'Info',
-  slate: 'Neutral',
-};
-
 const iconByTone: Record<BadgeTone, DashboardIconName> = {
   green: 'check',
   red: 'alert',
@@ -17,13 +9,35 @@ const iconByTone: Record<BadgeTone, DashboardIconName> = {
   slate: 'info',
 };
 
-export type StatusBadgeProps = {
+type StatusBadgeRequiredProps = {
+  tone: BadgeTone;
+  label: string;
+  icon?: DashboardIconName | false;
+  className?: string;
+  /** @deprecated Prefer tone+label; status bridge only for legacy callers */
+  status?: string;
+};
+
+type StatusBadgeLegacyProps = {
+  status: string;
   tone?: BadgeTone;
   label?: string;
   icon?: DashboardIconName | false;
   className?: string;
-  /** @deprecated Use `tone` instead */
-  status?: string;
+};
+
+/**
+ * Per spec tone+label are required. Legacy `status` prop is deprecated and maps to tone/label
+ * via internal fallback — retained only to unblock pre-Task2 callers.
+ */
+export type StatusBadgeProps = StatusBadgeRequiredProps | StatusBadgeLegacyProps;
+
+const labelByTone: Record<BadgeTone, string> = {
+  green: 'Success',
+  red: 'Failed',
+  amber: 'Attention',
+  blue: 'Info',
+  slate: 'Neutral',
 };
 
 function resolveTone(raw: string | undefined): BadgeTone {
@@ -36,9 +50,13 @@ function resolveTone(raw: string | undefined): BadgeTone {
   return 'slate';
 }
 
-export function StatusBadge({ tone, label, icon, className, status }: StatusBadgeProps) {
-  const resolvedTone = resolveTone(tone ?? status);
-  const resolvedLabel = label ?? labelByTone[resolvedTone];
+export function StatusBadge(props: StatusBadgeProps) {
+  const { icon, className, status } = props as StatusBadgeLegacyProps & StatusBadgeRequiredProps;
+  const tone = (props as StatusBadgeRequiredProps).tone as BadgeTone | undefined;
+  const label = (props as StatusBadgeRequiredProps).label as string | undefined;
+  // tone/label required per spec; status fallback only for deprecated bridge (runtime safety for legacy callers).
+  const resolvedTone: BadgeTone = tone ?? resolveTone(status);
+  const resolvedLabel = label ?? (status ? labelByTone[resolveTone(status)] ?? status : labelByTone[resolvedTone]);
   const resolvedIcon: DashboardIconName | null =
     icon === false ? null : (icon ?? iconByTone[resolvedTone] ?? null);
 

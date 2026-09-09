@@ -67,7 +67,7 @@ export function DashboardNav({
               key={item.href}
               href={item.href}
               aria-current={active ? 'page' : undefined}
-              className={`flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400 ${
+              className={`flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 ${
                 active ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -90,7 +90,7 @@ export function DashboardNav({
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`group flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400 ${
+            className={`group flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 ${
               active ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
             }`}
           >

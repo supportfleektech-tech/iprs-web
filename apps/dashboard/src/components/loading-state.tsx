@@ -18,8 +18,8 @@ export function LoadingState({ label = 'Loading workspace', compact = false }: L
       <span
         className={
           compact
-            ? 'h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-teal-500'
-            : 'h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-teal-500'
+            ? 'h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-teal-brand'
+            : 'h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-teal-brand'
         }
         aria-hidden="true"
       />

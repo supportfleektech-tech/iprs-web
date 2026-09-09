@@ -12,25 +12,8 @@ import {
   isConsentGatingBlocked,
   type ProductOption,
   type VerificationFormValues,
+  type VerificationResultPayload,
 } from '@/lib/verification-form';
-
-export interface VerificationResultPayload {
-  id: string;
-  type: string;
-  status: string;
-  result: Record<string, unknown> | null;
-  errorMessage: string | null;
-  cost: number;
-  latencyMs?: number | null;
-  createdAt: string;
-  source?: string;
-  consent?: boolean;
-  consentCollectedBy?: string | null;
-  cbConsent?: boolean;
-  isBackup?: boolean;
-  backupAvailable?: boolean;
-  backupPrice?: number;
-}
 
 export interface VerificationFormProps {
   product: ProductOption;
@@ -62,8 +45,8 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
     return true;
   }, [product.active, product.enabled, product.type, requiresCbConsent, values]);
 
-  function updateValue(key: keyof VerificationFormValues, value: string | boolean) {
-    setValues((current) => ({ ...current, [key]: value as string }));
+  function updateValue<K extends keyof VerificationFormValues>(key: K, value: VerificationFormValues[K]) {
+    setValues((current) => ({ ...current, [key]: value }));
   }
 
   function readFile(file: File, key: keyof VerificationFormValues) {
@@ -263,7 +246,7 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
               type="checkbox"
               required
               checked={values.consent === true}
-              onChange={(event) => updateValue('consent', event.target.checked ? true : (false as unknown as string))}
+              onChange={(event) => updateValue('consent', event.target.checked)}
               className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
               aria-label="Confirm subject consent for this verification"
             />
@@ -280,7 +263,7 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
                 type="checkbox"
                 required
                 checked={values.cbConsent === true}
-                onChange={(event) => updateValue('cbConsent', event.target.checked ? true : (false as unknown as string))}
+                onChange={(event) => updateValue('cbConsent', event.target.checked)}
                 className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
                 aria-label="Confirm credit bureau consent for this verification"
               />

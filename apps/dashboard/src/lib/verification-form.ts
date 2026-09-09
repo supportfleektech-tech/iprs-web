@@ -24,6 +24,24 @@ export interface VerificationFormValues {
   consent?: boolean;
 }
 
+export interface VerificationResultPayload {
+  id: string;
+  type: string;
+  status: string;
+  result: Record<string, unknown> | null;
+  errorMessage: string | null;
+  cost: number;
+  latencyMs?: number | null;
+  createdAt: string;
+  source?: string;
+  consent?: boolean;
+  consentCollectedBy?: string | null;
+  cbConsent?: boolean;
+  isBackup?: boolean;
+  backupAvailable?: boolean;
+  backupPrice?: number;
+}
+
 export type VerificationInputType =
   | 'search'
   | 'number'
@@ -142,6 +160,7 @@ export const VERIFICATION_FORM_FIELDS: Record<VerificationType, VerificationForm
   ],
   brs: [
     { key: 'businessRegNumber', label: 'Business registration number', hint: 'Enter the business registration number.', placeholder: 'BN123456', required: true },
+    { key: 'statementFileBase64', label: 'Business registration document', hint: 'Upload a PDF, JPEG, or PNG copy of the registration certificate (max 5 MB).', inputType: 'file', required: true },
   ],
   spin_score_only: [
     { key: 'idNumber', label: 'National ID number', hint: 'Enter the 7–9 digit Kenyan ID number.', inputMode: 'numeric', placeholder: '12345678', required: true },

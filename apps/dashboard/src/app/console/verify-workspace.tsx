@@ -8,13 +8,14 @@ import { DashboardIcon } from '@/components/dashboard-icons';
 import { EmptyState } from '@/components/empty-state';
 import { LoadingState } from '@/components/loading-state';
 import { StatusBadge } from '@/components/status-badge';
-import { VerificationForm, type VerificationResultPayload } from '@/components/verification-form';
+import { VerificationForm } from '@/components/verification-form';
 import { ResultPanel } from '@/components/result-panel';
 import {
   formatCurrency,
   getVerificationLabel,
   groupProductsByCategory,
   type ProductOption,
+  type VerificationResultPayload,
 } from '@/lib/verification-form';
 
 export function VerifyWorkspace() {
@@ -35,16 +36,20 @@ export function VerifyWorkspace() {
     try {
       const list = await apiFetch<ProductOption[]>('/verifications/products', { token });
       setProducts(list);
-      if (list.length && !selectedType) {
-        const firstAvailable = list.find((p) => p.enabled && p.active);
-        setSelectedType((firstAvailable ?? list[0])!.type as VerificationType);
-      }
+      setSelectedType((prev) => {
+        if (prev) return prev;
+        if (list.length) {
+          const firstAvailable = list.find((p) => p.enabled && p.active);
+          return ((firstAvailable ?? list[0])!.type as VerificationType);
+        }
+        return prev;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products');
     } finally {
       setLoading(false);
     }
-  }, [token, selectedType]);
+  }, [token]);
 
   useEffect(() => {
     void fetchProducts();

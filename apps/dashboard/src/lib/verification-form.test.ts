@@ -45,8 +45,10 @@ describe('hasRequiredValues', () => {
     expect(hasRequiredValues({ idNumber: '12345678' }, VerificationType.KRA_PIN_VERIFICATION)).toBe(false);
   });
 
-  it('requires businessRegNumber for brs', () => {
-    expect(hasRequiredValues({ businessRegNumber: 'BN123' }, VerificationType.BRS)).toBe(true);
+  it('requires businessRegNumber and file for brs', () => {
+    expect(hasRequiredValues({ businessRegNumber: 'BN123', statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.BRS)).toBe(true);
+    expect(hasRequiredValues({ businessRegNumber: 'BN123' }, VerificationType.BRS)).toBe(false);
+    expect(hasRequiredValues({ statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.BRS)).toBe(false);
     expect(hasRequiredValues({}, VerificationType.BRS)).toBe(false);
   });
 
@@ -160,17 +162,23 @@ describe('formatResultValue', () => {
 });
 
 describe('backup banner visibility', () => {
-  function shouldShowBackupBanner(detail: { backupAvailable?: boolean; backupPrice?: number | null }): boolean {
-    return Boolean(detail.backupAvailable && detail.backupPrice != null);
+  function shouldShowBackupBanner(detail: { backupAvailable?: boolean; backupPrice?: number | null; status?: string; errorMessage?: string | null }): boolean {
+    return Boolean(detail.backupAvailable && detail.backupPrice != null && (detail.status === 'failed' || !!detail.errorMessage));
   }
 
-  it('shows only when both available and price present', () => {
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45 })).toBe(true);
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: null })).toBe(false);
-    expect(shouldShowBackupBanner({ backupAvailable: false, backupPrice: 45 })).toBe(false);
-    expect(shouldShowBackupBanner({ backupAvailable: true })).toBe(false);
+  it('shows only when both available and price present and status failed', () => {
+    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'failed' })).toBe(true);
+    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, errorMessage: 'Upstream down', status: 'failed' })).toBe(true);
+    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: null, status: 'failed' })).toBe(false);
+    expect(shouldShowBackupBanner({ backupAvailable: false, backupPrice: 45, status: 'failed' })).toBe(false);
+    expect(shouldShowBackupBanner({ backupAvailable: true, status: 'failed' })).toBe(false);
     expect(shouldShowBackupBanner({})).toBe(false);
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 0 })).toBe(true);
+    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 0, status: 'failed' })).toBe(true);
+  });
+
+  it('does not show on success even if backup fields present', () => {
+    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'success' })).toBe(false);
+    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'success', errorMessage: null })).toBe(false);
   });
 });
 

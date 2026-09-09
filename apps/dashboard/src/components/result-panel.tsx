@@ -4,24 +4,7 @@ import Link from 'next/link';
 import { DashboardIcon } from './dashboard-icons';
 import { StatusBadge } from './status-badge';
 import { formatCurrency, formatResultValue, humanise, isSensitiveResultKey } from '@/lib/verification-form';
-
-export interface VerificationResultPayload {
-  id: string;
-  type: string;
-  status: string;
-  result: Record<string, unknown> | null;
-  errorMessage: string | null;
-  cost: number;
-  latencyMs?: number | null | undefined;
-  createdAt: string;
-  source?: string;
-  consent?: boolean;
-  consentCollectedBy?: string | null;
-  cbConsent?: boolean;
-  isBackup?: boolean;
-  backupAvailable?: boolean;
-  backupPrice?: number;
-}
+import type { VerificationResultPayload } from '@/lib/verification-form';
 
 export interface ResultPanelProps {
   detail: VerificationResultPayload;
@@ -34,7 +17,9 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
     ? Object.entries(detail.result).filter(([key]) => !isSensitiveResultKey(key))
     : [];
 
-  const showBackupBanner = Boolean(detail.backupAvailable && detail.backupPrice != null);
+  const showBackupBanner = Boolean(
+    detail.backupAvailable && detail.backupPrice != null && (detail.status === 'failed' || !!detail.errorMessage),
+  );
 
   return (
     <section

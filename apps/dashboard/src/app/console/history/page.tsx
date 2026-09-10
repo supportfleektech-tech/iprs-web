@@ -126,11 +126,11 @@ export default function HistoryPage() {
   function handleSort(key: string) {
     const k = key as SortKey;
     if (sortKey === k) {
-      setSortDir((prev) => {
-        const next = prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc';
-        if (next === null) setSortKey(null);
-        return next;
-      });
+      if (sortDir === 'asc') setSortDir('desc');
+      else if (sortDir === 'desc') {
+        setSortDir(null);
+        setSortKey(null);
+      } else setSortDir('asc');
     } else {
       setSortKey(k);
       setSortDir('asc');
@@ -189,7 +189,7 @@ export default function HistoryPage() {
     setExporting(format);
     setExportError(null);
     try {
-      const url = buildVerificationsExportUrl(debouncedFilters, format);
+      const url = buildVerificationsExportUrl(filters, format);
       const stamp = new Date().toISOString().slice(0, 10);
       const filename = `fleek-verifications-${stamp}.${format}`;
       await downloadReport(url, filename, token);

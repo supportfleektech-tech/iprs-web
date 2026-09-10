@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { VerificationType } from '@fleek/types';
+import { VerificationType, VERIFICATION_TYPES } from '@fleek/types';
 
 interface ExportOptions {
   format: 'csv' | 'xlsx' | 'pdf';
@@ -8,6 +8,7 @@ interface ExportOptions {
   from?: string;
   to?: string;
   status?: string;
+  search?: string;
   organizationId: string;
 }
 
@@ -34,7 +35,7 @@ export class ExportService {
   constructor(private readonly prisma: PrismaService) {}
 
   async exportVerifications(options: ExportOptions): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
-    const { format, type, from, to, status, organizationId } = options;
+    const { format, type, from, to, status, search, organizationId } = options;
 
     const where: Record<string, unknown> = { organizationId };
     if (type) where.type = type;
@@ -43,6 +44,20 @@ export class ExportService {
       where.createdAt = {};
       if (from) (where.createdAt as Record<string, Date>).gte = new Date(from);
       if (to) (where.createdAt as Record<string, Date>).lte = new Date(to);
+    }
+    const trimmedSearch = search?.trim();
+    if (trimmedSearch) {
+      const lower = trimmedSearch.toLowerCase();
+      const matchingTypes = VERIFICATION_TYPES.filter((t) => t.toLowerCase().includes(lower));
+      const statusValues = ['pending', 'success', 'not_found', 'failed'] as const;
+      const matchingStatuses = statusValues.filter((s) => s.includes(lower));
+      const or: Record<string, unknown>[] = [
+        { id: { contains: trimmedSearch, mode: 'insensitive' } },
+        { source: { contains: trimmedSearch, mode: 'insensitive' } },
+      ];
+      if (matchingTypes.length) or.push({ type: { in: matchingTypes } });
+      if (matchingStatuses.length) or.push({ status: { in: matchingStatuses } });
+      where.OR = or;
     }
 
     const requests = await this.prisma.client.verificationRequest.findMany({

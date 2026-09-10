@@ -421,7 +421,7 @@ export class VerificationsService {
     }
   }
 
-  async history(orgId: string, opts: { type?: VerificationType; limit: number; offset: number; from?: string; to?: string; status?: string }) {
+  async history(orgId: string, opts: { type?: VerificationType; limit: number; offset: number; from?: string; to?: string; status?: string; search?: string }) {
     const where: Record<string, unknown> = { organizationId: orgId };
     if (opts.type) where.type = opts.type;
     if (opts.status) where.status = opts.status;
@@ -429,6 +429,20 @@ export class VerificationsService {
       where.createdAt = {};
       if (opts.from) (where.createdAt as Record<string, Date>).gte = new Date(opts.from);
       if (opts.to) (where.createdAt as Record<string, Date>).lte = new Date(opts.to);
+    }
+    const search = opts.search?.trim();
+    if (search) {
+      const lower = search.toLowerCase();
+      const matchingTypes = VERIFICATION_TYPES.filter((t) => t.toLowerCase().includes(lower));
+      const statusValues = ['pending', 'success', 'not_found', 'failed'] as const;
+      const matchingStatuses = statusValues.filter((s) => s.includes(lower));
+      const or: Record<string, unknown>[] = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { source: { contains: search, mode: 'insensitive' } },
+      ];
+      if (matchingTypes.length) or.push({ type: { in: matchingTypes } });
+      if (matchingStatuses.length) or.push({ status: { in: matchingStatuses } });
+      where.OR = or;
     }
 
     const [items, total] = await Promise.all([

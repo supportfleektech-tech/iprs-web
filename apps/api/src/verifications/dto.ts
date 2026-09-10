@@ -108,6 +108,9 @@ export class ListVerificationsQuery {
   @IsOptional() @IsString()
   to?: string;
 
+  @IsOptional() @IsString()
+  search?: string;
+
   @Type(() => Number) @IsOptional()
   limit?: number = 50;
 

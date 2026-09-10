@@ -72,6 +72,7 @@ export class VerificationsController {
       from: query.from,
       to: query.to,
       status: query.status,
+      search: query.search,
     });
   }
 

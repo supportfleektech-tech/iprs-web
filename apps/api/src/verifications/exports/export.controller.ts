@@ -18,6 +18,7 @@ export class ExportsController {
   @ApiQuery({ name: 'from', required: false, description: 'ISO date' })
   @ApiQuery({ name: 'to', required: false, description: 'ISO date' })
   @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'search', required: false })
   async exportVerifications(
     @CurrentUser() user: { organizationId: string },
     @Query('format') format: 'csv' | 'xlsx' | 'pdf',
@@ -25,6 +26,7 @@ export class ExportsController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('status') status?: string,
+    @Query('search') search?: string,
     @Res() res?: Response,
   ) {
     if (!format || !['csv', 'xlsx', 'pdf'].includes(format)) {
@@ -37,6 +39,7 @@ export class ExportsController {
       from,
       to,
       status,
+      search,
       organizationId: user.organizationId,
     });
 

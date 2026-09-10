@@ -1,6 +1,6 @@
-'use client';
-
 import type { BadgeTone } from '@fleek/ui';
+import type { VerificationType } from '@fleek/types';
+import { getApiBaseUrl, getStoredToken } from './auth';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -8,7 +8,7 @@ import type { BadgeTone } from '@fleek/ui';
 export type ExportFormat = 'csv' | 'xlsx' | 'pdf';
 
 export interface HistoryFilters {
-  type?: string;
+  type?: VerificationType | string;
   status?: string;
   from?: string;
   to?: string;
@@ -154,20 +154,9 @@ export function summarizeHistoryMetrics(
 // Download helper — accepts an existing /exports/* URL and filename
 // ---------------------------------------------------------------------------
 export async function downloadReport(url: string, filename: string, token?: string | null): Promise<void> {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
-  // Resolve token from explicit param or localStorage session fallback
-  let authToken = token ?? null;
-  if (!authToken && typeof window !== 'undefined') {
-    try {
-      const raw = window.localStorage.getItem('fleek_session');
-      if (raw) {
-        const parsed = JSON.parse(raw) as { accessToken?: string };
-        authToken = parsed.accessToken ?? null;
-      }
-    } catch {
-      // ignore
-    }
-  }
+  const apiBase = getApiBaseUrl();
+  // Resolve token from explicit param or localStorage session fallback (single source via auth.tsx)
+  const authToken = token ?? getStoredToken();
 
   const fullUrl = url.startsWith('http') ? url : `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
   const res = await fetch(fullUrl, {

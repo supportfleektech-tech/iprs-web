@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@fleek/ui';
-import { PRODUCT_LABELS } from '@fleek/types';
+import { PRODUCT_LABELS, type VerificationType } from '@fleek/types';
 import { apiFetch, useAuth } from '@/lib/auth';
 import {
   buildHistoryQuery,
@@ -24,7 +24,7 @@ import { DashboardIcon } from '@/components/dashboard-icons';
 
 interface HistoryItem {
   id: string;
-  type: string;
+  type: VerificationType;
   status: string;
   source: string;
   cost: number;
@@ -32,6 +32,15 @@ interface HistoryItem {
   createdAt: string;
   subject: string;
   isBackup?: boolean;
+}
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return debounced;
 }
 
 type SortKey = 'subject' | 'type' | 'status' | 'cost' | 'createdAt' | 'latencyMs';
@@ -56,44 +65,53 @@ export default function HistoryPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [filters, setFilters] = useState<HistoryFilters>({ limit: DEFAULT_LIMIT, offset: 0 });
   const [sortKey, setSortKey] = useState<SortKey | null>('createdAt');
   const [sortDir, setSortDir] = useState<SortDirection>('desc');
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
 
-  // Fetch with typed query params
+  const debouncedSearch = useDebouncedValue(filters.search ?? '', 300);
+  const debouncedFilters = useMemo<HistoryFilters>(
+    () => ({ ...filters, search: debouncedSearch }),
+    [filters, debouncedSearch],
+  );
+
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Fetch with typed query params (server-side search)
   const load = useCallback(async () => {
     if (!token) return;
+    // Cancel in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     setError(null);
     try {
-      const qs = buildHistoryQuery(filters);
+      const qs = buildHistoryQuery(debouncedFilters);
       const path = qs ? `/verifications?${qs}` : '/verifications';
-      const res = await apiFetch<{ total: number; items: HistoryItem[] }>(path, { token });
-      // Client-side search fallback: server does not yet filter by search param
-      const searchTerm = filters.search?.trim().toLowerCase();
-      let filtered = res.items;
-      if (searchTerm) {
-        filtered = filtered.filter(
-          (it) =>
-            it.subject.toLowerCase().includes(searchTerm) ||
-            it.type.toLowerCase().includes(searchTerm) ||
-            it.id.toLowerCase().includes(searchTerm) ||
-            it.status.toLowerCase().includes(searchTerm),
-        );
-      }
-      setItems(filtered);
-      // If search was applied client-side, total reflects server total; keep as is but pagination range reflects filtered slice
+      const res = await apiFetch<{ total: number; items: HistoryItem[] }>(path, {
+        token,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setItems(res.items);
       setTotal(res.total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load history');
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      // Sanitize: avoid leaking raw upstream messages; show generic retryable error
+      const isAbort = err instanceof Error && err.message.toLowerCase().includes('abort');
+      if (isAbort) return;
+      setError('Failed to load history. Please retry.');
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
-  }, [token, filters]);
+  }, [token, debouncedFilters]);
 
   useEffect(() => {
     void load();
+    return () => abortRef.current?.abort();
   }, [load]);
 
   function handleFilterChange(next: HistoryFilters) {
@@ -108,8 +126,11 @@ export default function HistoryPage() {
   function handleSort(key: string) {
     const k = key as SortKey;
     if (sortKey === k) {
-      setSortDir((prev) => (prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc'));
-      if (sortDir === 'desc') setSortKey(null);
+      setSortDir((prev) => {
+        const next = prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc';
+        if (next === null) setSortKey(null);
+        return next;
+      });
     } else {
       setSortKey(k);
       setSortDir('asc');
@@ -166,28 +187,30 @@ export default function HistoryPage() {
 
   async function handleExport(format: ExportFormat) {
     setExporting(format);
+    setExportError(null);
     try {
-      const url = buildVerificationsExportUrl(filters, format);
+      const url = buildVerificationsExportUrl(debouncedFilters, format);
       const stamp = new Date().toISOString().slice(0, 10);
       const filename = `fleek-verifications-${stamp}.${format}`;
       await downloadReport(url, filename, token);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Export failed');
+    } catch {
+      setExportError('Export failed. Please try again.');
     } finally {
       setExporting(null);
     }
   }
 
   async function handleCertificate(id: string) {
+    setExportError(null);
     try {
       const url = buildCertificateUrl(id);
       await downloadReport(url, `certificate-${id.slice(0, 8)}.pdf`, token);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Certificate download failed');
+    } catch {
+      setExportError('Certificate download failed. Please try again.');
     }
   }
 
-  const columns: DataTableColumn<HistoryItem>[] = useMemo(
+  const columns: DataTableColumn<HistoryItem>[] = useMemo<DataTableColumn<HistoryItem>[]>(
     () => [
       {
         key: 'subject',
@@ -206,7 +229,7 @@ export default function HistoryPage() {
         sortable: true,
         render: (row) => (
           <span className="whitespace-nowrap text-xs font-medium text-navy-900">
-            {PRODUCT_LABELS[row.type as keyof typeof PRODUCT_LABELS] ?? row.type.replace(/_/g, ' ')}
+            {PRODUCT_LABELS[row.type as keyof typeof PRODUCT_LABELS] ?? String(row.type).replace(/_/g, ' ')}
           </span>
         ),
       },
@@ -383,6 +406,21 @@ export default function HistoryPage() {
               className="inline-flex h-11 items-center justify-center rounded-xl bg-red-700 px-4 text-sm font-medium text-white hover:bg-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
             >
               Retry
+            </button>
+          </div>
+        </div>
+      )}
+      {exportError && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" role="alert" aria-live="assertive">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-amber-800">{exportError}</p>
+            <button
+              type="button"
+              onClick={() => setExportError(null)}
+              aria-label="Dismiss export error"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-white px-4 text-sm font-medium text-amber-700 hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+            >
+              Dismiss
             </button>
           </div>
         </div>

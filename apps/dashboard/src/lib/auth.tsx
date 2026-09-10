@@ -28,7 +28,24 @@ export interface RegisterInput {
   organizationName: string;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
+const API = API_BASE;
+
+export function getApiBaseUrl(): string {
+  return API_BASE;
+}
+
+export function getStoredToken(): string | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredSession;
+    return parsed.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const SESSION_KEY = 'fleek_session';
 

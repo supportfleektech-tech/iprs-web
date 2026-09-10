@@ -175,7 +175,13 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                     <h2 className="text-sm font-semibold text-navy-900">Trends and distribution</h2>
                     <p className="mt-1 text-xs text-slate-500" aria-live="polite">
                       {formatDateRangeLabel(serverAnalytics.dateRange)} · {formatServerAnalyticsSummary(serverAnalytics)}
+                      {serverAnalytics.truncated ? ' · capped at 10k' : ''}
                     </p>
+                    {serverAnalytics.truncated && (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 ring-1 ring-inset ring-amber-600/15" role="status" aria-live="polite">
+                        Showing first 10,000 records — totals are truncated. Narrow date/type/status/search to see exact totals.
+                      </p>
+                    )}
                   </div>
                   <span className="inline-flex h-7 items-center rounded-full bg-teal-50 px-2.5 text-[11px] font-medium text-teal-700 ring-1 ring-inset ring-teal-600/15">
                     Server aggregation
@@ -282,6 +288,7 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                   )}
                   <p className="mt-2 text-xs text-slate-400">
                     Total {formatMetricCount(serverAnalytics.totals.verifications)} checks · {formatCurrencyKes(serverAnalytics.totals.cost)} total cost
+                    {serverAnalytics.truncated ? ' · truncated at 10k' : ''}
                   </p>
                 </div>
               </div>

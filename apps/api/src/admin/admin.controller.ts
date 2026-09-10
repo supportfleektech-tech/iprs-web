@@ -9,7 +9,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsDateString, IsEnum, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { VerificationType } from '@fleek/types';
 import { Auth, CurrentUser } from '../auth/auth.decorators';
 import { PrismaService } from '../prisma/prisma.service';
@@ -116,17 +117,35 @@ export class OrgEnabledChecksDto {
 }
 
 export class AnalyticsQueryDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsDateString({}, { message: 'from must be an ISO 8601 date string' })
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
   from?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsDateString({}, { message: 'to must be an ISO 8601 date string' })
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
   to?: string;
 
-  @IsOptional() @IsString()
-  type?: string;
+  @IsOptional()
+  @IsEnum(VerificationType, { message: `type must be one of: ${Object.values(VerificationType).join(', ')}` })
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
+  type?: VerificationType;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsIn(['pending', 'success', 'not_found', 'failed'], { message: 'status must be one of: pending, success, not_found, failed' })
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const t = value.trim();
+    if (t === '') return undefined;
+    return t.toLowerCase();
+  })
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
+  search?: string;
 }
 
 @ApiTags('admin')
@@ -148,6 +167,7 @@ export class AdminController {
   }
 
   @Get('analytics')
+  @Auth('OWNER', 'ADMIN', 'MEMBER')
   async analytics(@CurrentUser() user: JwtPayload, @Query() query: AnalyticsQueryDto) {
     const orgId = this.assertPlatform(user);
     return this.adminService.analytics(orgId ?? undefined, query);

@@ -51,6 +51,7 @@ export interface ServerAnalytics {
   statusCounts: Record<string, number>;
   productCounts: Record<string, number>;
   costByProduct: Record<string, number>;
+  truncated: boolean;
 }
 
 export interface OverviewWallet {

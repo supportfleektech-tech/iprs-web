@@ -128,6 +128,8 @@ export default function HistoryPage() {
     if (from) params.set('from', from);
     const to = (debouncedFilters.to ?? debouncedFilters.endDate)?.trim();
     if (to) params.set('to', to);
+    const search = debouncedFilters.search?.trim();
+    if (search) params.set('search', search);
     const qs = params.toString();
     const path = qs ? `/admin/analytics?${qs}` : '/admin/analytics';
     let cancelled = false;
@@ -141,7 +143,7 @@ export default function HistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, debouncedFilters.type, debouncedFilters.status, debouncedFilters.from, debouncedFilters.to, debouncedFilters.startDate, debouncedFilters.endDate]);
+  }, [token, debouncedFilters.type, debouncedFilters.status, debouncedFilters.from, debouncedFilters.to, debouncedFilters.startDate, debouncedFilters.endDate, debouncedFilters.search]);
 
   function handleFilterChange(next: HistoryFilters) {
     // Reset offset when filters change (except pagination itself)
@@ -393,15 +395,20 @@ export default function HistoryPage() {
             KES {(serverAnalytics ? serverAnalytics.totals.cost : metrics.totalCost).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            {serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} records (server)` : `${metrics.total} records (visible)`} · {metrics.totalCost !== (serverAnalytics?.totals.cost ?? metrics.totalCost) ? `visible ${formatCost(metrics.totalCost)}` : 'bounded to 10k rows, no PII'}
+            {serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} records (server${serverAnalytics.truncated ? ' · truncated at 10k' : ''})` : `${metrics.total} records (visible)`} · {metrics.totalCost !== (serverAnalytics?.totals.cost ?? metrics.totalCost) ? `visible ${formatCost(metrics.totalCost)}` : serverAnalytics?.truncated ? 'first 10k rows — filter to refine' : 'bounded to 10k rows, no PII'}
           </p>
+          {serverAnalytics?.truncated && (
+            <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-[11px] text-amber-700 ring-1 ring-inset ring-amber-600/15" role="status">
+              Truncated — showing first 10,000 matching records.
+            </p>
+          )}
         </Card>
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Average latency</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
             {(serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs) != null ? `${serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs}ms` : '—'}
           </p>
-          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? 'Server aggregate · bounded 10k' : 'Across visible records'}</p>
+          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? `Server aggregate · bounded 10k${serverAnalytics.truncated ? ' · truncated' : ''}` : 'Across visible records'}</p>
         </Card>
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Status distribution</p>
@@ -420,7 +427,7 @@ export default function HistoryPage() {
               );
             })()}
           </div>
-          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? 'Server totals' : 'Visible page'}</p>
+          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? `Server totals${serverAnalytics.truncated ? ' · truncated at 10k' : ''}` : 'Visible page'}</p>
         </Card>
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total records</p>
@@ -448,17 +455,20 @@ export default function HistoryPage() {
                 if (to) parts.push(`to ${to}`);
                 if (f.search) parts.push(`search “${f.search.trim()}”`);
                 const filterText = parts.length ? parts.join(' · ') : 'All records (no filters)';
-                const countText = serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} matching (server)` : `${total.toLocaleString('en-KE')} matching`;
+                const countText = serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} matching (server${serverAnalytics.truncated ? ' · truncated at 10k' : ''})` : `${total.toLocaleString('en-KE')} matching`;
                 const costText = serverAnalytics ? `KES ${serverAnalytics.totals.cost.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total` : '';
                 return `${filterText} · ${countText}${costText ? ` · ${costText}` : ''}`;
               })()}
             </p>
             <p className="mt-1 text-xs text-slate-400">
               Exports use the same server filters (type/status/date/search). Bounded server aggregation (max 10k) shows totals without PII. Certificates are per-record PDFs.
+              {serverAnalytics?.truncated ? ' Truncated — first 10k only; refine filters for exact export totals.' : ''}
             </p>
           </div>
-          <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-slate-100 px-2.5 text-[11px] font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
-            {serverAnalytics ? 'Server-synced' : 'Visible page'}
+          <span
+            className={`inline-flex h-7 shrink-0 items-center rounded-full px-2.5 text-[11px] font-medium ring-1 ring-inset ${serverAnalytics?.truncated ? 'bg-amber-50 text-amber-700 ring-amber-600/15' : 'bg-slate-100 text-slate-600 ring-slate-200'}`}
+          >
+            {serverAnalytics ? (serverAnalytics.truncated ? 'Truncated at 10k' : 'Server-synced') : 'Visible page'}
           </span>
         </div>
       </section>

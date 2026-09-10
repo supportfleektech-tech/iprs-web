@@ -15,6 +15,7 @@ import { Auth, CurrentUser } from '../auth/auth.decorators';
 import { PrismaService } from '../prisma/prisma.service';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { WalletService } from '../wallet/wallet.service';
+import { AdminService } from './admin.service';
 
 export class ReviewTopUpDto {
   @IsBoolean()
@@ -114,6 +115,20 @@ export class OrgEnabledChecksDto {
   enabled!: boolean;
 }
 
+export class AnalyticsQueryDto {
+  @IsOptional() @IsString()
+  from?: string;
+
+  @IsOptional() @IsString()
+  to?: string;
+
+  @IsOptional() @IsString()
+  type?: string;
+
+  @IsOptional() @IsString()
+  status?: string;
+}
+
 @ApiTags('admin')
 @ApiBearerAuth('jwt')
 @Controller('admin')
@@ -122,6 +137,7 @@ export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly wallet: WalletService,
+    private readonly adminService: AdminService,
   ) {}
 
   private assertPlatform(user: JwtPayload) {
@@ -129,6 +145,12 @@ export class AdminController {
       return user.organizationId;
     }
     return undefined;
+  }
+
+  @Get('analytics')
+  async analytics(@CurrentUser() user: JwtPayload, @Query() query: AnalyticsQueryDto) {
+    const orgId = this.assertPlatform(user);
+    return this.adminService.analytics(orgId ?? undefined, query);
   }
 
   @Get('stats')

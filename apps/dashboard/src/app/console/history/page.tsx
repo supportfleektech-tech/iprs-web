@@ -15,6 +15,7 @@ import {
   downloadReport,
   type HistoryFilters,
 } from '@/lib/exports';
+import type { ServerAnalytics } from '@/lib/overview';
 import { FilterBar } from '@/components/filter-bar';
 import { DataTable, type DataTableColumn, type SortDirection } from '@/components/data-table';
 import { StatusBadge } from '@/components/status-badge';
@@ -70,6 +71,7 @@ export default function HistoryPage() {
   const [sortKey, setSortKey] = useState<SortKey | null>('createdAt');
   const [sortDir, setSortDir] = useState<SortDirection>('desc');
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
+  const [serverAnalytics, setServerAnalytics] = useState<ServerAnalytics | null>(null);
 
   const debouncedSearch = useDebouncedValue(filters.search ?? '', 300);
   const debouncedFilters = useMemo<HistoryFilters>(
@@ -113,6 +115,33 @@ export default function HistoryPage() {
     void load();
     return () => abortRef.current?.abort();
   }, [load]);
+
+  // Server-side report analytics for summary cards + export context (bounded, no PII)
+  useEffect(() => {
+    if (!token) return;
+    const params = new URLSearchParams();
+    const t = debouncedFilters.type?.trim();
+    if (t) params.set('type', t);
+    const s = debouncedFilters.status?.trim();
+    if (s) params.set('status', s);
+    const from = (debouncedFilters.from ?? debouncedFilters.startDate)?.trim();
+    if (from) params.set('from', from);
+    const to = (debouncedFilters.to ?? debouncedFilters.endDate)?.trim();
+    if (to) params.set('to', to);
+    const qs = params.toString();
+    const path = qs ? `/admin/analytics?${qs}` : '/admin/analytics';
+    let cancelled = false;
+    void apiFetch<ServerAnalytics>(path, { token })
+      .then((res) => {
+        if (!cancelled) setServerAnalytics(res);
+      })
+      .catch(() => {
+        if (!cancelled) setServerAnalytics(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, debouncedFilters.type, debouncedFilters.status, debouncedFilters.from, debouncedFilters.to, debouncedFilters.startDate, debouncedFilters.endDate]);
 
   function handleFilterChange(next: HistoryFilters) {
     // Reset offset when filters change (except pagination itself)
@@ -356,40 +385,82 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Summary metrics */}
-      <section aria-label="History summary" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Report summary cards — server aggregation when available, fallback to visible */}
+      <section aria-label="Report summary" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total cost (visible)</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">KES {metrics.totalCost.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          <p className="mt-1 text-xs text-slate-400">{metrics.total} records in view</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total cost (report)</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
+            KES {(serverAnalytics ? serverAnalytics.totals.cost : metrics.totalCost).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            {serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} records (server)` : `${metrics.total} records (visible)`} · {metrics.totalCost !== (serverAnalytics?.totals.cost ?? metrics.totalCost) ? `visible ${formatCost(metrics.totalCost)}` : 'bounded to 10k rows, no PII'}
+          </p>
         </Card>
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Average latency</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">{metrics.avgLatencyMs != null ? `${metrics.avgLatencyMs}ms` : '—'}</p>
-          <p className="mt-1 text-xs text-slate-400">Across visible records</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
+            {(serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs) != null ? `${serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs}ms` : '—'}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? 'Server aggregate · bounded 10k' : 'Across visible records'}</p>
         </Card>
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Status distribution</p>
           <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite">
-            {Object.keys(metrics.statusCounts).length === 0 ? (
-              <span className="text-xs text-slate-400">No data</span>
-            ) : (
-              Object.entries(metrics.statusCounts).map(([s, count]) => (
-                <span key={s} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium tabular-nums text-slate-700 ring-1 ring-inset ring-slate-200">
-                  <StatusBadge tone={classifyHistoryStatus(s)} label={getHistoryStatusLabel(s)} className="scale-90" />
-                  <span className="tabular-nums">{count}</span>
-                </span>
-              ))
-            )}
+            {(() => {
+              const sc = serverAnalytics?.statusCounts ?? metrics.statusCounts;
+              return Object.keys(sc).length === 0 ? (
+                <span className="text-xs text-slate-400">No data</span>
+              ) : (
+                Object.entries(sc).map(([s, count]) => (
+                  <span key={s} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium tabular-nums text-slate-700 ring-1 ring-inset ring-slate-200">
+                    <StatusBadge tone={classifyHistoryStatus(s)} label={getHistoryStatusLabel(s)} className="scale-90" />
+                    <span className="tabular-nums">{count}</span>
+                  </span>
+                ))
+              );
+            })()}
           </div>
+          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? 'Server totals' : 'Visible page'}</p>
         </Card>
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total records</p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">{total.toLocaleString('en-KE')}</p>
           <p className="mt-1 text-xs text-slate-400">
-            Showing {rangeStart}–{rangeEnd}
+            Showing {rangeStart}–{rangeEnd} · page {Math.floor(offset / limit) + 1}
           </p>
         </Card>
+      </section>
+
+      {/* Export context — what current filters will export */}
+      <section aria-label="Export context" className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:px-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Export context</h2>
+            <p className="mt-1 text-sm text-slate-600" aria-live="polite">
+              {(() => {
+                const parts: string[] = [];
+                const f = debouncedFilters;
+                if (f.type) parts.push(`type ${String(f.type)}`);
+                if (f.status) parts.push(`status ${String(f.status)}`);
+                const from = (f.from ?? f.startDate)?.trim();
+                const to = (f.to ?? f.endDate)?.trim();
+                if (from) parts.push(`from ${from}`);
+                if (to) parts.push(`to ${to}`);
+                if (f.search) parts.push(`search “${f.search.trim()}”`);
+                const filterText = parts.length ? parts.join(' · ') : 'All records (no filters)';
+                const countText = serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} matching (server)` : `${total.toLocaleString('en-KE')} matching`;
+                const costText = serverAnalytics ? `KES ${serverAnalytics.totals.cost.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total` : '';
+                return `${filterText} · ${countText}${costText ? ` · ${costText}` : ''}`;
+              })()}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Exports use the same server filters (type/status/date/search). Bounded server aggregation (max 10k) shows totals without PII. Certificates are per-record PDFs.
+            </p>
+          </div>
+          <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-slate-100 px-2.5 text-[11px] font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+            {serverAnalytics ? 'Server-synced' : 'Visible page'}
+          </span>
+        </div>
       </section>
 
       {/* Filters */}

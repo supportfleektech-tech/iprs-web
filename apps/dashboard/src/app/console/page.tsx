@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { Overview } from './overview';
-import type { OverviewStats, OverviewVerification, OverviewProduct, OverviewWallet } from '@/lib/overview';
+import type { OverviewStats, OverviewVerification, OverviewProduct, OverviewWallet, ServerAnalytics } from '@/lib/overview';
 import { LoadingState } from '@/components/loading-state';
 
 interface HistoryResponse {
@@ -27,6 +27,7 @@ export default function ConsoleOverviewPage() {
   const [recentItems, setRecentItems] = useState<OverviewVerification[]>([]);
   const [products, setProducts] = useState<OverviewProduct[]>([]);
   const [wallet, setWallet] = useState<OverviewWallet | null>(null);
+  const [serverAnalytics, setServerAnalytics] = useState<ServerAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
@@ -36,11 +37,12 @@ export default function ConsoleOverviewPage() {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, historyRes, productsRes, walletRes] = await Promise.allSettled([
+      const [statsRes, historyRes, productsRes, walletRes, analyticsRes] = await Promise.allSettled([
         apiFetch<OverviewStats>('/admin/stats', { token }),
         apiFetch<HistoryResponse>('/verifications?limit=8', { token }),
         apiFetch<OverviewProduct[]>('/verifications/products', { token }),
         apiFetch<WalletResponse>('/wallet', { token }),
+        apiFetch<ServerAnalytics>('/admin/analytics', { token }),
       ]);
 
       let resolvedStats: OverviewStats;
@@ -83,6 +85,12 @@ export default function ConsoleOverviewPage() {
       } else {
         setWallet(null);
       }
+
+      if (analyticsRes.status === 'fulfilled') {
+        setServerAnalytics(analyticsRes.value);
+      } else {
+        setServerAnalytics(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load overview');
     } finally {
@@ -108,6 +116,7 @@ export default function ConsoleOverviewPage() {
         stats={stats ?? { organizations: 1, verifications: 0, pendingTopUps: 0 }}
         recentItems={recentItems}
         products={products}
+        serverAnalytics={serverAnalytics}
         wallet={wallet}
         loading={loading}
         error={error}

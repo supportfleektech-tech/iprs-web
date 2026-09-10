@@ -15,28 +15,33 @@ import {
   getAvailableProducts,
   buildOverviewAnalytics,
   formatActivitySummary,
+  formatServerAnalyticsSummary,
+  formatDateRangeLabel,
+  toBarWidth,
   type OverviewStats,
   type OverviewVerification,
   type OverviewProduct,
   type OverviewAnalytics,
   type OverviewWallet,
+  type ServerAnalytics,
 } from '@/lib/overview';
 
 // Re-export for external consumers (Task 7 extends this file)
-export type { OverviewStats, OverviewVerification, OverviewProduct, OverviewAnalytics, OverviewWallet };
+export type { OverviewStats, OverviewVerification, OverviewProduct, OverviewAnalytics, OverviewWallet, ServerAnalytics };
 
 export interface OverviewProps {
   stats: OverviewStats;
   recentItems: OverviewVerification[];
   products: OverviewProduct[];
   analytics?: OverviewAnalytics | null;
+  serverAnalytics?: ServerAnalytics | null;
   wallet?: OverviewWallet | null;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
 }
 
-export function Overview({ stats, recentItems, products, analytics: analyticsProp, wallet, loading, error, onRetry }: OverviewProps) {
+export function Overview({ stats, recentItems, products, analytics: analyticsProp, serverAnalytics, wallet, loading, error, onRetry }: OverviewProps) {
   const successful = getSuccessfulCount(recentItems);
   const successRate = calculateSuccessRate(recentItems);
   const recentCost = summarizeRecentCost(recentItems);
@@ -160,6 +165,128 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
               })}
             </div>
           </section>
+
+          {/* Server-backed trends — accessible bars + tables, text summary */}
+          {serverAnalytics ? (
+            <section aria-label="Trends and distribution" className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 px-5 py-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-navy-900">Trends and distribution</h2>
+                    <p className="mt-1 text-xs text-slate-500" aria-live="polite">
+                      {formatDateRangeLabel(serverAnalytics.dateRange)} · {formatServerAnalyticsSummary(serverAnalytics)}
+                    </p>
+                  </div>
+                  <span className="inline-flex h-7 items-center rounded-full bg-teal-50 px-2.5 text-[11px] font-medium text-teal-700 ring-1 ring-inset ring-teal-600/15">
+                    Server aggregation
+                  </span>
+                </div>
+              </div>
+              <div className="grid gap-6 p-5 md:grid-cols-2">
+                {/* Status distribution */}
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">By status</h3>
+                  {Object.keys(serverAnalytics.statusCounts).length === 0 ? (
+                    <p className="mt-2 text-sm text-slate-400">No data for this range.</p>
+                  ) : (
+                    <table className="mt-3 w-full text-sm">
+                      <caption className="sr-only">Verification count by status</caption>
+                      <thead>
+                        <tr className="text-left text-xs text-slate-500">
+                          <th scope="col" className="pb-1 font-medium">
+                            Status
+                          </th>
+                          <th scope="col" className="pb-1 text-right font-medium">
+                            Count
+                          </th>
+                          <th scope="col" className="pb-1 font-medium">
+                            <span className="sr-only">Distribution</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(serverAnalytics.statusCounts)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([status, count]) => {
+                            const max = Math.max(...Object.values(serverAnalytics.statusCounts));
+                            const w = toBarWidth(count, max);
+                            return (
+                              <tr key={status} className="border-t border-slate-100">
+                                <td className="py-2 pr-2">
+                                  <StatusBadge status={status} />
+                                </td>
+                                <td className="py-2 text-right tabular-nums text-navy-900">{formatMetricCount(count)}</td>
+                                <td className="w-28 py-2 pl-3">
+                                  <div className="h-2 rounded-full bg-slate-100" aria-hidden="true">
+                                    <div className="h-2 rounded-full bg-teal-500 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${w}%` }} />
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  )}
+                  <p className="mt-2 text-xs text-slate-400">
+                    Text summary: {Object.entries(serverAnalytics.statusCounts).map(([k, v]) => `${v} ${k}`).join(' · ') || 'No statuses'}
+                    {serverAnalytics.totals.avgLatencyMs != null ? ` · avg ${serverAnalytics.totals.avgLatencyMs}ms` : ''}
+                  </p>
+                </div>
+
+                {/* Product distribution */}
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">By product (top 6 by volume)</h3>
+                  {Object.keys(serverAnalytics.productCounts).length === 0 ? (
+                    <p className="mt-2 text-sm text-slate-400">No product data for this range.</p>
+                  ) : (
+                    <table className="mt-3 w-full text-sm">
+                      <caption className="sr-only">Verification count and cost by product</caption>
+                      <thead>
+                        <tr className="text-left text-xs text-slate-500">
+                          <th scope="col" className="pb-1 font-medium">
+                            Product
+                          </th>
+                          <th scope="col" className="pb-1 text-right font-medium">
+                            Count
+                          </th>
+                          <th scope="col" className="pb-1 text-right font-medium">
+                            Cost
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(serverAnalytics.productCounts)
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 6)
+                          .map(([type, count]) => {
+                            const max = Math.max(...Object.values(serverAnalytics.productCounts));
+                            const w = toBarWidth(count, max);
+                            const cost = serverAnalytics.costByProduct[type] ?? 0;
+                            return (
+                              <tr key={type} className="border-t border-slate-100">
+                                <td className="py-2 pr-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-navy-900">{humanise(type)}</span>
+                                    <span className="h-1.5 w-full rounded-full bg-slate-100" aria-hidden="true">
+                                      <span className="block h-1.5 rounded-full bg-navy-900 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${w}%` }} />
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-2 text-right tabular-nums text-navy-900">{formatMetricCount(count)}</td>
+                                <td className="py-2 text-right tabular-nums text-slate-600">{formatCurrencyKes(cost)}</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  )}
+                  <p className="mt-2 text-xs text-slate-400">
+                    Total {formatMetricCount(serverAnalytics.totals.verifications)} checks · {formatCurrencyKes(serverAnalytics.totals.cost)} total cost
+                  </p>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.65fr)]">
             <Card className="overflow-hidden">

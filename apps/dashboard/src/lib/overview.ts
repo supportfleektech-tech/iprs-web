@@ -45,6 +45,14 @@ export interface OverviewAnalytics {
   statusCounts: Record<string, number>;
 }
 
+export interface ServerAnalytics {
+  dateRange: { from: string | null; to: string | null };
+  totals: { verifications: number; cost: number; avgLatencyMs: number | null };
+  statusCounts: Record<string, number>;
+  productCounts: Record<string, number>;
+  costByProduct: Record<string, number>;
+}
+
 export interface OverviewWallet {
   balance: number | null;
   currency: string;
@@ -139,4 +147,32 @@ export function formatActivitySummary(analytics: OverviewAnalytics, total: numbe
   if (analytics.statusCounts['pending']) parts.push(`${analytics.statusCounts['pending']} pending`);
   const suffix = analytics.avgLatencyMs != null ? ` · avg ${analytics.avgLatencyMs}ms` : '';
   return parts.length ? `${parts.join(' · ')}${suffix}` : `${total} checks${suffix}`;
+}
+
+export function formatServerAnalyticsSummary(a: ServerAnalytics): string {
+  if (a.totals.verifications === 0) return 'No verifications in the selected range';
+  const parts: string[] = [];
+  parts.push(`${formatMetricCount(a.totals.verifications)} verifications`);
+  parts.push(formatCurrencyKes(a.totals.cost));
+  if (a.totals.avgLatencyMs != null) parts.push(`avg ${a.totals.avgLatencyMs}ms`);
+  return parts.join(' · ');
+}
+
+export function formatDateRangeLabel(dateRange: { from: string | null; to: string | null }): string {
+  if (!dateRange.from && !dateRange.to) return 'All time';
+  const fmt = (s: string) => {
+    try {
+      return new Date(s).toLocaleDateString('en-KE', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return s;
+    }
+  };
+  if (dateRange.from && dateRange.to) return `${fmt(dateRange.from)} – ${fmt(dateRange.to)}`;
+  if (dateRange.from) return `From ${fmt(dateRange.from)}`;
+  return `Until ${fmt(dateRange.to!)}`;
+}
+
+export function toBarWidth(value: number, max: number): number {
+  if (max <= 0) return 0;
+  return Math.max(4, Math.round((value / max) * 100));
 }

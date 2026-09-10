@@ -22,7 +22,7 @@ export function WalletHero({ balance, currency = 'KES', loading = false, onExpor
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-300">Available balance</p>
               {loading ? (
-                <div className="mt-3 h-9 w-40 animate-pulse rounded-lg bg-white/10" aria-hidden="true" />
+                <div className="mt-3 h-9 w-40 animate-pulse rounded-lg bg-white/10 motion-reduce:animate-none" aria-hidden="true" />
               ) : (
                 <p className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl" aria-live="polite">
                   {formatWalletBalance(balance)}
@@ -51,7 +51,7 @@ export function WalletHero({ balance, currency = 'KES', loading = false, onExpor
             onClick={onExportCsv}
             disabled={!!exporting}
             aria-label="Export wallet statement as CSV"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-medium text-white transition-colors hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:opacity-50 motion-reduce:transition-none"
+            className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-medium text-white transition-colors hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:opacity-50 motion-reduce:transition-none"
           >
             <DashboardIcon name="download" className="h-3.5 w-3.5" aria-hidden="true" />
             {exporting === 'csv' ? 'Exporting…' : 'CSV'}
@@ -61,7 +61,7 @@ export function WalletHero({ balance, currency = 'KES', loading = false, onExpor
             onClick={onExportPdf}
             disabled={!!exporting}
             aria-label="Export wallet statement as PDF"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3 text-xs font-semibold text-navy-900 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:opacity-50 motion-reduce:transition-none"
+            className="inline-flex h-11 items-center gap-1.5 rounded-lg bg-white px-3 text-xs font-semibold text-navy-900 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 disabled:opacity-50 motion-reduce:transition-none"
           >
             <DashboardIcon name="file" className="h-3.5 w-3.5" aria-hidden="true" />
             {exporting === 'pdf' ? 'Exporting…' : 'PDF'}
@@ -109,7 +109,7 @@ export function WalletActivitySummary({ transactions, topUps, loading }: WalletA
     return (
       <section aria-label="Wallet activity" className="grid gap-4 sm:grid-cols-3" aria-busy="true">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-xl bg-white ring-1 ring-slate-200" aria-hidden="true" />
+          <div key={i} className="h-24 animate-pulse rounded-xl bg-white ring-1 ring-slate-200 motion-reduce:animate-none" aria-hidden="true" />
         ))}
       </section>
     );

@@ -151,15 +151,7 @@ export interface StatementFilters {
   endDate?: string;
 }
 
-export function buildWalletStatementUrl(filters: StatementFilters, format: ExportFormat): string {
-  const params = new URLSearchParams();
-  params.set('format', format);
-  const from = (filters.from ?? filters.startDate)?.trim();
-  if (from) params.set('from', from);
-  const to = (filters.to ?? filters.endDate)?.trim();
-  if (to) params.set('to', to);
-  return `/exports/wallet/statement?${params.toString()}`;
-}
+export { buildWalletStatementUrl } from './exports';
 
 export function buildWalletStatementFilename(format: ExportFormat, date = new Date()): string {
   const stamp = date.toISOString().slice(0, 10);

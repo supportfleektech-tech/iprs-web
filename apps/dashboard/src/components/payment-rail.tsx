@@ -22,7 +22,7 @@ export interface PaymentRailTabsProps {
   canManage: boolean;
 }
 
-export function PaymentRailTabs({ activeRail, onChange, canManage }: PaymentRailTabsProps) {
+export function PaymentRailTabs({ activeRail, onChange, canManage: _canManage }: PaymentRailTabsProps) {
   return (
     <div role="tablist" aria-label="Payment rails" className="flex flex-wrap gap-2">
       {RAIL_TABS.map(({ rail }) => {
@@ -36,7 +36,6 @@ export function PaymentRailTabs({ activeRail, onChange, canManage }: PaymentRail
             aria-controls={`rail-panel-${rail}`}
             id={`rail-tab-${rail}`}
             onClick={() => onChange(rail)}
-            disabled={!canManage && false}
             className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 motion-reduce:transition-none ${
               active
                 ? 'border-navy-900 bg-navy-900 text-white shadow-sm'

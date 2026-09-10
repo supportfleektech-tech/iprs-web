@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@fleek/ui';
 import { apiFetch } from '@/lib/auth';
-import { PRODUCT_LABELS } from '@fleek/types';
+import { PRODUCT_LABELS, VERIFICATION_TYPES } from '@fleek/types';
 import { AdminStats, AdminTopUp, ProductPricing, ProductPricingTier, OrgSummary, formatPriceMinor, formatCount, requiresCbConsent, requiresFileUpload, getProductCategory } from '@/lib/admin';
 import { PriceEditor } from '@/components/price-editor';
 import { OrgManagement } from '@/components/org-management';
@@ -64,12 +64,29 @@ export function AdminCommandCenter({
   const catalog: ProductPricing[] = products.length > 0 ? products : pricing;
   // Map pricing for quick lookup
   const pricingByType = new Map(pricing.map((p) => [p.type, p]));
-  // Tier backup lookup per product
-  const tierBackupByType = new Map<string, number | string | null>();
+  // Collect all backup prices per product to avoid first-wins misrepresentation (I-1)
+  const backupByType = new Map<string, number[]>();
   for (const t of pricingTiers) {
-    if (!tierBackupByType.has(t.productType) && t.backupPriceMinor != null) {
-      tierBackupByType.set(t.productType, t.backupPriceMinor);
+    if (t.backupPriceMinor != null) {
+      const n = Number(t.backupPriceMinor);
+      if (Number.isFinite(n)) {
+        const arr = backupByType.get(t.productType) ?? [];
+        arr.push(n);
+        backupByType.set(t.productType, arr);
+      }
     }
+  }
+  function getBackupLabel(productType: string): string {
+    const vals = backupByType.get(productType) ?? [];
+    if (vals.length === 0) return '—';
+    const unique = [...new Set(vals)].sort((a, b) => a - b);
+    if (unique.length === 1) return formatPriceMinor(unique[0]);
+    // Heterogeneous backups across tiers — show range lower bound to avoid misleading single value
+    return `from ${formatPriceMinor(unique[0])}`;
+  }
+  function hasHeterogeneousBackup(productType: string): boolean {
+    const vals = backupByType.get(productType) ?? [];
+    return new Set(vals).size > 1;
   }
 
   async function review(id: string, approve: boolean) {
@@ -146,25 +163,19 @@ export function AdminCommandCenter({
     );
   }
 
-  if (error) {
-    return (
-      <Card className="border-red-200">
-        <CardContent className="p-8 text-center">
-          <p role="alert" className="text-sm font-medium text-red-700">{error}</p>
-          <p className="mt-1 text-xs text-slate-500">The command center did not load. Retry to refetch all 6 admin endpoints in parallel.</p>
-          {onRetry && (
-            <Button onClick={onRetry} className="mt-4 h-11" aria-label="Retry loading admin command center">Retry</Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
-
   const pending = topUps.filter((t) => t.status === 'pending');
   const totalOrgs = stats?.organizations ?? organizations.length;
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+          {onRetry && (
+            <Button onClick={onRetry} variant="secondary" className="h-9 shrink-0" aria-label="Retry loading admin command center">Retry</Button>
+          )}
+        </div>
+      )}
       {/* Header + KPIs — first viewport */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-navy-900 font-display">Admin — platform command center</h1>
@@ -253,7 +264,7 @@ export function AdminCommandCenter({
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Product catalog</span>
-            <Badge tone="slate">{catalog.length} / 24 products</Badge>
+            <Badge tone="slate">{catalog.length} / {VERIFICATION_TYPES.length} products</Badge>
           </CardTitle>
           <p className="text-xs text-slate-500">Active toggle controls availability. Pricing shows current minor-unit price (VAT-exclusive). Backup, consent, and upload indicators are vault-grade compliance surfaces.</p>
         </CardHeader>
@@ -267,10 +278,10 @@ export function AdminCommandCenter({
                 const category = getProductCategory(p.type);
                 const cbRequired = requiresCbConsent(p.type);
                 const fileUpload = requiresFileUpload(p.type);
-                const backupMinor = tierBackupByType.get(p.type);
+                const backupLabel = getBackupLabel(p.type);
+                const heterogeneous = hasHeterogeneousBackup(p.type);
                 const simplePricing = pricingByType.get(p.type);
                 const displayPrice = formatPriceMinor(p.priceMinor ?? simplePricing?.priceMinor ?? 0);
-                const backupLabel = backupMinor != null ? formatPriceMinor(backupMinor) : '—';
                 return (
                   <li key={p.type} className="rounded-xl border border-slate-200 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -284,7 +295,7 @@ export function AdminCommandCenter({
                           {cbRequired && <Badge tone="amber">CB consent required</Badge>}
                           {fileUpload && <Badge tone="blue">File upload</Badge>}
                           <Badge tone="slate">{displayPrice} {p.active ? '' : '(inactive)'}</Badge>
-                          <Badge tone={backupMinor != null ? 'slate' : 'slate'}>Backup {backupLabel}</Badge>
+                          <Badge tone="slate" title={heterogeneous ? 'Backup varies by tier — see tier editor for per-tier values' : undefined}>Backup {backupLabel}</Badge>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -322,8 +333,8 @@ export function AdminCommandCenter({
         </CardContent>
       </Card>
 
-      {/* Global tier editor */}
-      <PriceEditor tiers={pricingTiers} pricing={pricing} token={token} onSavePricing={handleSavePricing} onUpdateTier={handleUpdateTier} />
+      {/* Global tier editor — backup per-tier shown here (I-1 detail) */}
+      <PriceEditor tiers={pricingTiers} pricing={pricing} onSavePricing={handleSavePricing} onUpdateTier={handleUpdateTier} />
 
       {/* Org table + per-org controls */}
       <OrgManagement organizations={organizations} token={token} onReloadOrgs={onReload} />

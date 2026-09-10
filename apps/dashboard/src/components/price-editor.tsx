@@ -8,7 +8,6 @@ import { formatPriceMinor, tierRangeLabel, validatePriceInput, validateMinorInpu
 export interface PriceEditorProps {
   tiers: ProductPricingTier[];
   pricing: { id: string; type: string; priceMinor: string | number | bigint; active: boolean }[];
-  token: string | null;
   onSavePricing: (type: string, priceKes: number) => Promise<void>;
   onUpdateTier: (id: string, dto: { unitPriceMinor?: number; backupPriceMinor?: number | null }) => Promise<void>;
   onCreateTier?: (dto: { productType: string; minVolume: number; maxVolume: number | null; unitPriceMinor: number; backupPriceMinor?: number | null }) => Promise<void>;
@@ -76,8 +75,7 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
       setTierErr((s) => ({ ...s, [tier.id]: unitErr }));
       return;
     }
-    if (backupStr.trim() && validateMinorInput(backupStr) && Number(backupStr) !== 0) {
-      // backup can be empty or valid minor; if provided validate >=100
+    if (backupStr.trim() !== '') {
       const bErr = validateMinorInput(backupStr);
       if (bErr) {
         setTierErr((s) => ({ ...s, [tier.id]: bErr }));

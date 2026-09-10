@@ -51,9 +51,6 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
   const [checksErr, setChecksErr] = useState<string | null>(null);
   const [checksBusy, setChecksBusy] = useState(false);
 
-  // Store fetched tiers for normalization; value used via pricingEds/Ids derived above.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_pricingTiers, setPricingTiers] = useState<OrgPricingTier[]>([]);
   const [pricingEdits, setPricingEdits] = useState<Record<string, string>>({});
   const [pricingIds, setPricingIds] = useState<Record<string, string>>({});
   const [pricingMsg, setPricingMsg] = useState<Record<string, string>>({});
@@ -84,7 +81,6 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
       }
       setPricingEdits(edits);
       setPricingIds(ids);
-      setPricingTiers(tiers);
       setSelectedOrgId(orgId);
       setSelectedOrgName(organizations.find((o) => o.id === orgId)?.name ?? orgId);
     } catch (e) {

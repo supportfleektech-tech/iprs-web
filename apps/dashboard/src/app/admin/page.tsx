@@ -52,11 +52,27 @@ export default function AdminPage() {
       if (tiersRes.status === 'fulfilled') setTiers(tiersRes.value);
       else setTiers([]);
 
-      // If critical endpoints failed, surface retryable error; org-scoped OWNER may lack some
-      const criticalFailed = statsRes.status === 'rejected' && topUpsRes.status === 'rejected' && pricingRes.status === 'rejected';
-      if (criticalFailed) {
-        const msg = statsRes.status === 'rejected' ? (statsRes.reason as Error)?.message ?? 'Failed to load admin stats' : 'Failed to load admin data';
-        setError(msg);
+      // Surface partial failures (I-2) — any rejected endpoint yields retryable error banner
+      const failures: Array<{ label: string; res: PromiseSettledResult<unknown> }> = [
+        { label: 'stats', res: statsRes },
+        { label: 'top-ups', res: topUpsRes },
+        { label: 'products', res: productsRes },
+        { label: 'organizations', res: orgsRes },
+        { label: 'pricing', res: pricingRes },
+        { label: 'tiers', res: tiersRes },
+      ];
+      const failed = failures.filter((f) => f.res.status === 'rejected');
+      if (failed.length > 0) {
+        const details = failed
+          .map((f) => {
+            const reason = (f.res as PromiseRejectedResult).reason;
+            const msg = reason instanceof Error ? reason.message : String(reason ?? 'failed');
+            return `${f.label}: ${msg}`;
+          })
+          .join('; ');
+        setError(`Some admin data failed to load (${failed.map((f) => f.label).join(', ')}) — ${details} — retry`);
+      } else {
+        setError(null);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load admin command center');

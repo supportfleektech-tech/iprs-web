@@ -1,5 +1,3 @@
-'use client';
-
 import { CB_CONSENT_REQUIRED_TYPES, PRODUCT_CATEGORIES, PRODUCT_LABELS } from '@fleek/types';
 
 // ---------------------------------------------------------------------------
@@ -119,17 +117,16 @@ export function selectTierForVolume<T extends { minVolume: number; maxVolume: nu
   volume: number,
 ): T | null {
   if (!Array.isArray(tiers) || tiers.length === 0) return null;
-  // Primary: first tier where minVolume <= volume <= maxVolume (or null max)
-  for (const tier of tiers) {
+  // Ensure deterministic ordering: desc by minVolume (mirrors VerificationsService.selectTierInMemory)
+  const sorted = [...tiers].sort((a, b) => b.minVolume - a.minVolume);
+  for (const tier of sorted) {
     if (tier.minVolume <= volume && (tier.maxVolume === null || tier.maxVolume >= volume)) {
       return tier;
     }
   }
-  // Deterministic fallback: tiers expected sorted desc by minVolume; last is smallest min.
-  const smallest = tiers[tiers.length - 1];
+  const smallest = sorted[sorted.length - 1];
   if (volume < smallest.minVolume) return null;
-  // Fallback to most specific (first) when volume exceeds all bounded ranges but list non-empty
-  return tiers[0] ?? null;
+  return sorted[0] ?? null;
 }
 
 /**

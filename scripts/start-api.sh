@@ -49,42 +49,9 @@ export SMTP_PASS
 export SMTP_FROM
 export TRUST_PROXY
 export NODE_ENV
-# Use env to explicitly pass all environment variables to node
-env \
-  DATABASE_URL="$DATABASE_URL" \
-  JWT_SECRET="$JWT_SECRET" \
-  FIELD_ENCRYPTION_KEY="$FIELD_ENCRYPTION_KEY" \
-  PORT="$PORT" \
-  ENABLED_CHECKS="$ENABLED_CHECKS" \
-  USE_LIVE_UPSTREAM="$USE_LIVE_UPSTREAM" \
-  UPSTREAM_BASE_URL="$UPSTREAM_BASE_URL" \
-  UPSTREAM_API_KEY="$UPSTREAM_API_KEY" \
-  LIVE_CHECKS="$LIVE_CHECKS" \
-  DARAJA_CONSUMER_KEY="$DARAJA_CONSUMER_KEY" \
-  DARAJA_CONSUMER_SECRET="$DARAJA_CONSUMER_SECRET" \
-  DARAJA_SHORTCODE="$DARAJA_SHORTCODE" \
-  DARAJA_PASSKEY="$DARAJA_PASSKEY" \
-  DARAJA_ENV="$DARAJA_ENV" \
-  DARAJA_CALLBACK_URL="$DARAJA_CALLBACK_URL" \
-  PAYBILL_NUMBER="$PAYBILL_NUMBER" \
-  PAYBILL_ACCOUNT="$PAYBILL_ACCOUNT" \
-  BANK_NAME="$BANK_NAME" \
-  BANK_BRANCH="$BANK_BRANCH" \
-  ACCOUNT_NAME="$ACCOUNT_NAME" \
-  FIELD_ENCRYPTION_KEY="$FIELD_ENCRYPTION_KEY" \
-  JWT_SECRET="$JWT_SECRET" \
-  JWT_EXPIRES_IN="$JWT_EXPIRES_IN" \
-  REFRESH_EXPIRES_IN="$REFRESH_EXPIRES_IN" \
-  CORS_ORIGINS="$CORS_ORIGINS" \
-  PASSWORD_RESET_URL="$PASSWORD_RESET_URL" \
-  SMTP_HOST="$SMTP_HOST" \
-  SMTP_PORT="$SMTP_PORT" \
-  SMTP_SECURE="$SMTP_SECURE" \
-  SMTP_USER="$SMTP_USER" \
-  SMTP_PASS="$SMTP_PASS" \
-  SMTP_FROM="$SMTP_FROM" \
-  TRUST_PROXY="$TRUST_PROXY" \
-  NODE_ENV="$NODE_ENV" \
-  setsid nohup node dist/main.js </dev/null > /tmp/opencode/api.log 2>&1 &
+# Launch with the exported environment as-is. NOTE: do NOT re-pass vars via
+# `env VAR="$VAR"` — an unset var would arrive as an empty string, which
+# defeats the app's `?? default` fallbacks (e.g. PORT="" crashes listen()).
+setsid nohup node dist/main.js </dev/null > /tmp/opencode/api.log 2>&1 &
 echo $! > /tmp/opencode/api.pid
 echo "started pid $(cat /tmp/opencode/api.pid)"

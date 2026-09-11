@@ -16,7 +16,7 @@ function getEnvOrDefault(key: string, env: string, defaultValue: string): string
 const isProduction = process.env.NODE_ENV === 'production';
 
 export const appConfig = {
-  port: parseInt(process.env.PORT ?? '4000', 10),
+  port: Number(process.env.PORT) || 4000,
   jwtSecret: isProduction
     ? failFast('JWT_SECRET', 'JWT_SECRET')
     : getEnvOrDefault('JWT_SECRET', 'JWT_SECRET', 'dev-jwt-secret-change-in-production'),

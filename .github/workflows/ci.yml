@@ -102,7 +102,8 @@ jobs:
             sleep 10
           done
           echo "services failed to become ready (api=$api dash=$dash)"
-          tail -50 /tmp/opencode/api.log /tmp/opencode/dashboard.log || true
+          tail -n 50 /tmp/opencode/api.log || true
+          tail -n 50 /tmp/opencode/dashboard.log || true
           exit 1
       # Single worker: full parallelism OOM-kills `next dev` on small runners.
       - run: pnpm exec playwright test --workers=1

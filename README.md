@@ -78,6 +78,13 @@ that boots Postgres → API → dashboard and exercises the happy path in a real
 - `docker-compose.prod.yml` — Postgres + api + web + dashboard behind one compose project.
 - `apps/api/Dockerfile` — multi-stage NestJS image (runs migrations with `prisma migrate deploy`).
 - `Dockerfile.next` — standalone-output Next.js image used for both web and dashboard via `APP` arg.
+- Vercel (live, CLI prebuilt/remote flow from repo root — do NOT link inside app dirs):
+  - Marketing site: https://iprs-web.vercel.app (`fleek3/iprs-web`, rootDirectory `apps/web`)
+  - Console: https://iprs-dashboard.vercel.app (`fleek3/iprs-dashboard`, rootDirectory `apps/dashboard`)
+  - Dashboard deploys must build workspace deps first (`turbo run build` scope — plain
+    `next build` fails on `@fleek/types`); remote `vercel deploy --prod` handles this.
+- API production (Render blueprint `render.yaml` or VPS `deploy/deploy.sh`) is the remaining
+  step — frontends then need `NEXT_PUBLIC_API_URL` pointed at it and a rebuild.
 
 Required production env (see `.env.example`s): `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY`,
 `CORS_ORIGINS`, `ENABLED_CHECKS`, `NEXT_PUBLIC_API_URL`.

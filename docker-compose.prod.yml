@@ -28,12 +28,12 @@ services:
       NODE_ENV: production
       CORS_ORIGINS: https://fleekiprs.co.ke,https://app.fleekiprs.co.ke
       PASSWORD_RESET_URL: https://app.fleekiprs.co.ke/reset-password
-      ENABLED_CHECKS: iprs_id,kra_pin,phone_ownership,sim_swap
+      ENABLED_CHECKS: iprs_standard,kra_pin_verification,match_id_phone,sim_swap_check
       # Live verification upstream (optional — sandbox when empty):
       USE_LIVE_UPSTREAM: ${USE_LIVE_UPSTREAM:-false}
       UPSTREAM_BASE_URL: ${UPSTREAM_BASE_URL:-}
       UPSTREAM_API_KEY: ${UPSTREAM_API_KEY:-}
-      LIVE_CHECKS: ${LIVE_CHECKS:-iprs_id,kra_pin}
+      LIVE_CHECKS: ${LIVE_CHECKS:-iprs_standard,kra_pin_verification}
       # M-Pesa Daraja (optional — mock gateway when empty):
       DARAJA_CONSUMER_KEY: ${DARAJA_CONSUMER_KEY:-}
       DARAJA_CONSUMER_SECRET: ${DARAJA_CONSUMER_SECRET:-}
@@ -41,6 +41,24 @@ services:
       DARAJA_PASSKEY: ${DARAJA_PASSKEY:-}
       DARAJA_ENV: ${DARAJA_ENV:-sandbox}
       DARAJA_CALLBACK_URL: ${DARAJA_CALLBACK_URL:-https://api.fleekiprs.co.ke/v1/payments/callback}
+      # Backup upstream (optional — explicit opt-in retry only):
+      BACKUP_BASE_URL: ${BACKUP_BASE_URL:-}
+      BACKUP_API_KEY: ${BACKUP_API_KEY:-}
+      BACKUP_CHECKS: ${BACKUP_CHECKS:-}
+      # Card via Stripe (optional — sandbox auto-complete when empty):
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      # PayPal Orders v2 (optional — sandbox auto-complete when empty):
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
+      PAYPAL_SECRET: ${PAYPAL_SECRET:-}
+      PAYPAL_ENV: ${PAYPAL_ENV:-sandbox}
+      PAYPAL_CURRENCY: ${PAYPAL_CURRENCY:-USD}
+      # SMTP mail (optional — log-only ConsoleMailer when SMTP_HOST empty):
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Fleek IPRS <no-reply@fleekiprs.co.ke>}
       TRUST_PROXY: 'true'
     depends_on:
       postgres:

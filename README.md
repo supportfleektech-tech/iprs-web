@@ -91,8 +91,11 @@ configuration only:
 | Integration                                                     | Env vars                                                                            | While empty                                        |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
 | Live IPRS/KRA data (`packages/providers` → `AggregatorAdapter`) | `USE_LIVE_UPSTREAM`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS`         | Deterministic mock provider; per-type live routing |
+| Backup upstream (explicit opt-in retry)                         | `BACKUP_BASE_URL`, `BACKUP_API_KEY`, `BACKUP_CHECKS`                                | No backup offered (`backupAvailable: false`)       |
 | M-Pesa STK top-ups (`apps/api/src/payments` → `DarajaGateway`)  | `DARAJA_CONSUMER_KEY/SECRET/SHORTCODE/PASSKEY`, `DARAJA_ENV`, `DARAJA_CALLBACK_URL` | Mock gateway auto-completes after ~3s              |
-| Reset emails                                                    | swap `ConsoleMailer` for SES/Postmark                                               | Links logged server-side                           |
+| Card top-ups (Stripe PaymentIntent)                             | `STRIPE_SECRET_KEY`                                                                 | Sandbox auto-completes, no charge                  |
+| PayPal top-ups (Orders v2, non-KES via `PAYPAL_CURRENCY`)       | `PAYPAL_CLIENT_ID/SECRET`, `PAYPAL_ENV`                                             | Sandbox auto-completes, no charge                  |
+| Reset emails (`SmtpMailer` via `buildMailer` factory)           | `SMTP_HOST/PORT/SECURE/USER/PASS/FROM`                                              | `ConsoleMailer`: links logged server-side          |
 
 Bulk CSV verification, wallet billing, audit trails and admin approvals all work end-to-end
 in sandbox mode today.

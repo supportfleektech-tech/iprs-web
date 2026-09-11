@@ -27,6 +27,46 @@ services:
         value: https://iprs-dashboard.vercel.app/reset-password
       - key: TRUST_PROXY
         value: 'true'
+      # Optional integrations — empty/sandbox until you set them in the
+      # Render dashboard (sync: false keeps secrets out of the repo).
+      - key: USE_LIVE_UPSTREAM
+        value: 'false'
+      - key: UPSTREAM_BASE_URL
+        sync: false
+      - key: UPSTREAM_API_KEY
+        sync: false
+      - key: LIVE_CHECKS
+        value: iprs_standard,kra_pin_verification
+      - key: BACKUP_BASE_URL
+        sync: false
+      - key: BACKUP_API_KEY
+        sync: false
+      - key: BACKUP_CHECKS
+        sync: false
+      - key: DARAJA_CONSUMER_KEY
+        sync: false
+      - key: DARAJA_CONSUMER_SECRET
+        sync: false
+      - key: DARAJA_SHORTCODE
+        sync: false
+      - key: DARAJA_PASSKEY
+        sync: false
+      - key: DARAJA_ENV
+        value: sandbox
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: Fleek IPRS <no-reply@fleekiprs.co.ke>
 
 databases:
   - name: fleek-iprs-db

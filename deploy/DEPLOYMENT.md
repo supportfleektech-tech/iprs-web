@@ -82,7 +82,11 @@ All third-party integrations read credentials from `.env` — no code changes ne
 | Integration        | Env vars                                                                                                | Behaviour while empty       |
 | ------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------- |
 | Live IPRS/KRA data | `USE_LIVE_UPSTREAM=true`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS`                        | Deterministic mock provider |
+| Backup upstream    | `BACKUP_BASE_URL`, `BACKUP_API_KEY`, `BACKUP_CHECKS`                                                    | No backup offered           |
 | M-Pesa STK top-ups | `DARAJA_CONSUMER_KEY/SECRET/SHORTCODE/PASSKEY`, `DARAJA_ENV=sandbox\|production`, `DARAJA_CALLBACK_URL` | Mock gateway auto-completes |
+| Card top-ups       | `STRIPE_SECRET_KEY`                                                                                     | Sandbox auto-completes      |
+| PayPal top-ups     | `PAYPAL_CLIENT_ID/SECRET`, `PAYPAL_ENV`, `PAYPAL_CURRENCY`                                              | Sandbox auto-completes      |
+| Reset emails       | `SMTP_HOST/PORT/SECURE/USER/PASS/FROM`                                                                  | Log-only mailer             |
 
 After editing `.env`: `./deploy/deploy.sh` (rebuilds and restarts cleanly).
 

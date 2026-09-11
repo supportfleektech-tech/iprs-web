@@ -8,10 +8,12 @@ if [ -f /tmp/opencode/api.pid ] && kill -0 "$(cat /tmp/opencode/api.pid)" 2>/dev
   exit 0
 fi
 mkdir -p /tmp/opencode
-# Load environment variables from .env
-set -a
-source .env
-set +a
+# Load environment variables from .env when present (CI passes them via environment)
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+fi
 # Explicitly export all variables to ensure they're available to child processes
 export DATABASE_URL
 export JWT_SECRET
@@ -39,6 +41,12 @@ export JWT_EXPIRES_IN
 export REFRESH_EXPIRES_IN
 export CORS_ORIGINS
 export PASSWORD_RESET_URL
+export SMTP_HOST
+export SMTP_PORT
+export SMTP_SECURE
+export SMTP_USER
+export SMTP_PASS
+export SMTP_FROM
 export TRUST_PROXY
 export NODE_ENV
 # Use env to explicitly pass all environment variables to node
@@ -69,6 +77,12 @@ env \
   REFRESH_EXPIRES_IN="$REFRESH_EXPIRES_IN" \
   CORS_ORIGINS="$CORS_ORIGINS" \
   PASSWORD_RESET_URL="$PASSWORD_RESET_URL" \
+  SMTP_HOST="$SMTP_HOST" \
+  SMTP_PORT="$SMTP_PORT" \
+  SMTP_SECURE="$SMTP_SECURE" \
+  SMTP_USER="$SMTP_USER" \
+  SMTP_PASS="$SMTP_PASS" \
+  SMTP_FROM="$SMTP_FROM" \
   TRUST_PROXY="$TRUST_PROXY" \
   NODE_ENV="$NODE_ENV" \
   setsid nohup node dist/main.js </dev/null > /tmp/opencode/api.log 2>&1 &

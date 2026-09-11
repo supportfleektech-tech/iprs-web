@@ -3,7 +3,12 @@
 import Link from 'next/link';
 import { DashboardIcon } from './dashboard-icons';
 import { StatusBadge } from './status-badge';
-import { formatCurrency, formatResultValue, humanise, isSensitiveResultKey } from '@/lib/verification-form';
+import {
+  formatCurrency,
+  formatResultValue,
+  humanise,
+  isSensitiveResultKey,
+} from '@/lib/verification-form';
 import type { VerificationResultPayload } from '@/lib/verification-form';
 
 export interface ResultPanelProps {
@@ -18,7 +23,9 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
     : [];
 
   const showBackupBanner = Boolean(
-    detail.backupAvailable && detail.backupPrice != null && (detail.status === 'failed' || !!detail.errorMessage),
+    detail.backupAvailable &&
+    detail.backupPrice != null &&
+    (detail.status === 'failed' || !!detail.errorMessage),
   );
 
   return (
@@ -28,7 +35,9 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
     >
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Verification result</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+            Verification result
+          </p>
           <h2 id="verification-result-title" className="mt-1 text-lg font-semibold text-navy-900">
             {humanise(detail.type)}
           </h2>
@@ -42,15 +51,26 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
       {/* Structured evidence metrics */}
       <div className="grid gap-px bg-slate-100 sm:grid-cols-2 lg:grid-cols-4">
         <Metric label="Cost" value={detail.cost > 0 ? formatCurrency(detail.cost) : 'Free'} />
-        <Metric label="Latency" value={detail.latencyMs != null ? `${detail.latencyMs.toLocaleString()} ms` : '—'} />
+        <Metric
+          label="Latency"
+          value={detail.latencyMs != null ? `${detail.latencyMs.toLocaleString()} ms` : '—'}
+        />
         <Metric label="Source" value={detail.source ?? 'dashboard'} />
         <Metric label="Recorded" value={new Date(detail.createdAt).toLocaleString()} />
       </div>
 
       <div className="px-5 py-4">
         {detail.errorMessage ? (
-          <div className="flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert" aria-live="assertive">
-            <DashboardIcon name="alert" className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
+          <div
+            className="flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4"
+            role="alert"
+            aria-live="assertive"
+          >
+            <DashboardIcon
+              name="alert"
+              className="mt-0.5 h-4 w-4 shrink-0 text-red-600"
+              aria-hidden="true"
+            />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-red-700">Verification could not complete</p>
               <p className="mt-1 break-words text-sm text-red-700/80">{detail.errorMessage}</p>
@@ -67,8 +87,8 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-amber-800">Backup provider available</p>
               <p className="mt-1 text-sm text-amber-700/90">
-                The primary provider is unavailable. Backup pricing is {formatCurrency(detail.backupPrice ?? 0)} and is charged only after
-                you confirm.
+                The primary provider is unavailable. Backup pricing is{' '}
+                {formatCurrency(detail.backupPrice ?? 0)} and is charged only after you confirm.
               </p>
             </div>
             {onRetryBackup ? (
@@ -79,7 +99,11 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
                 aria-busy={backupPending}
                 className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white transition-[transform,opacity,background-color] duration-200 hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
               >
-                <DashboardIcon name="refresh" className={`h-4 w-4 ${backupPending ? 'animate-spin' : ''}`} aria-hidden="true" />
+                <DashboardIcon
+                  name="refresh"
+                  className={`h-4 w-4 ${backupPending ? 'animate-spin' : ''}`}
+                  aria-hidden="true"
+                />
                 {backupPending ? 'Retrying…' : 'Retry with backup'}
               </button>
             ) : (
@@ -96,10 +120,14 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
           <dl className="grid gap-3 sm:grid-cols-2">
             {entries.map(([key, value]) => (
               <div key={key} className="min-w-0 rounded-lg bg-slate-50 p-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{humanise(key)}</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {humanise(key)}
+                </dt>
                 <dd className="mt-1 break-words text-sm text-navy-900">
                   {typeof value === 'object' && value !== null ? (
-                    <pre className="whitespace-pre-wrap break-words text-xs">{formatResultValue(value)}</pre>
+                    <pre className="whitespace-pre-wrap break-words text-xs">
+                      {formatResultValue(value)}
+                    </pre>
                   ) : (
                     formatResultValue(value)
                   )}
@@ -112,8 +140,13 @@ export function ResultPanel({ detail, onRetryBackup, backupPending }: ResultPane
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4">
         <p className="text-xs text-slate-500">
-          Record ID <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">{detail.id.slice(0, 12)}…</code>{' '}
-          {detail.isBackup && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">backup</span>}
+          Record ID{' '}
+          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">
+            {detail.id.slice(0, 12)}…
+          </code>{' '}
+          {detail.isBackup && (
+            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">backup</span>
+          )}
         </p>
         <Link
           href={`/console/history/${detail.id}`}

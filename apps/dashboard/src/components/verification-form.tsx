@@ -23,8 +23,16 @@ export interface VerificationFormProps {
   onPayload?: (payload: Record<string, unknown>) => void;
 }
 
-export function VerificationForm({ product, token, onResult, onError, onPayload }: VerificationFormProps) {
-  const [values, setValues] = useState<VerificationFormValues>(() => getVerificationFormValues(product.type as VerificationType));
+export function VerificationForm({
+  product,
+  token,
+  onResult,
+  onError,
+  onPayload,
+}: VerificationFormProps) {
+  const [values, setValues] = useState<VerificationFormValues>(() =>
+    getVerificationFormValues(product.type as VerificationType),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileNotes, setFileNotes] = useState<Record<string, string>>({});
@@ -35,7 +43,10 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
     setFileNotes({});
   }, [product.type]);
 
-  const fields = useMemo(() => VERIFICATION_FORM_FIELDS[product.type as VerificationType] ?? [], [product.type]);
+  const fields = useMemo(
+    () => VERIFICATION_FORM_FIELDS[product.type as VerificationType] ?? [],
+    [product.type],
+  );
   const requiresCbConsent = product.cbConsentRequired;
 
   const canSubmit = useMemo(() => {
@@ -45,13 +56,21 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
     return true;
   }, [product.active, product.enabled, product.type, requiresCbConsent, values]);
 
-  function updateValue<K extends keyof VerificationFormValues>(key: K, value: VerificationFormValues[K]) {
+  function updateValue<K extends keyof VerificationFormValues>(
+    key: K,
+    value: VerificationFormValues[K],
+  ) {
     setValues((current) => ({ ...current, [key]: value }));
   }
 
   function readFile(file: File, key: keyof VerificationFormValues) {
-    const allowed = product.fileTypes.length ? product.fileTypes : ['image/jpeg', 'image/png', 'application/pdf'];
-    const isAllowed = allowed.includes(file.type) || file.type.match(/^image\/(jpeg|png)$/) || file.type === 'application/pdf';
+    const allowed = product.fileTypes.length
+      ? product.fileTypes
+      : ['image/jpeg', 'image/png', 'application/pdf'];
+    const isAllowed =
+      allowed.includes(file.type) ||
+      file.type.match(/^image\/(jpeg|png)$/) ||
+      file.type === 'application/pdf';
     if (!isAllowed) {
       const msg = 'Please choose a valid file type: ' + allowed.join(', ');
       setError(msg);
@@ -147,17 +166,21 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
       // Never log PII or base64 payloads.
       onPayload?.(payload);
 
-      const run = await apiFetch<{ id: string; status: string; backupAvailable?: boolean; backupPrice?: number }>(
-        '/verifications',
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          token,
-        },
-      );
+      const run = await apiFetch<{
+        id: string;
+        status: string;
+        backupAvailable?: boolean;
+        backupPrice?: number;
+      }>('/verifications', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      });
 
       // Fetch detail for structured evidence
-      const detail = await apiFetch<VerificationResultPayload>(`/verifications/${run.id}`, { token });
+      const detail = await apiFetch<VerificationResultPayload>(`/verifications/${run.id}`, {
+        token,
+      });
       onResult(detail);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Verification failed';
@@ -191,7 +214,9 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
                     *
                   </span>
                 ) : null}
-                {!field.required && <span className="ml-1 text-xs font-normal text-slate-400">(optional)</span>}
+                {!field.required && (
+                  <span className="ml-1 text-xs font-normal text-slate-400">(optional)</span>
+                )}
               </Label>
               {field.inputType === 'file' ? (
                 <div className="mt-1.5">
@@ -223,7 +248,18 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
               ) : (
                 <Input
                   id={id}
-                  type={field.inputType as 'search' | 'number' | 'tel' | 'text' | 'none' | 'email' | 'url' | 'decimal' | undefined}
+                  type={
+                    field.inputType as
+                      | 'search'
+                      | 'number'
+                      | 'tel'
+                      | 'text'
+                      | 'none'
+                      | 'email'
+                      | 'url'
+                      | 'decimal'
+                      | undefined
+                  }
                   inputMode={field.inputMode}
                   required={field.required}
                   aria-describedby={hintId}
@@ -268,7 +304,8 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
                 aria-label="Confirm credit bureau consent for this verification"
               />
               <span className="text-sm text-slate-700">
-                Credit bureau consent is required for this product — the subject has authorized CRB and registry checks.
+                Credit bureau consent is required for this product — the subject has authorized CRB
+                and registry checks.
                 <span className="ml-1 text-red-600" aria-hidden="true">
                   *
                 </span>
@@ -290,7 +327,9 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
               : product.active
                 ? 'No charge until a check completes successfully'
                 : 'Product unavailable — pricing not configured'}
-            {product.backupAvailable && product.backupPriceKes != null && ` · backup KES ${Number(product.backupPriceKes).toLocaleString('en-KE', { minimumFractionDigits: 2 })}`}
+            {product.backupAvailable &&
+              product.backupPriceKes != null &&
+              ` · backup KES ${Number(product.backupPriceKes).toLocaleString('en-KE', { minimumFractionDigits: 2 })}`}
           </p>
           <Button
             type="submit"
@@ -300,11 +339,13 @@ export function VerificationForm({ product, token, onResult, onError, onPayload 
           >
             {busy ? (
               <>
-                <DashboardIcon name="refresh" className="h-4 w-4 animate-spin" aria-hidden="true" /> Running check…
+                <DashboardIcon name="refresh" className="h-4 w-4 animate-spin" aria-hidden="true" />{' '}
+                Running check…
               </>
             ) : (
               <>
-                <DashboardIcon name="search" className="h-4 w-4" aria-hidden="true" /> Run verification
+                <DashboardIcon name="search" className="h-4 w-4" aria-hidden="true" /> Run
+                verification
               </>
             )}
           </Button>

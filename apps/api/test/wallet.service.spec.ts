@@ -51,7 +51,14 @@ describe('WalletService', () => {
   describe('getTransactions', () => {
     it('should return transactions with pagination', async () => {
       mockPrisma.client.transaction.findMany.mockResolvedValue([
-        { id: '1', type: 'topup', amountMinor: 100000n, balanceAfter: 500000n, description: 'Welcome', createdAt: new Date() },
+        {
+          id: '1',
+          type: 'topup',
+          amountMinor: 100000n,
+          balanceAfter: 500000n,
+          description: 'Welcome',
+          createdAt: new Date(),
+        },
       ]);
       mockPrisma.client.transaction.count.mockResolvedValue(1);
 
@@ -76,7 +83,9 @@ describe('WalletService', () => {
     });
 
     it('should throw BadRequestException for amount < 1000', async () => {
-      await expect(service.requestTopUp('org-1', 'user-1', 500)).rejects.toThrow('Minimum top-up is KES 1,000');
+      await expect(service.requestTopUp('org-1', 'user-1', 500)).rejects.toThrow(
+        'Minimum top-up is KES 1,000',
+      );
     });
   });
 
@@ -101,7 +110,9 @@ describe('WalletService', () => {
         id: 'topup-1',
         status: 'approved',
       });
-      await expect(service.reviewTopUp('topup-1', 'admin-1', true)).rejects.toThrow('Already reviewed');
+      await expect(service.reviewTopUp('topup-1', 'admin-1', true)).rejects.toThrow(
+        'Already reviewed',
+      );
     });
 
     it('should enforce org scope for non-platform admins', async () => {
@@ -110,7 +121,9 @@ describe('WalletService', () => {
         organizationId: 'org-2',
         status: 'pending',
       });
-      await expect(service.reviewTopUp('topup-1', 'admin-1', true, undefined, 'org-1')).rejects.toThrow('Not allowed to review this request');
+      await expect(
+        service.reviewTopUp('topup-1', 'admin-1', true, undefined, 'org-1'),
+      ).rejects.toThrow('Not allowed to review this request');
     });
   });
 });

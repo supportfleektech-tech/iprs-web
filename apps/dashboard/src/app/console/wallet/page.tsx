@@ -6,7 +6,12 @@ import { apiFetch, useAuth } from '@/lib/auth';
 import { WalletHero, WalletActivitySummary } from '@/components/wallet-summary';
 import { PaymentRail, PaymentRailTabs, RailMessage } from '@/components/payment-rail';
 import { downloadReport, buildWalletStatementUrl } from '@/lib/exports';
-import { formatLedgerAmount, isTopUpTransaction, canInitiatePayments, type PaymentRailType } from '@/lib/wallet';
+import {
+  formatLedgerAmount,
+  isTopUpTransaction,
+  canInitiatePayments,
+  type PaymentRailType,
+} from '@/lib/wallet';
 import { DashboardIcon } from '@/components/dashboard-icons';
 
 interface Tx {
@@ -115,7 +120,9 @@ export default function WalletPage() {
         setTopUps(reqs);
       }
       if (canManage) {
-        const details = await apiFetch<BankDetails>('/payments/bank-details', { token }).catch(() => null);
+        const details = await apiFetch<BankDetails>('/payments/bank-details', { token }).catch(
+          () => null,
+        );
         if (details) setBankDetails(details);
       }
     } catch (err) {
@@ -143,7 +150,9 @@ export default function WalletPage() {
         body: JSON.stringify({ amount: Number(amount) }),
         token,
       });
-      setMsg('Top-up requested. Fleektech will issue an invoice; the wallet is credited on approval.');
+      setMsg(
+        'Top-up requested. Fleektech will issue an invoice; the wallet is credited on approval.',
+      );
       setAmount('');
       await load();
     } catch (err) {
@@ -169,7 +178,9 @@ export default function WalletPage() {
       const started = Date.now();
       if (pollRef.current) clearInterval(pollRef.current);
       pollRef.current = setInterval(async () => {
-        const s = await apiFetch<StkPayment>(`/payments/stk/${payment.id}`, { token }).catch(() => null);
+        const s = await apiFetch<StkPayment>(`/payments/stk/${payment.id}`, { token }).catch(
+          () => null,
+        );
         if (!s) return;
         if (s.status === 'paid') {
           setStkMessage('Payment received — wallet credited.');
@@ -203,7 +214,9 @@ export default function WalletPage() {
         body: JSON.stringify({ amount: Number(bankAmount), phone: bankPhone, paybillRef: bankRef }),
         token,
       });
-      setBankMessage(res.message ?? 'Bank/Paybill transfer recorded. Wallet will be credited on confirmation.');
+      setBankMessage(
+        res.message ?? 'Bank/Paybill transfer recorded. Wallet will be credited on confirmation.',
+      );
       setBankAmount('');
       setBankRef('');
       await load();
@@ -254,7 +267,12 @@ export default function WalletPage() {
         token,
       });
       setCardPaymentId(res.id);
-      setCardMessage(res.message ?? (res.sandbox ? 'SANDBOX MODE — card payment auto-completes in a few seconds' : 'Card payment intent created — complete it, then confirm.'));
+      setCardMessage(
+        res.message ??
+          (res.sandbox
+            ? 'SANDBOX MODE — card payment auto-completes in a few seconds'
+            : 'Card payment intent created — complete it, then confirm.'),
+      );
       if (!res.sandbox && res.clientSecret) setCardNeedsConfirm(true);
       pollOnlinePayment(
         res.id,
@@ -315,7 +333,12 @@ export default function WalletPage() {
         token,
       });
       setPaypalPaymentId(res.id);
-      setPaypalMessage(res.message ?? (res.sandbox ? 'SANDBOX MODE — PayPal payment auto-completes in a few seconds' : 'PayPal order created — approve it, then capture.'));
+      setPaypalMessage(
+        res.message ??
+          (res.sandbox
+            ? 'SANDBOX MODE — PayPal payment auto-completes in a few seconds'
+            : 'PayPal order created — approve it, then capture.'),
+      );
       if (!res.sandbox && res.approvalUrl) setPaypalApprovalUrl(res.approvalUrl);
       pollOnlinePayment(
         res.id,
@@ -381,14 +404,23 @@ export default function WalletPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Financial control</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">Wallet</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+            Financial control
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">
+            Wallet
+          </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
             Top up your organization wallet and track every credit and debit with a running balance.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => void load()} aria-label="Refresh wallet data" className="h-11">
+          <Button
+            variant="secondary"
+            onClick={() => void load()}
+            aria-label="Refresh wallet data"
+            className="h-11"
+          >
             <DashboardIcon name="refresh" className="h-4 w-4" aria-hidden="true" />
             Refresh
           </Button>
@@ -407,7 +439,11 @@ export default function WalletPage() {
       <WalletActivitySummary transactions={txs} topUps={topUps} loading={loading} />
 
       {loadError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert" aria-live="assertive">
+        <div
+          className="rounded-xl border border-red-200 bg-red-50 p-4"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-red-700">{loadError}</p>
             <Button size="sm" variant="secondary" onClick={() => void load()} className="h-11">
@@ -418,7 +454,11 @@ export default function WalletPage() {
       )}
 
       {exportError && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" role="alert" aria-live="assertive">
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-4"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-amber-800">{exportError}</p>
             <button
@@ -441,11 +481,17 @@ export default function WalletPage() {
           aria-label="Payment permissions"
         >
           <div className="flex gap-3">
-            <DashboardIcon name="info" className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+            <DashboardIcon
+              name="info"
+              className="mt-0.5 h-5 w-5 shrink-0 text-amber-700"
+              aria-hidden="true"
+            />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold text-amber-800">View-only wallet access</h2>
               <p className="mt-1 text-sm leading-6 text-amber-700">
-                Your role (<span className="font-medium">{user?.role ?? 'Member'}</span>) cannot initiate payments or request invoices. Only Owners and Admins can top up the wallet. Contact your organization owner for access.
+                Your role (<span className="font-medium">{user?.role ?? 'Member'}</span>) cannot
+                initiate payments or request invoices. Only Owners and Admins can top up the wallet.
+                Contact your organization owner for access.
               </p>
             </div>
           </div>
@@ -455,15 +501,23 @@ export default function WalletPage() {
       {/* Rail tabs */}
       <section aria-label="Payment rails" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Payment rails</h2>
-          <span className="text-xs text-slate-400">Choose a rail — each shows sandbox/live context and status.</span>
+          <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Payment rails
+          </h2>
+          <span className="text-xs text-slate-400">
+            Choose a rail — each shows sandbox/live context and status.
+          </span>
         </div>
         <PaymentRailTabs activeRail={activeRail} onChange={setActiveRail} canManage={canManage} />
 
         <div className="space-y-4">
           {activeRail === 'mpesa' && (
             <PaymentRail rail="mpesa" enabled={canManage}>
-              <form onSubmit={payWithMpesa} className="flex flex-wrap items-end gap-3" aria-label="M-Pesa payment form">
+              <form
+                onSubmit={payWithMpesa}
+                className="flex flex-wrap items-end gap-3"
+                aria-label="M-Pesa payment form"
+              >
                 <div className="flex w-32 flex-col gap-1.5">
                   <Label htmlFor="mpesaAmount">Amount (KES)</Label>
                   <Input
@@ -491,7 +545,12 @@ export default function WalletPage() {
                     aria-label="M-Pesa phone number"
                   />
                 </div>
-                <Button type="submit" disabled={!canManage || stkBusy} aria-busy={stkBusy} className="h-11">
+                <Button
+                  type="submit"
+                  disabled={!canManage || stkBusy}
+                  aria-busy={stkBusy}
+                  className="h-11"
+                >
                   {stkBusy ? 'Waiting for PIN…' : 'Pay now'}
                 </Button>
               </form>
@@ -503,29 +562,44 @@ export default function WalletPage() {
             <PaymentRail rail="bank" enabled={canManage}>
               {bankDetails && (
                 <div className="mb-4 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-inset ring-slate-200">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Bank / Paybill details</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Bank / Paybill details
+                  </p>
                   <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
                     <div className="flex justify-between gap-2">
                       <dt className="text-slate-500">Paybill</dt>
-                      <dd className="font-medium tabular-nums text-navy-900">{bankDetails.paybillNumber}</dd>
+                      <dd className="font-medium tabular-nums text-navy-900">
+                        {bankDetails.paybillNumber}
+                      </dd>
                     </div>
                     <div className="flex justify-between gap-2">
                       <dt className="text-slate-500">Account</dt>
-                      <dd className="font-medium tabular-nums text-navy-900">{bankDetails.paybillAccount}</dd>
+                      <dd className="font-medium tabular-nums text-navy-900">
+                        {bankDetails.paybillAccount}
+                      </dd>
                     </div>
                     <div className="flex justify-between gap-2">
                       <dt className="text-slate-500">Bank</dt>
-                      <dd className="font-medium text-navy-900">{bankDetails.bankName} — {bankDetails.bankBranch}</dd>
+                      <dd className="font-medium text-navy-900">
+                        {bankDetails.bankName} — {bankDetails.bankBranch}
+                      </dd>
                     </div>
                     <div className="flex justify-between gap-2">
                       <dt className="text-slate-500">Account name</dt>
                       <dd className="font-medium text-navy-900">{bankDetails.accountName}</dd>
                     </div>
                   </dl>
-                  <p className="mt-2 text-xs text-slate-400">Transfer via bank or M-Pesa Paybill, then confirm below with the M-Pesa reference.</p>
+                  <p className="mt-2 text-xs text-slate-400">
+                    Transfer via bank or M-Pesa Paybill, then confirm below with the M-Pesa
+                    reference.
+                  </p>
                 </div>
               )}
-              <form onSubmit={confirmBankTransfer} className="flex flex-wrap items-end gap-3" aria-label="Bank transfer confirmation form">
+              <form
+                onSubmit={confirmBankTransfer}
+                className="flex flex-wrap items-end gap-3"
+                aria-label="Bank transfer confirmation form"
+              >
                 <div className="flex w-32 flex-col gap-1.5">
                   <Label htmlFor="bankAmount">Amount (KES)</Label>
                   <Input
@@ -562,7 +636,12 @@ export default function WalletPage() {
                     disabled={!canManage || bankBusy}
                   />
                 </div>
-                <Button type="submit" disabled={!canManage || bankBusy} aria-busy={bankBusy} className="h-11">
+                <Button
+                  type="submit"
+                  disabled={!canManage || bankBusy}
+                  aria-busy={bankBusy}
+                  className="h-11"
+                >
                   {bankBusy ? 'Recording…' : 'Confirm transfer'}
                 </Button>
               </form>
@@ -572,7 +651,11 @@ export default function WalletPage() {
 
           {activeRail === 'card' && (
             <PaymentRail rail="card" enabled={canManage}>
-              <form onSubmit={payWithCard} className="flex flex-wrap items-end gap-3" aria-label="Card payment form">
+              <form
+                onSubmit={payWithCard}
+                className="flex flex-wrap items-end gap-3"
+                aria-label="Card payment form"
+              >
                 <div className="flex w-32 flex-col gap-1.5">
                   <Label htmlFor="cardAmount">Amount (KES)</Label>
                   <Input
@@ -587,11 +670,22 @@ export default function WalletPage() {
                     disabled={!canManage || cardBusy}
                   />
                 </div>
-                <Button type="submit" disabled={!canManage || cardBusy} aria-busy={cardBusy} className="h-11">
+                <Button
+                  type="submit"
+                  disabled={!canManage || cardBusy}
+                  aria-busy={cardBusy}
+                  className="h-11"
+                >
                   {cardBusy ? 'Processing…' : 'Pay with card'}
                 </Button>
                 {cardNeedsConfirm && cardPaymentId && (
-                  <Button type="button" variant="secondary" onClick={() => void confirmCard()} className="h-11" disabled={!canManage}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void confirmCard()}
+                    className="h-11"
+                    disabled={!canManage}
+                  >
                     I&apos;ve completed the card step — confirm
                   </Button>
                 )}
@@ -602,7 +696,11 @@ export default function WalletPage() {
 
           {activeRail === 'paypal' && (
             <PaymentRail rail="paypal" enabled={canManage}>
-              <form onSubmit={payWithPayPal} className="flex flex-wrap items-end gap-3" aria-label="PayPal payment form">
+              <form
+                onSubmit={payWithPayPal}
+                className="flex flex-wrap items-end gap-3"
+                aria-label="PayPal payment form"
+              >
                 <div className="flex w-32 flex-col gap-1.5">
                   <Label htmlFor="paypalAmount">Amount (KES)</Label>
                   <Input
@@ -617,7 +715,12 @@ export default function WalletPage() {
                     disabled={!canManage || paypalBusy}
                   />
                 </div>
-                <Button type="submit" disabled={!canManage || paypalBusy} aria-busy={paypalBusy} className="h-11">
+                <Button
+                  type="submit"
+                  disabled={!canManage || paypalBusy}
+                  aria-busy={paypalBusy}
+                  className="h-11"
+                >
                   {paypalBusy ? 'Processing…' : 'Pay with PayPal'}
                 </Button>
                 {paypalApprovalUrl && (
@@ -627,11 +730,18 @@ export default function WalletPage() {
                     rel="noreferrer"
                     className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-teal-700 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
                   >
-                    Approve in PayPal <DashboardIcon name="external" className="h-3.5 w-3.5" aria-hidden="true" />
+                    Approve in PayPal{' '}
+                    <DashboardIcon name="external" className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
                 )}
                 {paypalPaymentId && (
-                  <Button type="button" variant="secondary" onClick={() => void capturePayPal()} className="h-11" disabled={!canManage}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void capturePayPal()}
+                    className="h-11"
+                    disabled={!canManage}
+                  >
                     I&apos;ve approved — capture payment
                   </Button>
                 )}
@@ -642,7 +752,11 @@ export default function WalletPage() {
 
           {activeRail === 'invoice' && (
             <PaymentRail rail="invoice" enabled={canManage}>
-              <form onSubmit={requestTopUp} className="flex flex-wrap items-end gap-3" aria-label="Invoice request form">
+              <form
+                onSubmit={requestTopUp}
+                className="flex flex-wrap items-end gap-3"
+                aria-label="Invoice request form"
+              >
                 <div className="flex w-40 flex-col gap-1.5">
                   <Label htmlFor="invoiceAmount">Amount (KES)</Label>
                   <Input
@@ -657,20 +771,45 @@ export default function WalletPage() {
                     disabled={!canManage || invoiceBusy}
                   />
                 </div>
-                <Button type="submit" variant="secondary" disabled={!canManage || invoiceBusy} aria-busy={invoiceBusy} className="h-11">
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  disabled={!canManage || invoiceBusy}
+                  aria-busy={invoiceBusy}
+                  className="h-11"
+                >
                   {invoiceBusy ? 'Requesting…' : 'Request invoice'}
                 </Button>
               </form>
               <RailMessage message={msg} error={invoiceError} busy={invoiceBusy} />
               {topUps.length > 0 && (
                 <div className="mt-5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recent invoice requests</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Recent invoice requests
+                  </h3>
                   <ul className="mt-2 space-y-2">
                     {topUps.map((t) => (
-                      <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-inset ring-slate-200">
-                        <span className="font-medium tabular-nums text-navy-900">KES {(Number(t.amountMinor) / 100).toLocaleString('en-KE')}</span>
-                        <span className="text-xs tabular-nums text-slate-400">{new Date(t.createdAt).toLocaleDateString('en-KE')}</span>
-                        <Badge tone={t.status === 'approved' ? 'green' : t.status === 'rejected' ? 'red' : 'amber'}>{t.status}</Badge>
+                      <li
+                        key={t.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-inset ring-slate-200"
+                      >
+                        <span className="font-medium tabular-nums text-navy-900">
+                          KES {(Number(t.amountMinor) / 100).toLocaleString('en-KE')}
+                        </span>
+                        <span className="text-xs tabular-nums text-slate-400">
+                          {new Date(t.createdAt).toLocaleDateString('en-KE')}
+                        </span>
+                        <Badge
+                          tone={
+                            t.status === 'approved'
+                              ? 'green'
+                              : t.status === 'rejected'
+                                ? 'red'
+                                : 'amber'
+                          }
+                        >
+                          {t.status}
+                        </Badge>
                       </li>
                     ))}
                   </ul>
@@ -686,7 +825,9 @@ export default function WalletPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100">
           <div className="min-w-0">
             <CardTitle>Ledger</CardTitle>
-            <p className="mt-1 text-xs text-slate-500">Sign-aware amounts, running balance, and exportable history.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Sign-aware amounts, running balance, and exportable history.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -716,28 +857,47 @@ export default function WalletPage() {
             <div className="p-6" aria-busy="true" aria-live="polite">
               <div className="space-y-2">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-50" aria-hidden="true" />
+                  <div
+                    key={i}
+                    className="h-12 animate-pulse rounded-lg bg-slate-50"
+                    aria-hidden="true"
+                  />
                 ))}
               </div>
             </div>
           ) : txs.length === 0 ? (
             <div className="px-6 py-10 text-center" role="status" aria-live="polite">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400" aria-hidden="true">
+              <div
+                className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                aria-hidden="true"
+              >
                 <DashboardIcon name="clipboard" className="h-5 w-5" />
               </div>
               <p className="mt-3 text-sm font-medium text-navy-900">No transactions yet</p>
-              <p className="mt-1 text-xs text-slate-500">Top up via any rail above — movements will appear here with running balance.</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Top up via any rail above — movements will appear here with running balance.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm" aria-label="Wallet ledger">
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                    <th scope="col" className="px-4 py-3 font-medium">Description</th>
-                    <th scope="col" className="px-4 py-3 font-medium">Type</th>
-                    <th scope="col" className="px-4 py-3 text-right font-medium">Amount</th>
-                    <th scope="col" className="px-4 py-3 text-right font-medium">Balance after</th>
-                    <th scope="col" className="px-4 py-3 text-right font-medium">When</th>
+                    <th scope="col" className="px-4 py-3 font-medium">
+                      Description
+                    </th>
+                    <th scope="col" className="px-4 py-3 font-medium">
+                      Type
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-right font-medium">
+                      Amount
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-right font-medium">
+                      Balance after
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-right font-medium">
+                      When
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -749,10 +909,14 @@ export default function WalletPage() {
                         <td className="px-4 py-3.5">
                           <Badge tone={isCredit ? 'green' : 'blue'}>{t.type}</Badge>
                         </td>
-                        <td className={`px-4 py-3.5 text-right font-medium tabular-nums ${isCredit ? 'text-emerald-600' : 'text-red-600'}`}>
+                        <td
+                          className={`px-4 py-3.5 text-right font-medium tabular-nums ${isCredit ? 'text-emerald-600' : 'text-red-600'}`}
+                        >
                           {formatLedgerAmount(t)}
                         </td>
-                        <td className="px-4 py-3.5 text-right tabular-nums text-slate-600">KES {t.balanceAfter.toLocaleString('en-KE')}</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums text-slate-600">
+                          KES {t.balanceAfter.toLocaleString('en-KE')}
+                        </td>
                         <td className="px-4 py-3.5 text-right text-xs tabular-nums text-slate-400">
                           <time dateTime={t.createdAt} title={t.createdAt}>
                             {new Date(t.createdAt).toLocaleString('en-KE')}

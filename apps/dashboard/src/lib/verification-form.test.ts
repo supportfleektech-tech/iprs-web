@@ -23,47 +23,105 @@ describe('hasRequiredValues', () => {
   });
 
   it('requires both fields for match_id_phone', () => {
-    expect(hasRequiredValues({ idNumber: '12345678', phoneNumber: '0712345678' }, VerificationType.MATCH_ID_PHONE)).toBe(true);
-    expect(hasRequiredValues({ idNumber: '12345678' }, VerificationType.MATCH_ID_PHONE)).toBe(false);
-    expect(hasRequiredValues({ phoneNumber: '0712345678' }, VerificationType.MATCH_ID_PHONE)).toBe(false);
+    expect(
+      hasRequiredValues(
+        { idNumber: '12345678', phoneNumber: '0712345678' },
+        VerificationType.MATCH_ID_PHONE,
+      ),
+    ).toBe(true);
+    expect(hasRequiredValues({ idNumber: '12345678' }, VerificationType.MATCH_ID_PHONE)).toBe(
+      false,
+    );
+    expect(hasRequiredValues({ phoneNumber: '0712345678' }, VerificationType.MATCH_ID_PHONE)).toBe(
+      false,
+    );
   });
 
   it('requires file for face_id_match', () => {
-    expect(hasRequiredValues({ idNumber: '12345678', faceImageBase64: 'data:image/jpeg;base64,xxx' }, VerificationType.FACE_ID_MATCH)).toBe(true);
+    expect(
+      hasRequiredValues(
+        { idNumber: '12345678', faceImageBase64: 'data:image/jpeg;base64,xxx' },
+        VerificationType.FACE_ID_MATCH,
+      ),
+    ).toBe(true);
     expect(hasRequiredValues({ idNumber: '12345678' }, VerificationType.FACE_ID_MATCH)).toBe(false);
   });
 
   it('requires employerName for employer_verification', () => {
-    expect(hasRequiredValues({ idNumber: '12345678', employerName: 'Acme' }, VerificationType.EMPLOYER_VERIFICATION)).toBe(true);
-    expect(hasRequiredValues({ idNumber: '12345678', employerName: '' }, VerificationType.EMPLOYER_VERIFICATION)).toBe(false);
+    expect(
+      hasRequiredValues(
+        { idNumber: '12345678', employerName: 'Acme' },
+        VerificationType.EMPLOYER_VERIFICATION,
+      ),
+    ).toBe(true);
+    expect(
+      hasRequiredValues(
+        { idNumber: '12345678', employerName: '' },
+        VerificationType.EMPLOYER_VERIFICATION,
+      ),
+    ).toBe(false);
   });
 
   it('optional idNumber for kra_pin_verification needs only kraPin', () => {
-    expect(hasRequiredValues({ kraPin: 'A012345678Z' }, VerificationType.KRA_PIN_VERIFICATION)).toBe(true);
-    expect(hasRequiredValues({ kraPin: 'A012345678Z', idNumber: '12345678' }, VerificationType.KRA_PIN_VERIFICATION)).toBe(true);
+    expect(
+      hasRequiredValues({ kraPin: 'A012345678Z' }, VerificationType.KRA_PIN_VERIFICATION),
+    ).toBe(true);
+    expect(
+      hasRequiredValues(
+        { kraPin: 'A012345678Z', idNumber: '12345678' },
+        VerificationType.KRA_PIN_VERIFICATION,
+      ),
+    ).toBe(true);
     // kraPin is required per fields
-    expect(hasRequiredValues({ idNumber: '12345678' }, VerificationType.KRA_PIN_VERIFICATION)).toBe(false);
+    expect(hasRequiredValues({ idNumber: '12345678' }, VerificationType.KRA_PIN_VERIFICATION)).toBe(
+      false,
+    );
   });
 
   it('requires businessRegNumber and file for brs', () => {
-    expect(hasRequiredValues({ businessRegNumber: 'BN123', statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.BRS)).toBe(true);
+    expect(
+      hasRequiredValues(
+        { businessRegNumber: 'BN123', statementFileBase64: 'data:pdf;base64,xxx' },
+        VerificationType.BRS,
+      ),
+    ).toBe(true);
     expect(hasRequiredValues({ businessRegNumber: 'BN123' }, VerificationType.BRS)).toBe(false);
-    expect(hasRequiredValues({ statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.BRS)).toBe(false);
+    expect(
+      hasRequiredValues({ statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.BRS),
+    ).toBe(false);
     expect(hasRequiredValues({}, VerificationType.BRS)).toBe(false);
   });
 
   it('requires statementPages and file for scanned_statement', () => {
-    expect(hasRequiredValues({ statementPages: '6', statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.SCANNED_STATEMENT)).toBe(true);
-    expect(hasRequiredValues({ statementPages: '6' }, VerificationType.SCANNED_STATEMENT)).toBe(false);
-    expect(hasRequiredValues({ statementFileBase64: 'data:pdf;base64,xxx' }, VerificationType.SCANNED_STATEMENT)).toBe(false);
+    expect(
+      hasRequiredValues(
+        { statementPages: '6', statementFileBase64: 'data:pdf;base64,xxx' },
+        VerificationType.SCANNED_STATEMENT,
+      ),
+    ).toBe(true);
+    expect(hasRequiredValues({ statementPages: '6' }, VerificationType.SCANNED_STATEMENT)).toBe(
+      false,
+    );
+    expect(
+      hasRequiredValues(
+        { statementFileBase64: 'data:pdf;base64,xxx' },
+        VerificationType.SCANNED_STATEMENT,
+      ),
+    ).toBe(false);
   });
 });
 
 describe('getRequiredFieldKeys', () => {
   it('returns required keys', () => {
     expect(getRequiredFieldKeys(VerificationType.IPRS_STANDARD)).toEqual(['idNumber']);
-    expect(getRequiredFieldKeys(VerificationType.MATCH_ID_PHONE)).toEqual(['idNumber', 'phoneNumber']);
-    expect(getRequiredFieldKeys(VerificationType.BANK_ACCOUNT_VERIFICATION)).toEqual(['accountNumber', 'bankCode']);
+    expect(getRequiredFieldKeys(VerificationType.MATCH_ID_PHONE)).toEqual([
+      'idNumber',
+      'phoneNumber',
+    ]);
+    expect(getRequiredFieldKeys(VerificationType.BANK_ACCOUNT_VERIFICATION)).toEqual([
+      'accountNumber',
+      'bankCode',
+    ]);
   });
 });
 
@@ -88,9 +146,51 @@ describe('isConsentGatingBlocked', () => {
 describe('groupProductsByCategory', () => {
   it('groups by category', () => {
     const products: ProductOption[] = [
-      { type: VerificationType.IPRS_STANDARD, label: 'IPRS', category: 'Identity — Standard', enabled: true, active: true, unitPriceKes: 30, backupPriceKes: null, vatExclusive: true, cbConsentRequired: false, requiresFileUpload: false, fileTypes: [], backupAvailable: false, live: true },
-      { type: VerificationType.ALIEN_ID, label: 'Alien', category: 'Identity — Premium', enabled: true, active: true, unitPriceKes: 30, backupPriceKes: null, vatExclusive: true, cbConsentRequired: false, requiresFileUpload: false, fileTypes: [], backupAvailable: false, live: true },
-      { type: VerificationType.IPRS_STANDARD, label: 'IPRS 2', category: 'Identity — Standard', enabled: true, active: true, unitPriceKes: 30, backupPriceKes: null, vatExclusive: true, cbConsentRequired: false, requiresFileUpload: false, fileTypes: [], backupAvailable: false, live: true },
+      {
+        type: VerificationType.IPRS_STANDARD,
+        label: 'IPRS',
+        category: 'Identity — Standard',
+        enabled: true,
+        active: true,
+        unitPriceKes: 30,
+        backupPriceKes: null,
+        vatExclusive: true,
+        cbConsentRequired: false,
+        requiresFileUpload: false,
+        fileTypes: [],
+        backupAvailable: false,
+        live: true,
+      },
+      {
+        type: VerificationType.ALIEN_ID,
+        label: 'Alien',
+        category: 'Identity — Premium',
+        enabled: true,
+        active: true,
+        unitPriceKes: 30,
+        backupPriceKes: null,
+        vatExclusive: true,
+        cbConsentRequired: false,
+        requiresFileUpload: false,
+        fileTypes: [],
+        backupAvailable: false,
+        live: true,
+      },
+      {
+        type: VerificationType.IPRS_STANDARD,
+        label: 'IPRS 2',
+        category: 'Identity — Standard',
+        enabled: true,
+        active: true,
+        unitPriceKes: 30,
+        backupPriceKes: null,
+        vatExclusive: true,
+        cbConsentRequired: false,
+        requiresFileUpload: false,
+        fileTypes: [],
+        backupAvailable: false,
+        live: true,
+      },
     ] as ProductOption[];
     const grouped = groupProductsByCategory(products);
     expect(grouped.get('Identity — Standard')?.length).toBe(2);
@@ -162,23 +262,56 @@ describe('formatResultValue', () => {
 });
 
 describe('backup banner visibility', () => {
-  function shouldShowBackupBanner(detail: { backupAvailable?: boolean; backupPrice?: number | null; status?: string; errorMessage?: string | null }): boolean {
-    return Boolean(detail.backupAvailable && detail.backupPrice != null && (detail.status === 'failed' || !!detail.errorMessage));
+  function shouldShowBackupBanner(detail: {
+    backupAvailable?: boolean;
+    backupPrice?: number | null;
+    status?: string;
+    errorMessage?: string | null;
+  }): boolean {
+    return Boolean(
+      detail.backupAvailable &&
+      detail.backupPrice != null &&
+      (detail.status === 'failed' || !!detail.errorMessage),
+    );
   }
 
   it('shows only when both available and price present and status failed', () => {
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'failed' })).toBe(true);
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, errorMessage: 'Upstream down', status: 'failed' })).toBe(true);
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: null, status: 'failed' })).toBe(false);
-    expect(shouldShowBackupBanner({ backupAvailable: false, backupPrice: 45, status: 'failed' })).toBe(false);
+    expect(
+      shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'failed' }),
+    ).toBe(true);
+    expect(
+      shouldShowBackupBanner({
+        backupAvailable: true,
+        backupPrice: 45,
+        errorMessage: 'Upstream down',
+        status: 'failed',
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowBackupBanner({ backupAvailable: true, backupPrice: null, status: 'failed' }),
+    ).toBe(false);
+    expect(
+      shouldShowBackupBanner({ backupAvailable: false, backupPrice: 45, status: 'failed' }),
+    ).toBe(false);
     expect(shouldShowBackupBanner({ backupAvailable: true, status: 'failed' })).toBe(false);
     expect(shouldShowBackupBanner({})).toBe(false);
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 0, status: 'failed' })).toBe(true);
+    expect(
+      shouldShowBackupBanner({ backupAvailable: true, backupPrice: 0, status: 'failed' }),
+    ).toBe(true);
   });
 
   it('does not show on success even if backup fields present', () => {
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'success' })).toBe(false);
-    expect(shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'success', errorMessage: null })).toBe(false);
+    expect(
+      shouldShowBackupBanner({ backupAvailable: true, backupPrice: 45, status: 'success' }),
+    ).toBe(false);
+    expect(
+      shouldShowBackupBanner({
+        backupAvailable: true,
+        backupPrice: 45,
+        status: 'success',
+        errorMessage: null,
+      }),
+    ).toBe(false);
   });
 });
 

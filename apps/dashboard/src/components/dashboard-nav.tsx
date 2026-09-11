@@ -46,10 +46,16 @@ export function DashboardNav({
               aria-label={item.label}
               title={item.label}
               className={`flex h-11 w-11 items-center justify-center rounded-xl text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 ${
-                active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                active
+                  ? 'bg-white/10 text-white'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <DashboardIcon name={item.icon} className={`h-5 w-5 ${active ? 'text-teal-300' : ''}`} aria-hidden="true" />
+              <DashboardIcon
+                name={item.icon}
+                className={`h-5 w-5 ${active ? 'text-teal-300' : ''}`}
+                aria-hidden="true"
+              />
             </Link>
           );
         })}
@@ -68,7 +74,9 @@ export function DashboardNav({
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={`flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 ${
-                active ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                active
+                  ? 'bg-white/10 text-white'
+                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
               <DashboardIcon name={item.icon} className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -82,7 +90,9 @@ export function DashboardNav({
 
   return (
     <nav aria-label="Primary navigation" className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-      <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Workspace</div>
+      <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+        Workspace
+      </div>
       {items.map((item) => {
         const active = isNavActive(activePath, item.href);
         return (

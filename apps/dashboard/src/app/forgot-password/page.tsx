@@ -43,9 +43,13 @@ export default function ForgotPasswordPage() {
             <div className="text-3xl">📬</div>
             <h1 className="mt-3 text-lg font-semibold">Check your inbox</h1>
             <p className="mt-2 text-sm text-slate-500">
-              If an account exists for {email}, a password reset link is on its way. It expires in one hour.
+              If an account exists for {email}, a password reset link is on its way. It expires in
+              one hour.
             </p>
-            <Link href="/login" className="mt-6 inline-block text-sm text-teal-brand hover:underline">
+            <Link
+              href="/login"
+              className="mt-6 inline-block text-sm text-teal-brand hover:underline"
+            >
               ← Back to sign in
             </Link>
           </div>

@@ -1,11 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { StkPayment, PaymentMethod } from '@fleek/database';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  DarajaGateway,
-  MockGateway,
-  type PaymentGateway,
-} from './gateway';
+import { DarajaGateway, MockGateway, type PaymentGateway } from './gateway';
 import { normalizeKePhone } from '../common/phone';
 
 /**
@@ -54,7 +50,9 @@ export class PaymentsService {
       this.gateway = new MockGateway((checkoutRequestId) => {
         void this.autoComplete(checkoutRequestId);
       });
-      this.logger.warn('Daraja credentials not configured — using MOCK payment gateway (auto-completes)');
+      this.logger.warn(
+        'Daraja credentials not configured — using MOCK payment gateway (auto-completes)',
+      );
     }
   }
 
@@ -75,7 +73,12 @@ export class PaymentsService {
 
   // ===== M-Pesa STK Push =====
 
-  async initiateStkPush(orgId: string, userId: string, amountKes: number, phone: string): Promise<StkPayment> {
+  async initiateStkPush(
+    orgId: string,
+    userId: string,
+    amountKes: number,
+    phone: string,
+  ): Promise<StkPayment> {
     if (!Number.isFinite(amountKes) || amountKes < 100) {
       throw new Error('Minimum M-Pesa top-up is KES 100');
     }
@@ -109,7 +112,7 @@ export class PaymentsService {
   async syncStatus(payment: StkPayment): Promise<StkPayment> {
     if (payment.status !== 'pending' || !payment.checkoutRequestId) return payment;
     if (payment.method !== PaymentMethod.stk) return payment;
-    
+
     if (!this.gateway.live) {
       // Mock gateway auto-completes on its own timer.
       await this.autoComplete(payment.checkoutRequestId);
@@ -118,9 +121,16 @@ export class PaymentsService {
     try {
       const result = await this.gateway.queryStk(payment.checkoutRequestId);
       if (result.status === 'pending') return payment;
-      return this.finalize(payment.id, result.status === 'paid', result.mpesaReceipt, result.resultDesc);
+      return this.finalize(
+        payment.id,
+        result.status === 'paid',
+        result.mpesaReceipt,
+        result.resultDesc,
+      );
     } catch (err) {
-      this.logger.warn(`status sync failed for ${payment.id}: ${err instanceof Error ? err.message : err}`);
+      this.logger.warn(
+        `status sync failed for ${payment.id}: ${err instanceof Error ? err.message : err}`,
+      );
       return payment;
     }
   }
@@ -133,7 +143,9 @@ export class PaymentsService {
     mpesaReceipt?: string;
     resultDesc?: string;
   }): Promise<void> {
-    const payment = await this.prisma.client.stkPayment.findUnique({ where: { id: input.reference } });
+    const payment = await this.prisma.client.stkPayment.findUnique({
+      where: { id: input.reference },
+    });
     if (!payment || payment.checkoutRequestId !== input.checkoutRequestId) {
       throw new Error('Callback reference/checkout mismatch');
     }
@@ -143,7 +155,9 @@ export class PaymentsService {
 
   private async autoComplete(checkoutRequestId: string): Promise<void> {
     try {
-      const payment = await this.prisma.client.stkPayment.findUnique({ where: { checkoutRequestId } });
+      const payment = await this.prisma.client.stkPayment.findUnique({
+        where: { checkoutRequestId },
+      });
       if (!payment || payment.status !== 'pending') return;
       await this.finalize(
         payment.id,
@@ -194,7 +208,12 @@ export class PaymentsService {
   }
 
   /** Admin or auto-confirmation of bank transfer */
-  async confirmBankPayment(paymentId: string, success: boolean, receipt?: string, resultDesc?: string): Promise<StkPayment> {
+  async confirmBankPayment(
+    paymentId: string,
+    success: boolean,
+    receipt?: string,
+    resultDesc?: string,
+  ): Promise<StkPayment> {
     return this.finalize(paymentId, success, receipt, resultDesc);
   }
 
@@ -230,7 +249,9 @@ export class PaymentsService {
         data: { merchantRequestId: `MR_${checkoutRequestId}`, checkoutRequestId },
       });
       this.scheduleMockCompletion(checkoutRequestId);
-      const updated = await this.prisma.client.stkPayment.findUniqueOrThrow({ where: { id: payment.id } });
+      const updated = await this.prisma.client.stkPayment.findUniqueOrThrow({
+        where: { id: payment.id },
+      });
       return { payment: updated, sandbox: true };
     }
 
@@ -244,7 +265,9 @@ export class PaymentsService {
 
   /** Confirm a card payment: live = check the PaymentIntent; sandbox = settle now. */
   async confirmCardPayment(paymentId: string): Promise<StkPayment> {
-    const payment = await this.prisma.client.stkPayment.findUniqueOrThrow({ where: { id: paymentId } });
+    const payment = await this.prisma.client.stkPayment.findUniqueOrThrow({
+      where: { id: paymentId },
+    });
     if (payment.method !== PaymentMethod.card || payment.status !== 'pending') return payment;
     if (!this.stripeSecretKey || !payment.checkoutRequestId) {
       if (payment.checkoutRequestId) await this.autoComplete(payment.checkoutRequestId);
@@ -280,16 +303,30 @@ export class PaymentsService {
       },
       body,
     });
-    const data = (await res.json()) as { id?: string; client_secret?: string; error?: { message?: string } };
-    if (!res.ok || !data.id) throw new Error(data.error?.message ?? `Stripe intent failed (${res.status})`);
+    const data = (await res.json()) as {
+      id?: string;
+      client_secret?: string;
+      error?: { message?: string };
+    };
+    if (!res.ok || !data.id)
+      throw new Error(data.error?.message ?? `Stripe intent failed (${res.status})`);
     return { id: data.id, client_secret: data.client_secret ?? '' };
   }
 
-  private async stripeRetrievePaymentIntent(intentId: string): Promise<{ status: string; id: string }> {
-    const res = await fetch(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(intentId)}`, {
-      headers: { Authorization: `Bearer ${this.stripeSecretKey}` },
-    });
-    const data = (await res.json()) as { status?: string; id?: string; error?: { message?: string } };
+  private async stripeRetrievePaymentIntent(
+    intentId: string,
+  ): Promise<{ status: string; id: string }> {
+    const res = await fetch(
+      `https://api.stripe.com/v1/payment_intents/${encodeURIComponent(intentId)}`,
+      {
+        headers: { Authorization: `Bearer ${this.stripeSecretKey}` },
+      },
+    );
+    const data = (await res.json()) as {
+      status?: string;
+      id?: string;
+      error?: { message?: string };
+    };
     if (!res.ok) throw new Error(data.error?.message ?? `Stripe retrieve failed (${res.status})`);
     return { status: data.status ?? 'unknown', id: data.id ?? intentId };
   }
@@ -309,7 +346,9 @@ export class PaymentsService {
   }
 
   private get paypalBaseUrl(): string {
-    return process.env.PAYPAL_ENV === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+    return process.env.PAYPAL_ENV === 'live'
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
   }
 
   /** PayPal supports no KES — live orders use PAYPAL_CURRENCY (default USD). Sandbox credits KES directly. */
@@ -343,7 +382,9 @@ export class PaymentsService {
         data: { merchantRequestId: `MR_${checkoutRequestId}`, checkoutRequestId },
       });
       this.scheduleMockCompletion(checkoutRequestId);
-      const updated = await this.prisma.client.stkPayment.findUniqueOrThrow({ where: { id: payment.id } });
+      const updated = await this.prisma.client.stkPayment.findUniqueOrThrow({
+        where: { id: payment.id },
+      });
       return { payment: updated, sandbox: true };
     }
 
@@ -357,7 +398,9 @@ export class PaymentsService {
 
   /** Capture an approved PayPal order; sandbox settles immediately. */
   async capturePayPalPayment(paymentId: string): Promise<StkPayment> {
-    const payment = await this.prisma.client.stkPayment.findUniqueOrThrow({ where: { id: paymentId } });
+    const payment = await this.prisma.client.stkPayment.findUniqueOrThrow({
+      where: { id: paymentId },
+    });
     if (payment.method !== PaymentMethod.paypal || payment.status !== 'pending') return payment;
     if (!this.paypalLive || !payment.checkoutRequestId) {
       if (payment.checkoutRequestId) await this.autoComplete(payment.checkoutRequestId);
@@ -384,7 +427,10 @@ export class PaymentsService {
     const auth = Buffer.from(`${this.paypalClientId}:${this.paypalSecret}`).toString('base64');
     const res = await fetch(`${this.paypalBaseUrl}/v1/oauth2/token`, {
       method: 'POST',
-      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
       body: new URLSearchParams({ grant_type: 'client_credentials' }),
     });
     const data = (await res.json()) as { access_token?: string };
@@ -392,7 +438,9 @@ export class PaymentsService {
     return data.access_token;
   }
 
-  private async paypalCreateOrder(amountMinor: bigint): Promise<{ id: string; approvalUrl?: string }> {
+  private async paypalCreateOrder(
+    amountMinor: bigint,
+  ): Promise<{ id: string; approvalUrl?: string }> {
     const token = await this.paypalAccessToken();
     // KES has no PayPal support — charge the configured currency; the KES
     // amountMinor recorded on our side is what gets credited on capture.
@@ -405,7 +453,10 @@ export class PaymentsService {
         purchase_units: [{ amount: { currency_code: this.paypalCurrency, value } }],
       }),
     });
-    const data = (await res.json()) as { id?: string; links?: Array<{ rel: string; href: string }> };
+    const data = (await res.json()) as {
+      id?: string;
+      links?: Array<{ rel: string; href: string }>;
+    };
     if (!res.ok || !data.id) throw new Error(`PayPal order failed (${res.status})`);
     return { id: data.id, approvalUrl: data.links?.find((l) => l.rel === 'approve')?.href };
   }
@@ -428,42 +479,49 @@ export class PaymentsService {
   ): Promise<StkPayment> {
     type Tx = Parameters<Parameters<PrismaService['client']['$transaction']>[0]>[0];
 
-    return this.prisma.client.$transaction(async (tx: Tx) => {
-      // Claim the payment row: only one finalizer wins.
-      const claimed = await tx.stkPayment.updateMany({
-        where: { id: paymentId, status: 'pending' },
-        data: {
-          status: success ? 'paid' : 'failed',
-          mpesaReceipt: receipt ?? null,
-          resultDesc: resultDesc ?? null,
-          completedAt: new Date(),
-        },
-      });
-      if (claimed.count === 0) {
-        return tx.stkPayment.findUniqueOrThrow({ where: { id: paymentId } });
-      }
-      const payment = await tx.stkPayment.findUniqueOrThrow({ where: { id: paymentId } });
-
-      if (success) {
-        const wallet = await tx.wallet.update({
-          where: { organizationId: payment.organizationId },
-          data: { balanceMinor: { increment: payment.amountMinor } },
-        });
-        await tx.transaction.create({
+    return this.prisma.client
+      .$transaction(async (tx: Tx) => {
+        // Claim the payment row: only one finalizer wins.
+        const claimed = await tx.stkPayment.updateMany({
+          where: { id: paymentId, status: 'pending' },
           data: {
-            type: 'topup',
-            amountMinor: payment.amountMinor,
-            balanceAfter: wallet.balanceMinor,
-            description: this.getTopupDescription(payment.method, receipt ?? payment.checkoutRequestId ?? payment.paybillRef ?? ''),
-            walletId: wallet.id,
+            status: success ? 'paid' : 'failed',
+            mpesaReceipt: receipt ?? null,
+            resultDesc: resultDesc ?? null,
+            completedAt: new Date(),
           },
         });
-      }
-      return payment;
-    }).catch((err: unknown) => {
-      this.logger.error(`finalize failed for ${paymentId}: ${err instanceof Error ? err.message : err}`);
-      throw err;
-    });
+        if (claimed.count === 0) {
+          return tx.stkPayment.findUniqueOrThrow({ where: { id: paymentId } });
+        }
+        const payment = await tx.stkPayment.findUniqueOrThrow({ where: { id: paymentId } });
+
+        if (success) {
+          const wallet = await tx.wallet.update({
+            where: { organizationId: payment.organizationId },
+            data: { balanceMinor: { increment: payment.amountMinor } },
+          });
+          await tx.transaction.create({
+            data: {
+              type: 'topup',
+              amountMinor: payment.amountMinor,
+              balanceAfter: wallet.balanceMinor,
+              description: this.getTopupDescription(
+                payment.method,
+                receipt ?? payment.checkoutRequestId ?? payment.paybillRef ?? '',
+              ),
+              walletId: wallet.id,
+            },
+          });
+        }
+        return payment;
+      })
+      .catch((err: unknown) => {
+        this.logger.error(
+          `finalize failed for ${paymentId}: ${err instanceof Error ? err.message : err}`,
+        );
+        throw err;
+      });
   }
 
   private getTopupDescription(method: PaymentMethod, reference: string): string {

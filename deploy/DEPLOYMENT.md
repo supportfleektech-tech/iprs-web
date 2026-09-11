@@ -7,11 +7,11 @@ Domains: `fleekiprs.co.ke` (marketing), `app.fleekiprs.co.ke` (console), `api.fl
 
 Create A records pointing all three hosts at your server's public IP:
 
-| Host | Type | Value |
-|---|---|---|
-| `fleekiprs.co.ke` (+ `www`) | A | `<server-ip>` |
-| `app.fleekiprs.co.ke` | A | `<server-ip>` |
-| `api.fleekiprs.co.ke` | A | `<server-ip>` |
+| Host                        | Type | Value         |
+| --------------------------- | ---- | ------------- |
+| `fleekiprs.co.ke` (+ `www`) | A    | `<server-ip>` |
+| `app.fleekiprs.co.ke`       | A    | `<server-ip>` |
+| `api.fleekiprs.co.ke`       | A    | `<server-ip>` |
 
 Wait for propagation before issuing certificates (`dig +short <host>`).
 
@@ -79,9 +79,9 @@ docker compose -f docker-compose.prod.yml exec postgres \
 
 All third-party integrations read credentials from `.env` — no code changes needed.
 
-| Integration | Env vars | Behaviour while empty |
-|---|---|---|
-| Live IPRS/KRA data | `USE_LIVE_UPSTREAM=true`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS` | Deterministic mock provider |
+| Integration        | Env vars                                                                                                | Behaviour while empty       |
+| ------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------- |
+| Live IPRS/KRA data | `USE_LIVE_UPSTREAM=true`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS`                        | Deterministic mock provider |
 | M-Pesa STK top-ups | `DARAJA_CONSUMER_KEY/SECRET/SHORTCODE/PASSKEY`, `DARAJA_ENV=sandbox\|production`, `DARAJA_CALLBACK_URL` | Mock gateway auto-completes |
 
 After editing `.env`: `./deploy/deploy.sh` (rebuilds and restarts cleanly).

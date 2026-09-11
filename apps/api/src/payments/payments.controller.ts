@@ -9,25 +9,30 @@ import { PaymentsService } from './payments.service';
 
 export class InitiateStkDto {
   /** Amount in KES (e.g. 5000). Minimum 100. */
-  @IsNumber() @Min(100)
+  @IsNumber()
+  @Min(100)
   amount!: number;
 
   /** Kenyan mobile number that will receive the STK push. */
-  @IsString() @Matches(/^(\+?254|0)7\d{8}$/, { message: 'phone must be a Kenyan mobile number' })
+  @IsString()
+  @Matches(/^(\+?254|0)7\d{8}$/, { message: 'phone must be a Kenyan mobile number' })
   phone!: string;
 }
 
 export class ConfirmBankTransferDto {
   /** Amount in KES (e.g. 5000). Minimum 100. */
-  @IsNumber() @Min(100)
+  @IsNumber()
+  @Min(100)
   amount!: number;
 
   /** Kenyan mobile number */
-  @IsString() @Matches(/^(\+?254|0)7\d{8}$/, { message: 'phone must be a Kenyan mobile number' })
+  @IsString()
+  @Matches(/^(\+?254|0)7\d{8}$/, { message: 'phone must be a Kenyan mobile number' })
   phone!: string;
 
   /** Paybill reference from M-Pesa confirmation SMS */
-  @IsString() @Min(5)
+  @IsString()
+  @Min(5)
   paybillRef!: string;
 }
 
@@ -35,16 +40,19 @@ export class ConfirmBankPaymentDto {
   @IsBoolean()
   success!: boolean;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   receipt?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   resultDesc?: string;
 }
 
 export class InitiateOnlineTopUpDto {
   /** Amount in KES (e.g. 5000). Minimum 100. */
-  @IsNumber() @Min(100)
+  @IsNumber()
+  @Min(100)
   amount!: number;
 }
 
@@ -143,7 +151,12 @@ export class PaymentsController {
     if (!user.isPlatformAdmin) {
       throw new NotFoundException('Only platform admins can confirm bank payments');
     }
-    const payment = await this.payments.confirmBankPayment(id, dto.success, dto.receipt, dto.resultDesc);
+    const payment = await this.payments.confirmBankPayment(
+      id,
+      dto.success,
+      dto.receipt,
+      dto.resultDesc,
+    );
     return {
       id: payment.id,
       status: payment.status,
@@ -256,7 +269,9 @@ export class PaymentsController {
       const cb = body.Body?.stkCallback;
       if (!cb?.CheckoutRequestID) throw new Error('Malformed callback');
 
-      const receipt = cb.CallbackMetadata?.Item?.find((i) => i.Name === 'MpesaReceiptNumber')?.Value;
+      const receipt = cb.CallbackMetadata?.Item?.find(
+        (i) => i.Name === 'MpesaReceiptNumber',
+      )?.Value;
 
       await this.payments.applyCallback({
         reference,

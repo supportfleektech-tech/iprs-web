@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { AuthService, LoginBody } from './auth.service';
@@ -10,26 +19,32 @@ export class RegisterBody {
   @IsEmail()
   email!: string;
 
-  @IsString() @MinLength(8)
+  @IsString()
+  @MinLength(8)
   password!: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   firstName!: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   lastName!: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   organizationName!: string;
 }
 
 export class RefreshDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   refreshToken!: string;
 }
 
 export class LogoutDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   refreshToken!: string;
 }
 
@@ -39,10 +54,12 @@ export class ForgotPasswordDto {
 }
 
 export class ResetPasswordDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   token!: string;
 
-  @IsString() @MinLength(8)
+  @IsString()
+  @MinLength(8)
   newPassword!: string;
 }
 

@@ -4,7 +4,11 @@ import './globals.css';
 import { AuthProvider } from '@/lib/auth';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-inter' });
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], display: 'swap', variable: '--font-space' });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-space',
+});
 
 export const metadata: Metadata = {
   title: 'Fleek IPRS — Console',

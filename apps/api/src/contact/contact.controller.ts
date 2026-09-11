@@ -5,16 +5,22 @@ import { Throttle } from '@nestjs/throttler';
 import { PrismaService } from '../prisma/prisma.service';
 
 export class ContactDto {
-  @IsString() @IsNotEmpty() @MaxLength(120)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
   name!: string;
 
   @IsEmail()
   email!: string;
 
-  @IsOptional() @IsString() @MaxLength(160)
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
   company?: string;
 
-  @IsString() @MinLength(10) @MaxLength(4000)
+  @IsString()
+  @MinLength(10)
+  @MaxLength(4000)
   message!: string;
 }
 

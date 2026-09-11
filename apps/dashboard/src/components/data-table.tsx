@@ -57,7 +57,9 @@ export function DataTable<T>({
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         {caption && <p className="sr-only">{caption}</p>}
         <div className="px-4 py-2">
-          {emptyContent ?? <p className="py-12 text-center text-sm text-slate-400">No records found.</p>}
+          {emptyContent ?? (
+            <p className="py-12 text-center text-sm text-slate-400">No records found.</p>
+          )}
         </div>
       </div>
     );
@@ -83,7 +85,11 @@ export function DataTable<T>({
                   : undefined;
 
                 const alignClass =
-                  col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left';
+                  col.align === 'right'
+                    ? 'text-right'
+                    : col.align === 'center'
+                      ? 'text-center'
+                      : 'text-left';
 
                 return (
                   <th
@@ -101,7 +107,13 @@ export function DataTable<T>({
                       >
                         <span>{col.header}</span>
                         <span aria-hidden="true" className="text-[10px] leading-none">
-                          {isSorted ? (sortDirection === 'asc' ? '▲' : sortDirection === 'desc' ? '▼' : '↕') : '↕'}
+                          {isSorted
+                            ? sortDirection === 'asc'
+                              ? '▲'
+                              : sortDirection === 'desc'
+                                ? '▼'
+                                : '↕'
+                            : '↕'}
                         </span>
                       </button>
                     ) : (
@@ -114,16 +126,27 @@ export function DataTable<T>({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((row, idx) => (
-              <tr key={getRowKey(row, idx)} className="transition-colors hover:bg-slate-50/60 motion-reduce:transition-none">
+              <tr
+                key={getRowKey(row, idx)}
+                className="transition-colors hover:bg-slate-50/60 motion-reduce:transition-none"
+              >
                 {columns.map((col) => {
                   const alignClass =
-                    col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left';
+                    col.align === 'right'
+                      ? 'text-right'
+                      : col.align === 'center'
+                        ? 'text-center'
+                        : 'text-left';
                   return (
                     <td
                       key={col.key}
                       className={`px-4 py-3 align-middle ${alignClass} ${col.className ?? ''}`}
                     >
-                      {col.render ? col.render(row) : col.accessor ? <span className="tabular-nums">{String(col.accessor(row) ?? '—')}</span> : null}
+                      {col.render ? (
+                        col.render(row)
+                      ) : col.accessor ? (
+                        <span className="tabular-nums">{String(col.accessor(row) ?? '—')}</span>
+                      ) : null}
                     </td>
                   );
                 })}

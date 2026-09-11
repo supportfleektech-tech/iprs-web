@@ -6,7 +6,8 @@ import { AuthService } from '../auth/auth.service';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
 
 export class CreateKeyDto {
-  @IsString() @MinLength(2)
+  @IsString()
+  @MinLength(2)
   name!: string;
 
   @IsIn(['live', 'test'])

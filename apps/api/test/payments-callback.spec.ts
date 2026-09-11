@@ -6,7 +6,12 @@ import { createHmac } from 'node:crypto';
  * re-declare it here (private function, not exported) so we can pin the
  * Stripe-style `t=<unix>,v1=<hex>` contract.
  */
-function verifyDarajaSignature(rawBody: string, header: string | undefined, secret: string | undefined, nowMs: number): { ok: true } | { ok: false; reason: string } {
+function verifyDarajaSignature(
+  rawBody: string,
+  header: string | undefined,
+  secret: string | undefined,
+  nowMs: number,
+): { ok: true } | { ok: false; reason: string } {
   const SIGNATURE_MAX_SKEW_MS = 5 * 60 * 1000;
   if (!secret) return { ok: true };
   if (!header) return { ok: false, reason: 'missing signature header' };
@@ -20,8 +25,12 @@ function verifyDarajaSignature(rawBody: string, header: string | undefined, secr
   if (!tsRaw || !v1) return { ok: false, reason: 'malformed signature header' };
   const tsSec = Number(tsRaw);
   if (!Number.isFinite(tsSec)) return { ok: false, reason: 'invalid signature timestamp' };
-  if (Math.abs(nowMs - tsSec * 1000) > SIGNATURE_MAX_SKEW_MS) return { ok: false, reason: 'signature expired' };
-  const expected = createHmac('sha256', secret).update(`${tsRaw}.`).update(rawBody, 'utf8').digest('hex');
+  if (Math.abs(nowMs - tsSec * 1000) > SIGNATURE_MAX_SKEW_MS)
+    return { ok: false, reason: 'signature expired' };
+  const expected = createHmac('sha256', secret)
+    .update(`${tsRaw}.`)
+    .update(rawBody, 'utf8')
+    .digest('hex');
   if (expected.length !== v1.length) return { ok: false, reason: 'signature length mismatch' };
   const a = Buffer.from(expected, 'utf8');
   const b = Buffer.from(v1, 'utf8');

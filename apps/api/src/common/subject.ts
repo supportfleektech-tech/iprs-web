@@ -3,7 +3,9 @@
  * from a decrypted verification input payload. Used by history, batches and
  * exports to keep the field-priority list consistent.
  */
-export function getSubjectFromInput(input: Record<string, string | number | boolean | null | undefined>): string {
+export function getSubjectFromInput(
+  input: Record<string, string | number | boolean | null | undefined>,
+): string {
   const candidates = [
     input.kraPin,
     input.phoneNumber,

@@ -21,12 +21,19 @@ function makeDeps() {
         store.set('pay1', row);
         return Promise.resolve(row);
       }),
-      findUnique: vi.fn().mockImplementation(({ where }) =>
-        Promise.resolve(
-          where.id ? store.get(where.id) ?? null : [...store.values()].find((r) => r.checkoutRequestId === where.checkoutRequestId) ?? null,
+      findUnique: vi
+        .fn()
+        .mockImplementation(({ where }) =>
+          Promise.resolve(
+            where.id
+              ? (store.get(where.id) ?? null)
+              : ([...store.values()].find((r) => r.checkoutRequestId === where.checkoutRequestId) ??
+                  null),
+          ),
         ),
-      ),
-      findUniqueOrThrow: vi.fn().mockImplementation(({ where }) => Promise.resolve(store.get(where.id)!)),
+      findUniqueOrThrow: vi
+        .fn()
+        .mockImplementation(({ where }) => Promise.resolve(store.get(where.id)!)),
       update: vi.fn().mockImplementation(({ where, data }) => {
         const row = store.get(where.id);
         if (row) Object.assign(row, data);
@@ -88,7 +95,10 @@ describe('PaymentsService (mock gateway)', () => {
 
     expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
     expect(deps.client.transaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ type: 'topup', description: expect.stringContaining('QK77XYZ') }),
+      data: expect.objectContaining({
+        type: 'topup',
+        description: expect.stringContaining('QK77XYZ'),
+      }),
     });
 
     // A duplicate callback must be a no-op
@@ -136,7 +146,11 @@ describe('MockGateway timing', () => {
       notified = id;
     });
 
-    const init = await gw.initiateStk({ amountMinor: BigInt(100_000), phone: '254712345678', reference: 'ref' });
+    const init = await gw.initiateStk({
+      amountMinor: BigInt(100_000),
+      phone: '254712345678',
+      reference: 'ref',
+    });
     expect(await gw.queryStk(init.checkoutRequestId)).toEqual({ status: 'pending' });
 
     await vi.advanceTimersByTimeAsync(3100);
@@ -169,7 +183,10 @@ describe('PaymentsService card + PayPal rails (sandbox)', () => {
     expect(settled.status).toBe('paid');
     expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
     expect(deps.client.transaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ type: 'topup', description: expect.stringContaining('Card') }),
+      data: expect.objectContaining({
+        type: 'topup',
+        description: expect.stringContaining('Card'),
+      }),
     });
     // Second confirm is a no-op
     await deps.service.confirmCardPayment(payment.id);
@@ -194,7 +211,10 @@ describe('PaymentsService card + PayPal rails (sandbox)', () => {
     expect(settled.status).toBe('paid');
     expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);
     expect(deps.client.transaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ type: 'topup', description: expect.stringContaining('PayPal') }),
+      data: expect.objectContaining({
+        type: 'topup',
+        description: expect.stringContaining('PayPal'),
+      }),
     });
     await deps.service.capturePayPalPayment(payment.id);
     expect(deps.client.wallet.update).toHaveBeenCalledTimes(1);

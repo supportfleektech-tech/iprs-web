@@ -10,7 +10,10 @@ const NAV = [
 
 function Logo({ dark = false }: { dark?: boolean }) {
   return (
-    <Link href="/" className={`text-xl font-bold font-display ${dark ? 'text-white' : 'text-navy-900'}`}>
+    <Link
+      href="/"
+      className={`text-xl font-bold font-display ${dark ? 'text-white' : 'text-navy-900'}`}
+    >
       Fleek<span className="brand-gradient-text">IPRS</span>
     </Link>
   );
@@ -59,7 +62,11 @@ export function SiteFooter() {
           <Logo dark />
           <p className="mt-3 text-sm text-slate-400">
             Identity intelligence for Africa. A product of{' '}
-            <a href="https://fleektech.co.ke" className="text-teal-brand hover:underline" rel="noopener noreferrer">
+            <a
+              href="https://fleektech.co.ke"
+              className="text-teal-brand hover:underline"
+              rel="noopener noreferrer"
+            >
               Fleektech LTD
             </a>
             .
@@ -67,27 +74,65 @@ export function SiteFooter() {
           <p className="mt-4 text-xs text-slate-500">Nairobi, Kenya · support@fleektech.co.ke</p>
         </div>
         <div>
-          <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white">Products</h4>
+          <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white">
+            Products
+          </h4>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/products/iprs-id" className="hover:text-teal-brand">IPRS ID Verification</Link></li>
-            <li><Link href="/products/kra-pin" className="hover:text-teal-brand">KRA PIN Checker</Link></li>
-            <li><Link href="/products/hakikisha" className="hover:text-teal-brand">Hakikisha / Phone Check</Link></li>
-            <li><Link href="/products/sim-swap" className="hover:text-teal-brand">SIM-swap Detection</Link></li>
+            <li>
+              <Link href="/products/iprs-id" className="hover:text-teal-brand">
+                IPRS ID Verification
+              </Link>
+            </li>
+            <li>
+              <Link href="/products/kra-pin" className="hover:text-teal-brand">
+                KRA PIN Checker
+              </Link>
+            </li>
+            <li>
+              <Link href="/products/hakikisha" className="hover:text-teal-brand">
+                Hakikisha / Phone Check
+              </Link>
+            </li>
+            <li>
+              <Link href="/products/sim-swap" className="hover:text-teal-brand">
+                SIM-swap Detection
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white">Company</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/about" className="hover:text-teal-brand">About</Link></li>
-            <li><Link href="/developers" className="hover:text-teal-brand">Developers</Link></li>
-            <li><Link href="/contact" className="hover:text-teal-brand">Contact</Link></li>
+            <li>
+              <Link href="/about" className="hover:text-teal-brand">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link href="/developers" className="hover:text-teal-brand">
+                Developers
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="hover:text-teal-brand">
+                Contact
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white">Legal</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/privacy" className="hover:text-teal-brand">Privacy Policy</Link></li>
-            <li><Link href="/terms" className="hover:text-teal-brand">Terms of Service</Link></li>
+            <li>
+              <Link href="/privacy" className="hover:text-teal-brand">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:text-teal-brand">
+                Terms of Service
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

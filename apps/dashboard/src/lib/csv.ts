@@ -120,7 +120,8 @@ export function csvRowsToInputs(records: Record<string, string>[]): CsvRow[] {
   return records.map((rec) => {
     const row: CsvRow = {};
     for (const [header, value] of Object.entries(rec)) {
-      const key = HEADER_ALIASEES[header.toLowerCase().replace(/\s+/g, '_')] as keyof CsvRow | undefined;
+      const key = HEADER_ALIASEES[header.toLowerCase().replace(/\s+/g, '_')] as
+        keyof CsvRow | undefined;
       if (key && value) (row as Record<string, string>)[key] = value.replace(/\s+/g, '');
     }
     return row;

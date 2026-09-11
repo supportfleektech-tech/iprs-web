@@ -84,9 +84,11 @@
 **Base:** `fb186da` → **Fix commit:** `174b7ea`
 
 ### Critical
+
 - **Committed console/page.tsx → clean-checkout broken** (`apps/dashboard/src/app/console/page.tsx:125` imported untracked `./overview`): Reverted `console/page.tsx` to `602bacb` verify-form state (`VerifyPage` with IPRS check, no Overview import). Task 2 will introduce `Overview`. Verified `pnpm -w build` no longer requires `overview.tsx`.
 
 ### Important
+
 - **Focus color violation** (`dashboard-nav.tsx:70,93` rail+mobile, `dashboard-shell.tsx:70,97,137,148`): Changed all `focus-visible:outline-teal-400` to `focus-visible:outline-cyan-600` to match spec cyan `#0891B2`. `collapsed` variant already used cyan-600 — now consistent.
 - **Tailwind animation mismatch** (`tailwind.config.ts:1007-1014`): Fixed `animation.dashIn` from `'dash-in 240ms...'` to `'dashIn 240ms...'` to match `keyframes.dashIn`.
 - **StatusBadge required props optional** (`status-badge.tsx:936-958`): Changed to `tone: BadgeTone` + `label: string` required per spec. Added union `StatusBadgeRequiredProps | StatusBadgeLegacyProps` so deprecated `status`-only callers (pre-Task2 WIP: `admin/page.tsx:171`, `overview.tsx:127`, `verification-result-panel.tsx:45`, `verification-workspace.tsx:188,211-213`) remain type-safe via fallback `resolveTone`/`labelByTone`. Documented bridge with JSDoc; runtime resolves `tone ?? resolveTone(status)` and `label ?? labelByTone[resolveTone(status)]`.
@@ -94,13 +96,14 @@
 - **Out-of-scope console/page.tsx** (`console/page.tsx:108-305` fetching `/admin/stats` + `/verifications?limit=10`): Reverted as part of Critical fix; Overview dashboard deferred to Task 2/3.
 
 ### Additional fix
+
 - **SessionUser.lastName missing** (`src/lib/auth.tsx:5`): Added optional `lastName?: string` to `SessionUser` — `dashboard-shell.tsx:30` uses `firstName`+`lastName` for displayName. Without it `typecheck`/`build` failed after reverting auth WIP.
 
 ### Tests / commands
+
 - `pnpm --filter @fleek/dashboard typecheck` — **PASS** (0 errors, previously 7 errors after making props required; fixed via union bridge).
 - `pnpm --filter @fleek/dashboard lint` — **PASS** (0 errors).
 - `pnpm --filter @fleek/dashboard build` — **PASS** (13/13 pages; `/console` 3.58 kB verify form).
 - `pnpm -w build` — **PASS** (6/6 tasks; dashboard + web built).
 - `pnpm -w typecheck` — **PASS** on dashboard; `pnpm -w lint` — PASS (pre-existing api warnings only).
 - Clean-checkout path verified: `console/page.tsx` no longer imports `./overview`; `overview.tsx` remains untracked WIP.
-

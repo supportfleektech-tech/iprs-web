@@ -48,7 +48,9 @@ describe('ProviderRegistry', () => {
   });
 
   it('routes IPRS_STANDARD to mock by default', async () => {
-    const registry = new ProviderRegistry(new Set<VerificationType>([VerificationType.IPRS_STANDARD]));
+    const registry = new ProviderRegistry(
+      new Set<VerificationType>([VerificationType.IPRS_STANDARD]),
+    );
     const result = await registry.resolve(VerificationType.IPRS_STANDARD);
     expect(result.iprsStandardLookup('12345678')).resolves.toBeDefined();
   });

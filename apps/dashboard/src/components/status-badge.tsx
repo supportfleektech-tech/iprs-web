@@ -42,11 +42,40 @@ const labelByTone: Record<BadgeTone, string> = {
 
 function resolveTone(raw: string | undefined): BadgeTone {
   const normalized = (raw ?? 'slate').toLowerCase();
-  if (['success', 'completed', 'active', 'enabled', 'paid', 'approved', 'valid', 'clear', 'listed'].includes(normalized)) return 'green';
-  if (['failed', 'expired', 'invalid', 'rejected', 'inactive', 'disabled', 'not_found', 'high', 'critical', 'watchlist', 'error'].includes(normalized)) return 'red';
+  if (
+    [
+      'success',
+      'completed',
+      'active',
+      'enabled',
+      'paid',
+      'approved',
+      'valid',
+      'clear',
+      'listed',
+    ].includes(normalized)
+  )
+    return 'green';
+  if (
+    [
+      'failed',
+      'expired',
+      'invalid',
+      'rejected',
+      'inactive',
+      'disabled',
+      'not_found',
+      'high',
+      'critical',
+      'watchlist',
+      'error',
+    ].includes(normalized)
+  )
+    return 'red';
   if (['pending', 'processing', 'medium', 'attention'].includes(normalized)) return 'amber';
   if (['low', 'info', 'informational'].includes(normalized)) return 'blue';
-  if (['green', 'red', 'amber', 'blue', 'slate'].includes(normalized)) return normalized as BadgeTone;
+  if (['green', 'red', 'amber', 'blue', 'slate'].includes(normalized))
+    return normalized as BadgeTone;
   return 'slate';
 }
 
@@ -56,13 +85,16 @@ export function StatusBadge(props: StatusBadgeProps) {
   const label = (props as StatusBadgeRequiredProps).label as string | undefined;
   // tone/label required per spec; status fallback only for deprecated bridge (runtime safety for legacy callers).
   const resolvedTone: BadgeTone = tone ?? resolveTone(status);
-  const resolvedLabel = label ?? (status ? labelByTone[resolveTone(status)] ?? status : labelByTone[resolvedTone]);
+  const resolvedLabel =
+    label ?? (status ? (labelByTone[resolveTone(status)] ?? status) : labelByTone[resolvedTone]);
   const resolvedIcon: DashboardIconName | null =
     icon === false ? null : (icon ?? iconByTone[resolvedTone] ?? null);
 
   return (
     <Badge tone={resolvedTone} className={className}>
-      {resolvedIcon && <DashboardIcon name={resolvedIcon} className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+      {resolvedIcon && (
+        <DashboardIcon name={resolvedIcon} className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      )}
       <span>{resolvedLabel}</span>
     </Badge>
   );

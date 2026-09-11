@@ -47,8 +47,10 @@ export function buildHistoryQuery(filters: HistoryFilters): string {
   const search = filters.search?.trim();
   if (search) params.set('search', search);
 
-  if (filters.limit != null && Number.isFinite(filters.limit)) params.set('limit', String(filters.limit));
-  if (filters.offset != null && Number.isFinite(filters.offset)) params.set('offset', String(filters.offset));
+  if (filters.limit != null && Number.isFinite(filters.limit))
+    params.set('limit', String(filters.limit));
+  if (filters.offset != null && Number.isFinite(filters.offset))
+    params.set('offset', String(filters.offset));
 
   return params.toString();
 }
@@ -83,7 +85,10 @@ export function buildBatchExportUrl(batchId: string, format: ExportFormat): stri
   return `/exports/verifications/batch/${encodeURIComponent(batchId)}?format=${format}`;
 }
 
-export function buildWalletStatementUrl(filters: Pick<HistoryFilters, 'from' | 'to' | 'startDate' | 'endDate'>, format: ExportFormat): string {
+export function buildWalletStatementUrl(
+  filters: Pick<HistoryFilters, 'from' | 'to' | 'startDate' | 'endDate'>,
+  format: ExportFormat,
+): string {
   const params = new URLSearchParams();
   params.set('format', format);
   const from = (filters.from ?? filters.startDate)?.trim();
@@ -114,11 +119,35 @@ export function toCsv(header: string[], rows: (string | number | null | undefine
 // ---------------------------------------------------------------------------
 export function classifyHistoryStatus(status: string): BadgeTone {
   const s = (status ?? '').toLowerCase().trim();
-  if (s === 'success' || s === 'completed' || s === 'paid' || s === 'approved' || s === 'valid' || s === 'clear') return 'green';
-  if (s === 'failed' || s === 'rejected' || s === 'error' || s === 'expired' || s === 'invalid' || s === 'disabled') return 'red';
-  if (s === 'not_found' || s === 'pending' || s === 'processing' || s === 'attention' || s === 'medium') return 'amber';
+  if (
+    s === 'success' ||
+    s === 'completed' ||
+    s === 'paid' ||
+    s === 'approved' ||
+    s === 'valid' ||
+    s === 'clear'
+  )
+    return 'green';
+  if (
+    s === 'failed' ||
+    s === 'rejected' ||
+    s === 'error' ||
+    s === 'expired' ||
+    s === 'invalid' ||
+    s === 'disabled'
+  )
+    return 'red';
+  if (
+    s === 'not_found' ||
+    s === 'pending' ||
+    s === 'processing' ||
+    s === 'attention' ||
+    s === 'medium'
+  )
+    return 'amber';
   if (s === 'low' || s === 'info' || s === 'informational') return 'blue';
-  if (s === 'green' || s === 'red' || s === 'amber' || s === 'blue' || s === 'slate') return s as BadgeTone;
+  if (s === 'green' || s === 'red' || s === 'amber' || s === 'blue' || s === 'slate')
+    return s as BadgeTone;
   return 'slate';
 }
 
@@ -140,8 +169,12 @@ export function summarizeHistoryMetrics(
 ): SummaryMetrics {
   const total = items.length;
   const totalCost = items.reduce((sum, it) => sum + (Number.isFinite(it.cost) ? it.cost : 0), 0);
-  const latencies = items.map((it) => it.latencyMs).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
-  const avgLatencyMs = latencies.length ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) : null;
+  const latencies = items
+    .map((it) => it.latencyMs)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  const avgLatencyMs = latencies.length
+    ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+    : null;
   const statusCounts: Record<string, number> = {};
   for (const it of items) {
     const k = (it.status ?? '').toLowerCase();
@@ -153,12 +186,18 @@ export function summarizeHistoryMetrics(
 // ---------------------------------------------------------------------------
 // Download helper — accepts an existing /exports/* URL and filename
 // ---------------------------------------------------------------------------
-export async function downloadReport(url: string, filename: string, token?: string | null): Promise<void> {
+export async function downloadReport(
+  url: string,
+  filename: string,
+  token?: string | null,
+): Promise<void> {
   const apiBase = getApiBaseUrl();
   // Resolve token from explicit param or localStorage session fallback (single source via auth.tsx)
   const authToken = token ?? getStoredToken();
 
-  const fullUrl = url.startsWith('http') ? url : `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
+  const fullUrl = url.startsWith('http')
+    ? url
+    : `${apiBase}${url.startsWith('/') ? '' : '/'}${url}`;
   const res = await fetch(fullUrl, {
     headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
   });

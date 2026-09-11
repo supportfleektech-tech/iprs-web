@@ -22,7 +22,11 @@ export interface PaymentRailTabsProps {
   canManage: boolean;
 }
 
-export function PaymentRailTabs({ activeRail, onChange, canManage: _canManage }: PaymentRailTabsProps) {
+export function PaymentRailTabs({
+  activeRail,
+  onChange,
+  canManage: _canManage,
+}: PaymentRailTabsProps) {
   return (
     <div role="tablist" aria-label="Payment rails" className="flex flex-wrap gap-2">
       {RAIL_TABS.map(({ rail }) => {
@@ -84,20 +88,32 @@ export function PaymentRail({ rail, enabled, children }: PaymentRailPropsInterna
               </CardTitle>
               <CardDescription>{description}</CardDescription>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-200" aria-hidden="true">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-200"
+              aria-hidden="true"
+            >
               <DashboardIcon name="wallet" className="h-4 w-4" />
             </div>
           </div>
         </CardHeader>
         <CardContent className="pt-5">
           {!enabled && (
-            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" role="status" aria-live="polite">
+            <div
+              className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+              role="status"
+              aria-live="polite"
+            >
               <div className="flex gap-2.5">
-                <DashboardIcon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />
+                <DashboardIcon
+                  name="info"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-amber-700"
+                  aria-hidden="true"
+                />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-amber-800">You have view-only access</p>
                   <p className="mt-1 text-xs leading-5 text-amber-700">
-                    Only organization Owners and Admins can initiate payments or request invoices. Contact your workspace owner to get access.
+                    Only organization Owners and Admins can initiate payments or request invoices.
+                    Contact your workspace owner to get access.
                   </p>
                 </div>
               </div>
@@ -122,12 +138,20 @@ export function RailMessage({ message, error }: RailMessageProps) {
   return (
     <>
       {message && (
-        <p className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-800 ring-1 ring-inset ring-teal-100" role="status" aria-live="polite">
+        <p
+          className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-800 ring-1 ring-inset ring-teal-100"
+          role="status"
+          aria-live="polite"
+        >
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100" role="alert" aria-live="assertive">
+        <p
+          className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100"
+          role="alert"
+          aria-live="assertive"
+        >
           {error}
         </p>
       )}

@@ -15,11 +15,11 @@ Reference competitor: spinmobile.co (same service category; independent branding
 
 Three applications plus shared packages:
 
-| App | Domain | Purpose |
-|---|---|---|
-| `apps/web` | fleekiprs.co.ke | Public marketing site |
-| `apps/dashboard` | app.fleekiprs.co.ke | Client portal + admin panel |
-| `apps/api` | api.fleekiprs.co.ke | REST API powering dashboard & public API |
+| App              | Domain              | Purpose                                  |
+| ---------------- | ------------------- | ---------------------------------------- |
+| `apps/web`       | fleekiprs.co.ke     | Public marketing site                    |
+| `apps/dashboard` | app.fleekiprs.co.ke | Client portal + admin panel              |
+| `apps/api`       | api.fleekiprs.co.ke | REST API powering dashboard & public API |
 
 Shared packages: `packages/ui`, `packages/database` (Prisma), `packages/providers`, `packages/types`.
 
@@ -29,7 +29,7 @@ Shared packages: `packages/ui`, `packages/database` (Prisma), `packages/provider
 2. **KRA PIN Checker** — input: KRA PIN or ID → output: PIN validity, tax compliance status.
 3. **Hakikisha / Phone Check** — input: phone number or ID → output: registered owner name(s), numbers linked to ID.
 4. **SIM-swap Detection** — input: phone number → output: last swap date, risk level.
-   *(M-Pesa KYC match ships with the phone check family.)*
+   _(M-Pesa KYC match ships with the phone check family.)_
 
 ## 4. Data Sources
 

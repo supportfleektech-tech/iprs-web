@@ -37,25 +37,42 @@ export class BatchesService {
     if (!this.verifications.registry.isEnabled(dto.type)) {
       throw new BadRequestException(`Check "${dto.type}" is not available`);
     }
-    
+
     // Filter rows with at least one identifier
-    const rows = dto.rows.filter((r) => r.idNumber || r.phoneNumber || r.kraPin || r.alienId || r.passportNumber || r.meterNumber || r.vehicleRegNumber || r.dlNumber || r.businessRegNumber);
+    const rows = dto.rows.filter(
+      (r) =>
+        r.idNumber ||
+        r.phoneNumber ||
+        r.kraPin ||
+        r.alienId ||
+        r.passportNumber ||
+        r.meterNumber ||
+        r.vehicleRegNumber ||
+        r.dlNumber ||
+        r.businessRegNumber,
+    );
     if (rows.length === 0) {
-      throw new BadRequestException('No usable rows found — expected columns like id_number or phone_number');
+      throw new BadRequestException(
+        'No usable rows found — expected columns like id_number or phone_number',
+      );
     }
     if (rows.length > MAX_ROWS) {
-      throw new BadRequestException(`A batch may contain at most ${MAX_ROWS} rows (got ${rows.length})`);
+      throw new BadRequestException(
+        `A batch may contain at most ${MAX_ROWS} rows (got ${rows.length})`,
+      );
     }
 
     // For batch, we estimate cost using the base tier price (will be actual per-row at runtime)
-    const productPricing = await this.prisma.client.productPricing.findUnique({ where: { type: dto.type } });
+    const productPricing = await this.prisma.client.productPricing.findUnique({
+      where: { type: dto.type },
+    });
     const wallet = await this.prisma.client.wallet.findUnique({ where: { organizationId: orgId } });
     const basePriceMinor = productPricing?.priceMinor ?? BigInt(0);
     if (!productPricing?.active) throw new BadRequestException('Product not priced/inactive');
     // Estimate max cost (all rows succeed at highest tier - conservative)
     const tier = await this.verifications.getCurrentTier(dto.type, 0);
     const estimatedPriceMinor = tier?.unitPriceMinor ?? basePriceMinor;
-    
+
     if (!wallet || wallet.balanceMinor < estimatedPriceMinor * BigInt(rows.length)) {
       throw new InsufficientFundsException(
         `Estimated cost KES ${(Number(estimatedPriceMinor * BigInt(rows.length)) / 100).toLocaleString()} exceeds wallet balance` +
@@ -118,7 +135,12 @@ export class BatchesService {
           if (processed % 25 === 0 || queue.length === 0) {
             await this.prisma.client.verificationBatch.update({
               where: { id: batchId },
-              data: { processedRows: processed, successCount: success, failedCount: failed, notFoundCount: notFound },
+              data: {
+                processedRows: processed,
+                successCount: success,
+                failedCount: failed,
+                notFoundCount: notFound,
+              },
             });
           }
         } catch (err) {
@@ -129,7 +151,9 @@ export class BatchesService {
             this.logger.warn(`batch ${batchId} aborted: insufficient funds`);
             break;
           }
-          this.logger.warn(`batch ${batchId} row error: ${err instanceof Error ? err.message : err}`);
+          this.logger.warn(
+            `batch ${batchId} row error: ${err instanceof Error ? err.message : err}`,
+          );
         }
       }
     };
@@ -221,8 +245,21 @@ export class BatchesService {
 
   private subjectOf(encryptedInput: string): string {
     try {
-      const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<string, string | number | null | undefined>;
-      const subject = input.kraPin ?? input.phoneNumber ?? input.idNumber ?? input.alienId ?? input.passportNumber ?? input.vehicleRegNumber ?? input.dlNumber ?? input.businessRegNumber ?? input.meterNumber ?? (input.statementPages ? String(input.statementPages) : '—');
+      const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<
+        string,
+        string | number | null | undefined
+      >;
+      const subject =
+        input.kraPin ??
+        input.phoneNumber ??
+        input.idNumber ??
+        input.alienId ??
+        input.passportNumber ??
+        input.vehicleRegNumber ??
+        input.dlNumber ??
+        input.businessRegNumber ??
+        input.meterNumber ??
+        (input.statementPages ? String(input.statementPages) : '—');
       return String(subject);
     } catch {
       return '—';
@@ -254,7 +291,9 @@ export class BatchesService {
       case VerificationType.MOTOR_VEHICLE_OWNERSHIP:
       case VerificationType.DRIVERS_LICENSE_VERIFICATION:
       case VerificationType.BRS:
-        return String(r.fullName ?? r.ownerName ?? r.taxpayerName ?? r.customerName ?? r.businessName ?? '');
+        return String(
+          r.fullName ?? r.ownerName ?? r.taxpayerName ?? r.customerName ?? r.businessName ?? '',
+        );
       case VerificationType.KRA_PIN_VERIFICATION:
         return String(r.taxpayerName ?? '');
       case VerificationType.SEARCH_PHONES_BY_ID:

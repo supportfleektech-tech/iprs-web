@@ -135,7 +135,12 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
       } else if (selectedOrgId) {
         await apiFetch(`/admin/organizations/${selectedOrgId}/pricing-tiers`, {
           method: 'POST',
-          body: JSON.stringify({ productType: type, minVolume: 0, maxVolume: null, unitPriceMinor: Number(value) }),
+          body: JSON.stringify({
+            productType: type,
+            minVolume: 0,
+            maxVolume: null,
+            unitPriceMinor: Number(value),
+          }),
           token,
         });
       }
@@ -166,7 +171,10 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
             <span>Organizations</span>
             <Badge tone="slate">{organizations.length}</Badge>
           </CardTitle>
-          <p className="text-xs text-slate-500">Balance is ledger-verified, KES. Manage to edit pricing and availability per organization. Vault-grade controls.</p>
+          <p className="text-xs text-slate-500">
+            Balance is ledger-verified, KES. Manage to edit pricing and availability per
+            organization. Vault-grade controls.
+          </p>
         </CardHeader>
         <CardContent>
           {organizations.length === 0 ? (
@@ -179,7 +187,9 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                 {
                   key: 'name',
                   header: 'Organization',
-                  render: (o: OrgSummary) => <span className="font-medium text-navy-900">{o.name}</span>,
+                  render: (o: OrgSummary) => (
+                    <span className="font-medium text-navy-900">{o.name}</span>
+                  ),
                 },
                 {
                   key: 'users',
@@ -193,7 +203,9 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                   align: 'right',
                   render: (o: OrgSummary) => (
                     <span className="tabular-nums font-medium">
-                      {o.wallet?.balanceMinor != null ? formatPriceMinor(o.wallet.balanceMinor) : 'KES —'}
+                      {o.wallet?.balanceMinor != null
+                        ? formatPriceMinor(o.wallet.balanceMinor)
+                        : 'KES —'}
                     </span>
                   ),
                 },
@@ -221,7 +233,10 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
           {selectedOrgId && (
             <div className="mt-3 flex items-center gap-2">
               <span className="text-xs text-slate-500">
-                Selected: <span className="font-medium text-navy-900">{selectedOrgName ?? selectedOrgId}</span>
+                Selected:{' '}
+                <span className="font-medium text-navy-900">
+                  {selectedOrgName ?? selectedOrgId}
+                </span>
               </span>
               <button
                 type="button"
@@ -252,9 +267,14 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
         <Card>
           <CardHeader>
             <CardTitle>Organization: {selectedOrgName ?? selectedOrgId}</CardTitle>
-            {orgLoading && <p className="text-xs text-slate-500">Loading availability and pricing…</p>}
+            {orgLoading && (
+              <p className="text-xs text-slate-500">Loading availability and pricing…</p>
+            )}
             {orgErr && (
-              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between">
+              <div
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between"
+              >
                 <span>{orgErr}</span>
                 <button
                   type="button"
@@ -271,12 +291,18 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
             <div className="rounded-xl border border-slate-200 overflow-hidden">
               <div className="bg-slate-50/60 px-4 py-3 border-b border-slate-200">
                 <h3 className="text-sm font-semibold text-navy-900">Enabled checks</h3>
-                <p className="text-xs text-slate-500 mt-1">Tick the lookups this organization may use. No row = enabled (global default). Change applies immediately.</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Tick the lookups this organization may use. No row = enabled (global default).
+                  Change applies immediately.
+                </p>
               </div>
               <div className="p-4">
                 <div className="grid gap-2 sm:grid-cols-2">
                   {VERIFICATION_TYPES.map((type) => (
-                    <label key={type} className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 hover:bg-slate-50 transition-colors motion-reduce:transition-none cursor-pointer">
+                    <label
+                      key={type}
+                      className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 hover:bg-slate-50 transition-colors motion-reduce:transition-none cursor-pointer"
+                    >
                       <input
                         type="checkbox"
                         checked={checkEdits[type] ?? true}
@@ -289,10 +315,20 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                   ))}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <Button size="sm" disabled={checksBusy || orgLoading} onClick={() => void saveEnabledChecks()} className="h-11" aria-label="Save enabled checks">
+                  <Button
+                    size="sm"
+                    disabled={checksBusy || orgLoading}
+                    onClick={() => void saveEnabledChecks()}
+                    className="h-11"
+                    aria-label="Save enabled checks"
+                  >
                     {checksBusy ? 'Saving…' : 'Save availability'}
                   </Button>
-                  {checksMsg && <span role="status" aria-live="polite" className="text-xs text-teal-700">{checksMsg}</span>}
+                  {checksMsg && (
+                    <span role="status" aria-live="polite" className="text-xs text-teal-700">
+                      {checksMsg}
+                    </span>
+                  )}
                 </div>
                 {checksErr && (
                   <p role="alert" className="mt-2 flex items-center gap-2 text-xs text-red-600">
@@ -312,18 +348,32 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
             {/* Org pricing tiers */}
             <div className="rounded-xl border border-slate-200 overflow-hidden">
               <div className="bg-slate-50/60 px-4 py-3 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-navy-900">Organization pricing overrides</h3>
-                <p className="text-xs text-slate-500 mt-1">Org-specific unit price (minor units) overrides global tiers. Leave empty to inherit global pricing.</p>
+                <h3 className="text-sm font-semibold text-navy-900">
+                  Organization pricing overrides
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Org-specific unit price (minor units) overrides global tiers. Leave empty to
+                  inherit global pricing.
+                </p>
               </div>
               <div className="p-4 space-y-3">
                 {VERIFICATION_TYPES.map((type) => {
                   const current = pricingEdits[type] ?? '';
                   const hasOverride = pricingIds[type] != null;
                   return (
-                    <div key={type} className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-100 p-3">
+                    <div
+                      key={type}
+                      className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-100 p-3"
+                    >
                       <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-navy-900 truncate block">{type}</span>
-                        <span className="text-xs text-slate-500">{hasOverride ? `Override ${formatPriceMinor(current)}` : 'Using global price'}</span>
+                        <span className="text-sm font-medium text-navy-900 truncate block">
+                          {type}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {hasOverride
+                            ? `Override ${formatPriceMinor(current)}`
+                            : 'Using global price'}
+                        </span>
                       </div>
                       <div className="w-36">
                         <Input
@@ -332,7 +382,9 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                           step={100}
                           placeholder="minor (e.g. 3000)"
                           value={current}
-                          onChange={(e) => setPricingEdits((v) => ({ ...v, [type]: e.target.value }))}
+                          onChange={(e) =>
+                            setPricingEdits((v) => ({ ...v, [type]: e.target.value }))
+                          }
                           aria-label={`Price for ${type}`}
                           aria-describedby={pricingErr[type] ? `err-org-${type}` : undefined}
                           className="h-11 w-36"
@@ -350,7 +402,11 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                       </Button>
                       <div className="w-full">
                         {pricingErr[type] && (
-                          <p id={`err-org-${type}`} role="alert" className="flex items-center gap-2 text-xs text-red-600">
+                          <p
+                            id={`err-org-${type}`}
+                            role="alert"
+                            className="flex items-center gap-2 text-xs text-red-600"
+                          >
                             <span>{pricingErr[type]}</span>
                             <button
                               type="button"
@@ -361,7 +417,11 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                             </button>
                           </p>
                         )}
-                        {pricingMsg[type] && <p role="status" aria-live="polite" className="text-xs text-teal-700">{pricingMsg[type]}</p>}
+                        {pricingMsg[type] && (
+                          <p role="status" aria-live="polite" className="text-xs text-teal-700">
+                            {pricingMsg[type]}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );

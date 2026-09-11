@@ -42,8 +42,8 @@ export default function HomePage() {
             Verify anyone. <span className="brand-gradient-text">Instantly.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
-            Fleek IPRS gives lenders, SACCOs and fintechs real-time identity verification against IPRS,
-            KRA, telecom and mobile-money records — through one clean API.
+            Fleek IPRS gives lenders, SACCOs and fintechs real-time identity verification against
+            IPRS, KRA, telecom and mobile-money records — through one clean API.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
@@ -96,7 +96,9 @@ export default function HomePage() {
       {/* Products */}
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="text-center text-3xl font-bold font-display">Powerful verification tools</h2>
+          <h2 className="text-center text-3xl font-bold font-display">
+            Powerful verification tools
+          </h2>
           <p className="mx-auto mt-3 max-w-xl text-center text-slate-500">
             One platform, multiple authoritative data sources.
           </p>
@@ -109,7 +111,9 @@ export default function HomePage() {
               >
                 <h3 className="font-semibold group-hover:text-teal-brand">{p.title}</h3>
                 <p className="mt-2 text-sm text-slate-500">{p.short}</p>
-                <span className="mt-4 inline-block text-sm font-medium text-teal-brand">Learn more →</span>
+                <span className="mt-4 inline-block text-sm font-medium text-teal-brand">
+                  Learn more →
+                </span>
               </Link>
             ))}
           </div>
@@ -123,7 +127,9 @@ export default function HomePage() {
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {WHY.map(([title, body]) => (
               <div key={title} className="rounded-xl border border-slate-100 p-6">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-brand/10 text-lg">✓</div>
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-brand/10 text-lg">
+                  ✓
+                </div>
                 <h3 className="font-semibold">{title}</h3>
                 <p className="mt-1 text-sm text-slate-500">{body}</p>
               </div>
@@ -136,11 +142,15 @@ export default function HomePage() {
       <section className="hero-grid-bg bg-navy-900 py-20 text-white">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="text-center text-3xl font-bold font-display">
-            Built for every institution that needs to <span className="brand-gradient-text">know</span>
+            Built for every institution that needs to{' '}
+            <span className="brand-gradient-text">know</span>
           </h2>
           <div className="mt-12 grid gap-6 md:grid-cols-4">
             {SECTORS.map(([title, body]) => (
-              <div key={title} className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+              <div
+                key={title}
+                className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur"
+              >
                 <h3 className="font-semibold">{title}</h3>
                 <p className="mt-2 text-sm text-slate-400">{body}</p>
               </div>

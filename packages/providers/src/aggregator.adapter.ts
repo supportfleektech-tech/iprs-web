@@ -168,7 +168,10 @@ export class AggregatorAdapter implements VerificationProvider {
     return this.call<IprsStandardResult>('/kenya/iprs-standard', { idNumber });
   }
 
-  async matchIdPhone(input: { idNumber: string; phoneNumber: string }): Promise<MatchIdPhoneResult> {
+  async matchIdPhone(input: {
+    idNumber: string;
+    phoneNumber: string;
+  }): Promise<MatchIdPhoneResult> {
     return this.call<MatchIdPhoneResult>('/kenya/match-id-phone', input);
   }
 
@@ -232,7 +235,9 @@ export class AggregatorAdapter implements VerificationProvider {
     return this.call<MotorVehicleOwnershipResult>('/kenya/vehicle', input);
   }
 
-  async driversLicenseVerification(input: DriversLicenseInput): Promise<DriversLicenseVerificationResult> {
+  async driversLicenseVerification(
+    input: DriversLicenseInput,
+  ): Promise<DriversLicenseVerificationResult> {
     return this.call<DriversLicenseVerificationResult>('/kenya/drivers-license', input);
   }
 
@@ -257,7 +262,9 @@ export class AggregatorAdapter implements VerificationProvider {
   }
 
   async creditInfoComprehensive(idNumber: string): Promise<CreditInfoComprehensiveResult> {
-    return this.call<CreditInfoComprehensiveResult>('/kenya/creditinfo/comprehensive', { idNumber });
+    return this.call<CreditInfoComprehensiveResult>('/kenya/creditinfo/comprehensive', {
+      idNumber,
+    });
   }
 
   async creditInfoCrbStatus(idNumber: string): Promise<CreditInfoCrbStatusResult> {

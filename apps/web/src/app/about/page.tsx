@@ -14,19 +14,19 @@ export default function AboutPage() {
             <a href="https://fleektech.co.ke" className="text-teal-brand hover:underline">
               Fleektech LTD
             </a>
-            , a Kenyan technology company. We help financial institutions, SACCOs and digital businesses
-            confirm who their customers really are — in seconds, not days.
+            , a Kenyan technology company. We help financial institutions, SACCOs and digital
+            businesses confirm who their customers really are — in seconds, not days.
           </p>
           <p>
-            Our platform connects authoritative data sources — the Integrated Population Registration
-            System, KRA, telecom subscriber records and mobile-money KYC — behind a single, clean API.
-            Every verification captures consent and produces an audit trail, keeping you aligned with
-            the Kenya Data Protection Act.
+            Our platform connects authoritative data sources — the Integrated Population
+            Registration System, KRA, telecom subscriber records and mobile-money KYC — behind a
+            single, clean API. Every verification captures consent and produces an audit trail,
+            keeping you aligned with the Kenya Data Protection Act.
           </p>
           <p>
-            Whether you are onboarding your ten-thousandth customer or running your first loan, Fleek
-            IPRS scales with you: start in sandbox with deterministic mock data, then switch to live
-            sources with one configuration change.
+            Whether you are onboarding your ten-thousandth customer or running your first loan,
+            Fleek IPRS scales with you: start in sandbox with deterministic mock data, then switch
+            to live sources with one configuration change.
           </p>
         </div>
 

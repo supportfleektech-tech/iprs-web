@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { AdminCommandCenter } from './admin-command-center';
-import type { AdminStats, AdminTopUp, ProductPricing, ProductPricingTier, OrgSummary } from '@/lib/admin';
+import type {
+  AdminStats,
+  AdminTopUp,
+  ProductPricing,
+  ProductPricingTier,
+  OrgSummary,
+} from '@/lib/admin';
 
 export default function AdminPage() {
   const { token, user } = useAuth();
@@ -70,7 +76,9 @@ export default function AdminPage() {
             return `${f.label}: ${msg}`;
           })
           .join('; ');
-        setError(`Some admin data failed to load (${failed.map((f) => f.label).join(', ')}) — ${details} — retry`);
+        setError(
+          `Some admin data failed to load (${failed.map((f) => f.label).join(', ')}) — ${details} — retry`,
+        );
       } else {
         setError(null);
       }
@@ -88,10 +96,16 @@ export default function AdminPage() {
   // Auth gate — platform admin or org OWNER (per existing contract)
   if (!user?.isPlatformAdmin && user?.role !== 'OWNER') {
     return (
-      <main className="flex min-h-screen items-center justify-center px-4" role="status" aria-live="polite">
+      <main
+        className="flex min-h-screen items-center justify-center px-4"
+        role="status"
+        aria-live="polite"
+      >
         <div className="rounded-xl border border-slate-200 bg-white px-6 py-8 text-center shadow-sm">
           <p className="text-sm font-medium text-slate-600">Admin access required.</p>
-          <p className="mt-1 text-xs text-slate-400">Platform administrator or organization owner only.</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Platform administrator or organization owner only.
+          </p>
         </div>
       </main>
     );

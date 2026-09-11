@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -10,7 +20,8 @@ import { VerificationsService } from './verifications.service';
 import { ListVerificationsQuery, RunVerificationDto } from './dto';
 
 const CurrentApiKey = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): string | null => ctx.switchToHttp().getRequest()['apiKey']?.id ?? null,
+  (_data: unknown, ctx: ExecutionContext): string | null =>
+    ctx.switchToHttp().getRequest()['apiKey']?.id ?? null,
 );
 
 @ApiTags('verifications')

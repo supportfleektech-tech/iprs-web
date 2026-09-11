@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fleek/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@fleek/ui';
 import { apiFetch } from '@/lib/auth';
 import { VerificationType, PRODUCT_LABELS } from '@fleek/types';
 
@@ -95,7 +103,9 @@ export default function VerificationDetailPage() {
         <Link href="/console/history" className="text-sm text-teal-brand hover:underline">
           ← Back to history
         </Link>
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}</div>
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+          {error}
+        </div>
       </div>
     );
   }
@@ -112,7 +122,9 @@ export default function VerificationDetailPage() {
     ([, v]) => v !== null && v !== undefined && v !== '',
   );
   const resultEntries = detail.result
-    ? Object.entries(detail.result).filter(([k]) => k !== 'photoBase64' && k !== 'referenceImageBase64')
+    ? Object.entries(detail.result).filter(
+        ([k]) => k !== 'photoBase64' && k !== 'referenceImageBase64',
+      )
     : [];
 
   return (
@@ -142,9 +154,18 @@ export default function VerificationDetailPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <dl className="grid gap-3 sm:grid-cols-2">
-            <Stat label="Cost" value={detail.cost > 0 ? `KES ${detail.cost.toLocaleString()}` : 'Free'} />
-            <Stat label="Consent" value={detail.consent ? `Yes (by ${detail.consentCollectedBy ?? '—'})` : 'No'} />
-            <Stat label="Credit-bureau consent" value={detail.cbConsent ? 'Provided' : 'Not required'} />
+            <Stat
+              label="Cost"
+              value={detail.cost > 0 ? `KES ${detail.cost.toLocaleString()}` : 'Free'}
+            />
+            <Stat
+              label="Consent"
+              value={detail.consent ? `Yes (by ${detail.consentCollectedBy ?? '—'})` : 'No'}
+            />
+            <Stat
+              label="Credit-bureau consent"
+              value={detail.cbConsent ? 'Provided' : 'Not required'}
+            />
             <Stat label="Verification ID" value={detail.id} mono />
           </dl>
 
@@ -155,7 +176,9 @@ export default function VerificationDetailPage() {
           )}
 
           <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Input</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Input
+            </h3>
             {inputEntries.length === 0 ? (
               <p className="text-sm text-slate-400">No input captured.</p>
             ) : (
@@ -175,7 +198,9 @@ export default function VerificationDetailPage() {
           </section>
 
           <section>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Result</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Result
+            </h3>
             {resultEntries.length === 0 ? (
               <p className="text-sm text-slate-400">No result payload.</p>
             ) : (
@@ -186,11 +211,15 @@ export default function VerificationDetailPage() {
                       {humanise(k)}
                     </dt>
                     <dd className="mt-1 text-sm text-navy-900">
-                      {v === null || v === undefined
-                        ? '—'
-                        : typeof v === 'object'
-                          ? <pre className="whitespace-pre-wrap break-words text-xs">{JSON.stringify(v, null, 2)}</pre>
-                          : String(v)}
+                      {v === null || v === undefined ? (
+                        '—'
+                      ) : typeof v === 'object' ? (
+                        <pre className="whitespace-pre-wrap break-words text-xs">
+                          {JSON.stringify(v, null, 2)}
+                        </pre>
+                      ) : (
+                        String(v)
+                      )}
                     </dd>
                   </div>
                 ))}

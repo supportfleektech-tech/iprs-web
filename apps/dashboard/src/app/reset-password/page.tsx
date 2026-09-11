@@ -81,9 +81,7 @@ function ResetForm() {
               />
             </div>
             <FieldError>{error}</FieldError>
-            {!token && (
-              <FieldError>Missing reset token — use the link from your email.</FieldError>
-            )}
+            {!token && <FieldError>Missing reset token — use the link from your email.</FieldError>}
             <Button type="submit" disabled={busy || !token} className="w-full">
               {busy ? 'Updating…' : 'Update password'}
             </Button>

@@ -6,7 +6,8 @@ import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { WalletService } from './wallet.service';
 
 export class TopUpDto {
-  @IsNumber() @Min(1000)
+  @IsNumber()
+  @Min(1000)
   amount!: number;
 }
 
@@ -29,7 +30,11 @@ export class WalletController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    return this.wallet.getTransactions(user.organizationId!, Number(limit ?? 50), Number(offset ?? 0));
+    return this.wallet.getTransactions(
+      user.organizationId!,
+      Number(limit ?? 50),
+      Number(offset ?? 0),
+    );
   }
 
   @Post('top-ups')
@@ -40,7 +45,10 @@ export class WalletController {
 
   @Get('top-ups')
   @Auth('OWNER', 'ADMIN')
-  topUps(@CurrentUser() user: JwtPayload, @Query('status') status?: 'pending' | 'approved' | 'rejected') {
+  topUps(
+    @CurrentUser() user: JwtPayload,
+    @Query('status') status?: 'pending' | 'approved' | 'rejected',
+  ) {
     return this.wallet.listTopUps(user.organizationId!, status);
   }
 }

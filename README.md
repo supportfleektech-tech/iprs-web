@@ -10,15 +10,15 @@ mobile-money KYC — through one clean REST API and an operator-friendly dashboa
 
 ## Monorepo layout
 
-| Path | What it is | Dev URL |
-|---|---|---|
-| `apps/web` | Public marketing site + developer portal | http://localhost:3000 |
-| `apps/dashboard` | Client console: verifications, wallet, API keys, admin | http://localhost:3001 |
-| `apps/api` | NestJS REST API (`/v1`) with OpenAPI docs at `/docs` | http://localhost:4000 |
-| `packages/types` | Shared domain types (verification products & results) | — |
-| `packages/providers` | Pluggable verification provider layer + deterministic mock | — |
-| `packages/database` | Prisma schema, client, field-level AES-256 encryption helpers | — |
-| `packages/ui` | Brand kit & shared UI components (navy `#0A1628` / teal `#00D9B5`) | — |
+| Path                 | What it is                                                         | Dev URL               |
+| -------------------- | ------------------------------------------------------------------ | --------------------- |
+| `apps/web`           | Public marketing site + developer portal                           | http://localhost:3000 |
+| `apps/dashboard`     | Client console: verifications, wallet, API keys, admin             | http://localhost:3001 |
+| `apps/api`           | NestJS REST API (`/v1`) with OpenAPI docs at `/docs`               | http://localhost:4000 |
+| `packages/types`     | Shared domain types (verification products & results)              | —                     |
+| `packages/providers` | Pluggable verification provider layer + deterministic mock         | —                     |
+| `packages/database`  | Prisma schema, client, field-level AES-256 encryption helpers      | —                     |
+| `packages/ui`        | Brand kit & shared UI components (navy `#0A1628` / teal `#00D9B5`) | —                     |
 
 ## Quick start (local dev)
 
@@ -88,11 +88,11 @@ Every third-party integration reads credentials from env. **The platform is full
 without any of them** (mock providers + sandbox gateways), and real services activate by
 configuration only:
 
-| Integration | Env vars | While empty |
-|---|---|---|
-| Live IPRS/KRA data (`packages/providers` → `AggregatorAdapter`) | `USE_LIVE_UPSTREAM`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS` | Deterministic mock provider; per-type live routing |
-| M-Pesa STK top-ups (`apps/api/src/payments` → `DarajaGateway`) | `DARAJA_CONSUMER_KEY/SECRET/SHORTCODE/PASSKEY`, `DARAJA_ENV`, `DARAJA_CALLBACK_URL` | Mock gateway auto-completes after ~3s |
-| Reset emails | swap `ConsoleMailer` for SES/Postmark | Links logged server-side |
+| Integration                                                     | Env vars                                                                            | While empty                                        |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Live IPRS/KRA data (`packages/providers` → `AggregatorAdapter`) | `USE_LIVE_UPSTREAM`, `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `LIVE_CHECKS`         | Deterministic mock provider; per-type live routing |
+| M-Pesa STK top-ups (`apps/api/src/payments` → `DarajaGateway`)  | `DARAJA_CONSUMER_KEY/SECRET/SHORTCODE/PASSKEY`, `DARAJA_ENV`, `DARAJA_CALLBACK_URL` | Mock gateway auto-completes after ~3s              |
+| Reset emails                                                    | swap `ConsoleMailer` for SES/Postmark                                               | Links logged server-side                           |
 
 Bulk CSV verification, wallet billing, audit trails and admin approvals all work end-to-end
 in sandbox mode today.
@@ -115,4 +115,5 @@ M-Pesa Daraja wallet top-ups · CRB checks · KYB (business registry) · face ma
 bulk CSV verification runs · live NRB/aggregator adapters.
 
 © 2026 Fleektech LTD
+
 # iprs-deploy-fix

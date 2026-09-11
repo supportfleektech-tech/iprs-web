@@ -27,7 +27,9 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
   const navItems = user.isPlatformAdmin ? [...consoleNavItems, adminNavItem] : consoleNavItems;
   const userInitial = user.firstName?.[0]?.toUpperCase() ?? user.email[0]?.toUpperCase() ?? 'U';
   const displayName =
-    user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email : user.email;
+    user.firstName || user.lastName
+      ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email
+      : user.email;
 
   return (
     <div className="min-h-screen bg-[#F6F8FB] text-[#0A1628]">
@@ -48,7 +50,9 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
             <div className="truncate text-[15px] font-semibold tracking-tight">
               Fleek <span className="text-teal-300">IPRS</span>
             </div>
-            <div className="truncate text-[11px] leading-none text-slate-400">Identity operations</div>
+            <div className="truncate text-[11px] leading-none text-slate-400">
+              Identity operations
+            </div>
           </div>
         </div>
 
@@ -56,7 +60,10 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
 
         <div className="border-t border-white/10 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-xs font-semibold text-teal-300 ring-1 ring-inset ring-teal-400/25" aria-hidden="true">
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-xs font-semibold text-teal-300 ring-1 ring-inset ring-teal-400/25"
+              aria-hidden="true"
+            >
               {userInitial}
             </div>
             <div className="min-w-0 flex-1">
@@ -86,7 +93,10 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
         <DashboardNav items={navItems} activePath={activePath} variant="collapsed" />
 
         <div className="mt-auto flex w-full flex-col items-center gap-2 border-t border-white/10 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-500/15 text-xs font-semibold text-teal-300 ring-1 ring-inset ring-teal-400/25" aria-hidden="true">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-500/15 text-xs font-semibold text-teal-300 ring-1 ring-inset ring-teal-400/25"
+            aria-hidden="true"
+          >
             {userInitial}
           </div>
           <button
@@ -105,7 +115,10 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
       <div className="md:pl-16 lg:pl-64">
         {/* Mobile top bar — < md */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur md:hidden">
-          <Link href="/console" className="flex items-center gap-2.5 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 rounded-lg">
+          <Link
+            href="/console"
+            className="flex items-center gap-2.5 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 rounded-lg"
+          >
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-navy-900 text-teal-300">
               <DashboardIcon name="shield" className="h-4 w-4" aria-hidden="true" />
             </span>
@@ -119,13 +132,23 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
             onClick={() => setMobileOpen((open) => !open)}
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
-            <DashboardIcon name={mobileOpen ? 'close' : 'menu'} className="h-5 w-5" aria-hidden="true" />
+            <DashboardIcon
+              name={mobileOpen ? 'close' : 'menu'}
+              className="h-5 w-5"
+              aria-hidden="true"
+            />
           </button>
         </header>
 
         {/* Mobile overlay */}
         {mobileOpen && (
-          <div id="mobile-nav-panel" className="fixed inset-0 z-30 bg-navy-900/95 backdrop-blur-sm md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <div
+            id="mobile-nav-panel"
+            className="fixed inset-0 z-30 bg-navy-900/95 backdrop-blur-sm md:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+          >
             <div className="flex h-16 items-center justify-between border-b border-white/10 px-4 text-white">
               <span className="font-semibold">
                 Fleek <span className="text-teal-300">IPRS</span>
@@ -153,8 +176,14 @@ export function DashboardShell({ activePath, user, children, onLogout }: Dashboa
           </div>
         )}
 
-        <main id="main-content" tabIndex={-1} className="min-h-[calc(100dvh-4rem)] outline-none md:min-h-screen">
-          <div className="mx-auto w-full max-w-[1280px] px-4 py-6 md:px-4 lg:px-6 lg:py-8">{children}</div>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="min-h-[calc(100dvh-4rem)] outline-none md:min-h-screen"
+        >
+          <div className="mx-auto w-full max-w-[1280px] px-4 py-6 md:px-4 lg:px-6 lg:py-8">
+            {children}
+          </div>
         </main>
       </div>
     </div>

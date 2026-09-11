@@ -42,11 +42,53 @@ import {
   type VerificationProvider,
 } from './provider';
 
-const FIRST_NAMES = ['John', 'Jane', 'Peter', 'Mary', 'Samuel', 'Grace', 'Dennis', 'Faith', 'Brian', 'Lucy'];
-const SURNAMES = ['Kamau', 'Wanjiku', 'Otieno', 'Achieng', 'Mutiso', 'Njoroge', 'Chebet', 'Odhiambo', 'Kiptoo', 'Mwende'];
+const FIRST_NAMES = [
+  'John',
+  'Jane',
+  'Peter',
+  'Mary',
+  'Samuel',
+  'Grace',
+  'Dennis',
+  'Faith',
+  'Brian',
+  'Lucy',
+];
+const SURNAMES = [
+  'Kamau',
+  'Wanjiku',
+  'Otieno',
+  'Achieng',
+  'Mutiso',
+  'Njoroge',
+  'Chebet',
+  'Odhiambo',
+  'Kiptoo',
+  'Mwende',
+];
 const CITIES = ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Machakos'];
-const BANKS = ['KCB', 'Equity', 'Co-op', 'Absa', 'Standard Chartered', 'NCBA', 'I&M', 'DTB', 'Family', 'Gulf African'];
-const VEHICLE_MAKES = ['Toyota', 'Nissan', 'Mazda', 'Subaru', 'Honda', 'Mitsubishi', 'Isuzu', 'Volkswagen'];
+const BANKS = [
+  'KCB',
+  'Equity',
+  'Co-op',
+  'Absa',
+  'Standard Chartered',
+  'NCBA',
+  'I&M',
+  'DTB',
+  'Family',
+  'Gulf African',
+];
+const VEHICLE_MAKES = [
+  'Toyota',
+  'Nissan',
+  'Mazda',
+  'Subaru',
+  'Honda',
+  'Mitsubishi',
+  'Isuzu',
+  'Volkswagen',
+];
 const VEHICLE_MODELS = ['Corolla', 'Axela', 'Demio', 'Impreza', 'Fit', 'Lancer', 'D-Max', 'Golf'];
 
 function hash(seed: string): number {
@@ -124,7 +166,10 @@ export class MockProvider implements VerificationProvider {
     };
   }
 
-  async matchIdPhone(input: { idNumber: string; phoneNumber: string }): Promise<MatchIdPhoneResult> {
+  async matchIdPhone(input: {
+    idNumber: string;
+    phoneNumber: string;
+  }): Promise<MatchIdPhoneResult> {
     assertSupported(VerificationType.MATCH_ID_PHONE, this.supported);
     if (!/^\d{7,9}$/.test(input.idNumber)) {
       throw new ProviderError('INVALID_INPUT', 'ID number must be 7-9 digits');
@@ -191,7 +236,12 @@ export class MockProvider implements VerificationProvider {
     }
 
     const seed = `${input.accountNumber}|${input.bankCode}`;
-    const statuses: ('active' | 'dormant' | 'closed' | 'unknown')[] = ['active', 'dormant', 'closed', 'unknown'];
+    const statuses: ('active' | 'dormant' | 'closed' | 'unknown')[] = [
+      'active',
+      'dormant',
+      'closed',
+      'unknown',
+    ];
     const idMatch = input.idNumber ? hash(seed) % 5 !== 0 : true; // 80% match if ID provided
 
     return {
@@ -213,7 +263,15 @@ export class MockProvider implements VerificationProvider {
     }
 
     const statuses: ('valid' | 'expired' | 'invalid')[] = ['valid', 'expired', 'invalid'];
-    const nationalities = ['Ugandan', 'Tanzanian', 'Rwandan', 'South Sudanese', 'Congolese', 'Somali', 'Ethiopian'];
+    const nationalities = [
+      'Ugandan',
+      'Tanzanian',
+      'Rwandan',
+      'South Sudanese',
+      'Congolese',
+      'Somali',
+      'Ethiopian',
+    ];
 
     return {
       alienId: input.alienId,
@@ -242,7 +300,8 @@ export class MockProvider implements VerificationProvider {
       amlMatch,
       pepMatch,
       watchlistMatches: amlMatch || pepMatch ? [pick(watchlists, `wl${idNumber}`)] : [],
-      riskLevel: amlMatch || pepMatch ? pick(['low', 'medium', 'high', 'critical'], `rl${idNumber}`) : 'low',
+      riskLevel:
+        amlMatch || pepMatch ? pick(['low', 'medium', 'high', 'critical'], `rl${idNumber}`) : 'low',
     };
   }
 
@@ -253,7 +312,16 @@ export class MockProvider implements VerificationProvider {
     }
 
     const statuses: ('valid' | 'expired' | 'invalid')[] = ['valid', 'expired', 'invalid'];
-    const countries = ['Kenya', 'Uganda', 'Tanzania', 'Rwanda', 'South Sudan', 'UK', 'USA', 'Canada'];
+    const countries = [
+      'Kenya',
+      'Uganda',
+      'Tanzania',
+      'Rwanda',
+      'South Sudan',
+      'UK',
+      'USA',
+      'Canada',
+    ];
 
     return {
       passportNumber: input.passportNumber,
@@ -292,7 +360,11 @@ export class MockProvider implements VerificationProvider {
       throw new ProviderError('INVALID_INPUT', 'Meter number is required');
     }
 
-    const statuses: ('active' | 'inactive' | 'disconnected')[] = ['active', 'inactive', 'disconnected'];
+    const statuses: ('active' | 'inactive' | 'disconnected')[] = [
+      'active',
+      'inactive',
+      'disconnected',
+    ];
 
     return {
       meterNumber: input.meterNumber,
@@ -344,7 +416,9 @@ export class MockProvider implements VerificationProvider {
     const count = 1 + (hash(`c${idNumber}`) % 3);
     const normalized = `+2547${hash(idNumber) % 100000000}`;
     const numbers = Array.from({ length: count }, (_, i) =>
-      i === 0 ? normalized : `${normalized.slice(0, 6)}${(hash(`n${idNumber}${i}`) % 10000000) + 7000000}`,
+      i === 0
+        ? normalized
+        : `${normalized.slice(0, 6)}${(hash(`n${idNumber}${i}`) % 10000000) + 7000000}`,
     );
 
     return {
@@ -362,7 +436,11 @@ export class MockProvider implements VerificationProvider {
       throw new ProviderError('INVALID_INPUT', 'Vehicle registration number is required');
     }
 
-    const logbookStatuses: ('valid' | 'expired' | 'cancelled')[] = ['valid', 'expired', 'cancelled'];
+    const logbookStatuses: ('valid' | 'expired' | 'cancelled')[] = [
+      'valid',
+      'expired',
+      'cancelled',
+    ];
     const ownerId = generateIdNumber(input.vehicleRegNumber);
 
     return {
@@ -372,20 +450,30 @@ export class MockProvider implements VerificationProvider {
       make: pick(VEHICLE_MAKES, `mk${input.vehicleRegNumber}`),
       model: pick(VEHICLE_MODELS, `md${input.vehicleRegNumber}`),
       year: 2010 + (hash(`yr${input.vehicleRegNumber}`) % 15),
-      color: pick(['White', 'Silver', 'Black', 'Blue', 'Red', 'Grey'], `clr${input.vehicleRegNumber}`),
+      color: pick(
+        ['White', 'Silver', 'Black', 'Blue', 'Red', 'Grey'],
+        `clr${input.vehicleRegNumber}`,
+      ),
       engineNumber: `ENG${hash(`en${input.vehicleRegNumber}`)}`.slice(0, 10).padStart(10, '0'),
       chassisNumber: `CHS${hash(`ch${input.vehicleRegNumber}`)}`.slice(0, 17).padStart(17, '0'),
       logbookStatus: pick(logbookStatuses, `ls${input.vehicleRegNumber}`),
     };
   }
 
-  async driversLicenseVerification(input: DriversLicenseInput): Promise<DriversLicenseVerificationResult> {
+  async driversLicenseVerification(
+    input: DriversLicenseInput,
+  ): Promise<DriversLicenseVerificationResult> {
     assertSupported(VerificationType.DRIVERS_LICENSE_VERIFICATION, this.supported);
     if (!input.dlNumber || input.dlNumber.length < 8) {
-      throw new ProviderError('INVALID_INPUT', 'Driver\'s license number is required');
+      throw new ProviderError('INVALID_INPUT', "Driver's license number is required");
     }
 
-    const statuses: ('valid' | 'expired' | 'suspended' | 'revoked')[] = ['valid', 'expired', 'suspended', 'revoked'];
+    const statuses: ('valid' | 'expired' | 'suspended' | 'revoked')[] = [
+      'valid',
+      'expired',
+      'suspended',
+      'revoked',
+    ];
     const classes = ['BCE', 'BC', 'B', 'C', 'CE', 'D', 'DE', 'A'];
 
     return {
@@ -409,7 +497,13 @@ export class MockProvider implements VerificationProvider {
     }
 
     const score = 300 + (hash(`ms${idNumber}`) % 550); // 300-850
-    const bands = ['Poor (300-499)', 'Fair (500-599)', 'Good (600-699)', 'Very Good (700-749)', 'Excellent (750-850)'];
+    const bands = [
+      'Poor (300-499)',
+      'Fair (500-599)',
+      'Good (600-699)',
+      'Very Good (700-749)',
+      'Excellent (750-850)',
+    ];
 
     return {
       score,
@@ -425,7 +519,13 @@ export class MockProvider implements VerificationProvider {
     }
 
     const score = 300 + (hash(`ms${idNumber}`) % 550);
-    const bands = ['Poor (300-499)', 'Fair (500-599)', 'Good (600-699)', 'Very Good (700-749)', 'Excellent (750-850)'];
+    const bands = [
+      'Poor (300-499)',
+      'Fair (500-599)',
+      'Good (600-699)',
+      'Very Good (700-749)',
+      'Excellent (750-850)',
+    ];
 
     return {
       score,
@@ -439,7 +539,11 @@ export class MockProvider implements VerificationProvider {
       paymentHistory: [
         { accountType: 'Personal Loan', status: 'Current', monthsInArrears: 0 },
         { accountType: 'Credit Card', status: 'Current', monthsInArrears: 0 },
-        { accountType: 'Mortgage', status: hash(`mh${idNumber}`) % 3 === 0 ? 'Arrears' : 'Current', monthsInArrears: hash(`ma${idNumber}`) % 3 },
+        {
+          accountType: 'Mortgage',
+          status: hash(`mh${idNumber}`) % 3 === 0 ? 'Arrears' : 'Current',
+          monthsInArrears: hash(`ma${idNumber}`) % 3,
+        },
       ],
     };
   }
@@ -451,7 +555,13 @@ export class MockProvider implements VerificationProvider {
     }
 
     const score = 300 + (hash(`ms${idNumber}`) % 550);
-    const bands = ['Poor (300-499)', 'Fair (500-599)', 'Good (600-699)', 'Very Good (700-749)', 'Excellent (750-850)'];
+    const bands = [
+      'Poor (300-499)',
+      'Fair (500-599)',
+      'Good (600-699)',
+      'Very Good (700-749)',
+      'Excellent (750-850)',
+    ];
 
     return {
       score,
@@ -480,12 +590,28 @@ export class MockProvider implements VerificationProvider {
         },
       ],
       inquiries: [
-        { date: randomDate(2023, 2024, `inq1${idNumber}`), institution: pick(BANKS, `inqb1${idNumber}`), purpose: 'Credit Application' },
-        { date: randomDate(2023, 2024, `inq2${idNumber}`), institution: pick(BANKS, `inqb2${idNumber}`), purpose: 'Loan Review' },
+        {
+          date: randomDate(2023, 2024, `inq1${idNumber}`),
+          institution: pick(BANKS, `inqb1${idNumber}`),
+          purpose: 'Credit Application',
+        },
+        {
+          date: randomDate(2023, 2024, `inq2${idNumber}`),
+          institution: pick(BANKS, `inqb2${idNumber}`),
+          purpose: 'Loan Review',
+        },
       ],
-      publicRecords: hash(`pr${idNumber}`) % 5 === 0
-        ? [{ type: 'Court Judgment', amount: 50000 + (hash(`pa${idNumber}`) % 200000), date: randomDate(2020, 2023, `prd${idNumber}`), status: 'Satisfied' }]
-        : [],
+      publicRecords:
+        hash(`pr${idNumber}`) % 5 === 0
+          ? [
+              {
+                type: 'Court Judgment',
+                amount: 50000 + (hash(`pa${idNumber}`) % 200000),
+                date: randomDate(2020, 2023, `prd${idNumber}`),
+                status: 'Satisfied',
+              },
+            ]
+          : [],
     };
   }
 
@@ -500,7 +626,16 @@ export class MockProvider implements VerificationProvider {
     const score = 300 + (hash(`ci${idNumber}`) % 550);
     return {
       score,
-      scoreBand: score >= 750 ? 'Excellent' : score >= 700 ? 'Very Good' : score >= 650 ? 'Good' : score >= 600 ? 'Fair' : 'Poor',
+      scoreBand:
+        score >= 750
+          ? 'Excellent'
+          : score >= 700
+            ? 'Very Good'
+            : score >= 650
+              ? 'Good'
+              : score >= 600
+                ? 'Fair'
+                : 'Poor',
       riskLevel: score >= 700 ? 'low' : score >= 600 ? 'medium' : 'high',
     };
   }
@@ -536,9 +671,16 @@ export class MockProvider implements VerificationProvider {
           repaymentHistory: '000000000000',
         },
       ],
-      guarantees: hash(`gu${idNumber}`) % 3 === 0
-        ? [{ borrower: `${pick(SURNAMES, `g${idNumber}`)} ${pick(FIRST_NAMES, `gfn${idNumber}`)}`, amount: 500000, status: 'Active' }]
-        : [],
+      guarantees:
+        hash(`gu${idNumber}`) % 3 === 0
+          ? [
+              {
+                borrower: `${pick(SURNAMES, `g${idNumber}`)} ${pick(FIRST_NAMES, `gfn${idNumber}`)}`,
+                amount: 500000,
+                status: 'Active',
+              },
+            ]
+          : [],
     };
   }
 
@@ -574,7 +716,12 @@ export class MockProvider implements VerificationProvider {
     }
 
     const statuses: ('active' | 'dormant' | 'dissolved')[] = ['active', 'dormant', 'dissolved'];
-    const businessTypes = ['Private Limited Company', 'Public Limited Company', 'Sole Proprietorship', 'Partnership'];
+    const businessTypes = [
+      'Private Limited Company',
+      'Public Limited Company',
+      'Sole Proprietorship',
+      'Partnership',
+    ];
 
     return {
       businessRegNumber: input.businessRegNumber,
@@ -622,14 +769,43 @@ export class MockProvider implements VerificationProvider {
 
     return {
       score,
-      scoreBand: score >= 80 ? 'A (80-100)' : score >= 60 ? 'B (60-79)' : score >= 40 ? 'C (40-59)' : score >= 20 ? 'D (20-39)' : 'E (1-19)',
+      scoreBand:
+        score >= 80
+          ? 'A (80-100)'
+          : score >= 60
+            ? 'B (60-79)'
+            : score >= 40
+              ? 'C (40-59)'
+              : score >= 20
+                ? 'D (20-39)'
+                : 'E (1-19)',
       riskLevel: score >= 60 ? 'low' : score >= 30 ? 'medium' : 'high',
       factors: [
-        { factor: 'Payment History', impact: hash(`f1${idNumber}`) % 2 === 0 ? 'positive' : 'negative', weight: 35 },
-        { factor: 'Credit Utilization', impact: hash(`f2${idNumber}`) % 2 === 0 ? 'positive' : 'negative', weight: 30 },
-        { factor: 'Credit Age', impact: hash(`f3${idNumber}`) % 2 === 0 ? 'positive' : 'negative', weight: 15 },
-        { factor: 'Credit Mix', impact: hash(`f4${idNumber}`) % 2 === 0 ? 'positive' : 'negative', weight: 10 },
-        { factor: 'Recent Inquiries', impact: hash(`f5${idNumber}`) % 2 === 0 ? 'positive' : 'negative', weight: 10 },
+        {
+          factor: 'Payment History',
+          impact: hash(`f1${idNumber}`) % 2 === 0 ? 'positive' : 'negative',
+          weight: 35,
+        },
+        {
+          factor: 'Credit Utilization',
+          impact: hash(`f2${idNumber}`) % 2 === 0 ? 'positive' : 'negative',
+          weight: 30,
+        },
+        {
+          factor: 'Credit Age',
+          impact: hash(`f3${idNumber}`) % 2 === 0 ? 'positive' : 'negative',
+          weight: 15,
+        },
+        {
+          factor: 'Credit Mix',
+          impact: hash(`f4${idNumber}`) % 2 === 0 ? 'positive' : 'negative',
+          weight: 10,
+        },
+        {
+          factor: 'Recent Inquiries',
+          impact: hash(`f5${idNumber}`) % 2 === 0 ? 'positive' : 'negative',
+          weight: 10,
+        },
       ],
     };
   }
@@ -643,14 +819,31 @@ export class MockProvider implements VerificationProvider {
     const txCount = input.statementPages * 10 + (hash(`tx${input.statementPages}`) % 20);
     const transactions = Array.from({ length: txCount }, (_, i) => ({
       date: randomDate(2023, 2024, `txd${input.statementPages}${i}`),
-      description: pick(['M-Pesa Receive', 'M-Pesa Send', 'Bank Transfer', 'Card Payment', 'Salary', 'Bill Payment', 'Airtime', 'Loan Repayment'], `txdesc${i}`),
+      description: pick(
+        [
+          'M-Pesa Receive',
+          'M-Pesa Send',
+          'Bank Transfer',
+          'Card Payment',
+          'Salary',
+          'Bill Payment',
+          'Airtime',
+          'Loan Repayment',
+        ],
+        `txdesc${i}`,
+      ),
       amount: 100 + (hash(`txa${input.statementPages}${i}`) % 50000),
-      type: hash(`txt${input.statementPages}${i}`) % 2 === 0 ? 'credit' as const : 'debit' as const,
+      type:
+        hash(`txt${input.statementPages}${i}`) % 2 === 0 ? ('credit' as const) : ('debit' as const),
       balance: 10000 + (hash(`txb${input.statementPages}${i}`) % 1000000),
     }));
 
-    const totalCredits = transactions.filter((t) => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
-    const totalDebits = transactions.filter((t) => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+    const totalCredits = transactions
+      .filter((t) => t.type === 'credit')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalDebits = transactions
+      .filter((t) => t.type === 'debit')
+      .reduce((sum, t) => sum + t.amount, 0);
 
     return {
       pagesProcessed: input.statementPages,

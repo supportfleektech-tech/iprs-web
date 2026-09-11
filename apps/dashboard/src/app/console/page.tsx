@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { Overview } from './overview';
-import type { OverviewStats, OverviewVerification, OverviewProduct, OverviewWallet, ServerAnalytics } from '@/lib/overview';
+import type {
+  OverviewStats,
+  OverviewVerification,
+  OverviewProduct,
+  OverviewWallet,
+  ServerAnalytics,
+} from '@/lib/overview';
 import { LoadingState } from '@/components/loading-state';
 
 interface HistoryResponse {
@@ -37,13 +43,15 @@ export default function ConsoleOverviewPage() {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, historyRes, productsRes, walletRes, analyticsRes] = await Promise.allSettled([
-        apiFetch<OverviewStats>('/admin/stats', { token }),
-        apiFetch<HistoryResponse>('/verifications?limit=8', { token }),
-        apiFetch<OverviewProduct[]>('/verifications/products', { token }),
-        apiFetch<WalletResponse>('/wallet', { token }),
-        apiFetch<ServerAnalytics>('/admin/analytics', { token }),
-      ]);
+      const [statsRes, historyRes, productsRes, walletRes, analyticsRes] = await Promise.allSettled(
+        [
+          apiFetch<OverviewStats>('/admin/stats', { token }),
+          apiFetch<HistoryResponse>('/verifications?limit=8', { token }),
+          apiFetch<OverviewProduct[]>('/verifications/products', { token }),
+          apiFetch<WalletResponse>('/wallet', { token }),
+          apiFetch<ServerAnalytics>('/admin/analytics', { token }),
+        ],
+      );
 
       let resolvedStats: OverviewStats;
       if (statsRes.status === 'fulfilled') {
@@ -56,12 +64,17 @@ export default function ConsoleOverviewPage() {
 
       if (historyRes.status === 'fulfilled') {
         setRecentItems(historyRes.value.items);
-        if (statsRes.status !== 'fulfilled' && historyRes.value.total > resolvedStats.verifications) {
+        if (
+          statsRes.status !== 'fulfilled' &&
+          historyRes.value.total > resolvedStats.verifications
+        ) {
           setStats({ ...resolvedStats, verifications: historyRes.value.total });
         }
       } else if (historyRes.status === 'rejected') {
         if (statsRes.status === 'rejected') {
-          throw historyRes.reason instanceof Error ? historyRes.reason : new Error('Failed to load workspace data');
+          throw historyRes.reason instanceof Error
+            ? historyRes.reason
+            : new Error('Failed to load workspace data');
         }
         setRecentItems([]);
       }

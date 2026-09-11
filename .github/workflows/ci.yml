@@ -55,8 +55,57 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm -w build
       - run: pnpm --filter @fleek/database exec prisma migrate deploy
-      - run: pnpm --filter @fleek/database exec prisma db seed
+      - run: pnpm --filter @fleek/database seed
       - run: pnpm -w test
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test]
+    if: github.ref == 'refs/heads/main'
+    env:
+      DATABASE_URL: postgresql://fleek:fleek_dev_password@localhost:5432/fleek_iprs
+      JWT_SECRET: ci-test-secret-change-in-prod
+      FIELD_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: fleek
+          POSTGRES_PASSWORD: fleek_dev_password
+          POSTGRES_DB: fleek_iprs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U fleek -d fleek_iprs"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm -w build
+      - run: pnpm --filter @fleek/database exec prisma migrate deploy
+      - run: pnpm --filter @fleek/database seed
+      - run: ./scripts/start-api.sh && ./scripts/start-dashboard.sh
+      - name: Wait for API and dashboard
+        run: |
+          for i in $(seq 1 30); do
+            api=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/docs || true)
+            dash=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/login || true)
+            if [ "$api" = "200" ] && [ "$dash" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "services failed to become ready (api=$api dash=$dash)"
+          tail -50 /tmp/opencode/api.log /tmp/opencode/dashboard.log || true
+          exit 1
+      # Single worker: full parallelism OOM-kills `next dev` on small runners.
+      - run: pnpm exec playwright test --workers=1
 
   build-web:
     runs-on: ubuntu-latest

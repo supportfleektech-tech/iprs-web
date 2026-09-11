@@ -95,7 +95,13 @@ async function tryRefresh(): Promise<string | null> {
   }
 }
 
-const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password'];
+const AUTH_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
 
 export async function apiFetch<T>(
   path: string,
@@ -129,8 +135,8 @@ export async function apiFetch<T>(
         : Array.isArray(body?.message)
           ? body.message.join('; ')
           : body?.message
-          ? String(body.message)
-          : `Request failed (${res.status})`;
+            ? String(body.message)
+            : `Request failed (${res.status})`;
     throw new Error(msg ?? 'Request failed');
   }
   return body as T;
@@ -154,7 +160,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const persist = useCallback(
     (data: { accessToken: string; refreshToken?: string; user: SessionUser }) => {
-      writeSession({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken });
+      writeSession({
+        user: data.user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      });
       setToken(data.accessToken);
       setUser(data.user);
     },

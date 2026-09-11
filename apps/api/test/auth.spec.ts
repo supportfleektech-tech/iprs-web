@@ -70,13 +70,17 @@ describe('login throttling', () => {
 
     // 4 failures → still generic invalid credentials, no lock
     for (let i = 0; i < 4; i++) {
-      await expect(deps.service.login(user.email, 'wrongpass1')).rejects.toThrow('Invalid credentials');
+      await expect(deps.service.login(user.email, 'wrongpass1')).rejects.toThrow(
+        'Invalid credentials',
+      );
     }
     expect(user.failedLoginAttempts).toBe(4);
     expect(user.lockedUntil).toBeNull();
 
     // 5th failure → lock set
-    await expect(deps.service.login(user.email, 'wrongpass1')).rejects.toThrow('Invalid credentials');
+    await expect(deps.service.login(user.email, 'wrongpass1')).rejects.toThrow(
+      'Invalid credentials',
+    );
     expect(user.failedLoginAttempts).toBe(5);
     expect(user.lockedUntil).toBeInstanceOf(Date);
   });
@@ -90,9 +94,7 @@ describe('login throttling', () => {
   });
 
   it('resets failure counter on successful login', async () => {
-    deps.client.user.findUnique.mockResolvedValue(
-      makeUser({ failedLoginAttempts: 3 }),
-    );
+    deps.client.user.findUnique.mockResolvedValue(makeUser({ failedLoginAttempts: 3 }));
     await deps.service.login('a@b.co', 'CorrectHorse1!');
     const update = deps.client.user.update.mock.calls[0][0];
     expect(update.data.failedLoginAttempts).toBe(0);
@@ -118,9 +120,7 @@ describe('refresh token rotation', () => {
     expect(tokens.refreshToken.length).toBeGreaterThan(20);
 
     // Old token revoked, linked to its successor
-    const revoke = client.refreshToken.update.mock.calls.find(
-      (c) => c[0].where.id === 'rt-old',
-    );
+    const revoke = client.refreshToken.update.mock.calls.find((c) => c[0].where.id === 'rt-old');
     expect(revoke).toBeTruthy();
     expect(revoke![0].data.revokedAt).toBeInstanceOf(Date);
   });
@@ -158,7 +158,9 @@ describe('password reset', () => {
       usedAt: new Date(),
       expiresAt: new Date(Date.now() + 1000),
     });
-    await expect(service.resetPassword('tok', 'NewPassword1!')).rejects.toThrow(BadRequestException);
+    await expect(service.resetPassword('tok', 'NewPassword1!')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('updates the password, consumes the token and revokes all sessions', async () => {

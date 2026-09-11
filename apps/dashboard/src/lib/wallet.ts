@@ -176,7 +176,10 @@ export function formatTimestamp(iso: string): string {
   }
 }
 
-export function summarizeWalletActivity(transactions: WalletTransaction[], topUps: WalletTopUp[]): {
+export function summarizeWalletActivity(
+  transactions: WalletTransaction[],
+  topUps: WalletTopUp[],
+): {
   txCount: number;
   topUpCount: number;
   pendingTopUps: number;

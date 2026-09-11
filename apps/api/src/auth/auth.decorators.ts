@@ -17,5 +17,8 @@ export const CurrentUser = createParamDecorator(
 );
 
 export function Auth(...roles: UserRole[]) {
-  return applyDecorators(UseGuards(JwtAuthGuard, RolesGuard), ...(roles.length ? [Roles(...roles)] : []));
+  return applyDecorators(
+    UseGuards(JwtAuthGuard, RolesGuard),
+    ...(roles.length ? [Roles(...roles)] : []),
+  );
 }

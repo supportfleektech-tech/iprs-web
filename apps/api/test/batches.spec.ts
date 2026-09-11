@@ -46,7 +46,13 @@ function makeDeps() {
     run,
     getCurrentTier,
   } as never;
-  return { service: new BatchesService(prisma, verifications), client, run, isEnabled, getCurrentTier };
+  return {
+    service: new BatchesService(prisma, verifications),
+    client,
+    run,
+    isEnabled,
+    getCurrentTier,
+  };
 }
 
 /** Lets fire-and-forget background processing settle before assertions. */
@@ -66,7 +72,10 @@ describe('BatchesService.createBatch', () => {
 
   beforeEach(() => {
     deps = makeDeps();
-    deps.client.productPricing.findUnique.mockResolvedValue({ active: true, priceMinor: BigInt(5000) });
+    deps.client.productPricing.findUnique.mockResolvedValue({
+      active: true,
+      priceMinor: BigInt(5000),
+    });
     deps.client.wallet.findUnique.mockResolvedValue({ balanceMinor: BigInt(10_000_000) });
   });
 

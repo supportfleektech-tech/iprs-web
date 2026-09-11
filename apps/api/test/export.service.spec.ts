@@ -29,8 +29,30 @@ describe('ExportService', () => {
   describe('generateExport', () => {
     it('should generate CSV export', async () => {
       (service as any).prisma.client.verificationRequest.findMany.mockResolvedValue([
-        { id: '1', type: 'iprs_standard', status: 'success', costMinor: 5000n, latencyMs: 100, createdAt: new Date(), encryptedInput: 'encrypted-input', encryptedResult: 'encrypted-result', isBackup: false, source: 'dashboard' },
-        { id: '2', type: 'kra_pin', status: 'not_found', costMinor: 0n, latencyMs: 50, createdAt: new Date(), encryptedInput: 'encrypted-input', encryptedResult: null, isBackup: false, source: 'api' },
+        {
+          id: '1',
+          type: 'iprs_standard',
+          status: 'success',
+          costMinor: 5000n,
+          latencyMs: 100,
+          createdAt: new Date(),
+          encryptedInput: 'encrypted-input',
+          encryptedResult: 'encrypted-result',
+          isBackup: false,
+          source: 'dashboard',
+        },
+        {
+          id: '2',
+          type: 'kra_pin',
+          status: 'not_found',
+          costMinor: 0n,
+          latencyMs: 50,
+          createdAt: new Date(),
+          encryptedInput: 'encrypted-input',
+          encryptedResult: null,
+          isBackup: false,
+          source: 'api',
+        },
       ]);
 
       (service as any).prisma.decrypt.mockImplementation((val: string) => {
@@ -47,12 +69,40 @@ describe('ExportService', () => {
       expect(result.contentType).toBe('text/csv');
       expect(result.filename).toMatch(/^verifications-\d{8}\.csv$/);
       const csv = result.buffer.toString('utf-8');
-      expect(csv).toContain('id,type,status,source,cost_kes,latency_ms,created_at,subject,result,is_backup');
+      expect(csv).toContain(
+        'id,type,status,source,cost_kes,latency_ms,created_at,subject,result,is_backup',
+      );
       expect(csv).toContain('1,iprs_standard,success,dashboard,50');
     });
 
-    it.skip('should generate XLSX export (requires exceljs)', async () => {
-      // Skipped because exceljs is not installed in test environment
+    it('should generate XLSX export', async () => {
+      (service as any).prisma.client.verificationRequest.findMany.mockResolvedValue([
+        {
+          id: '1',
+          type: 'iprs_standard',
+          status: 'success',
+          costMinor: 5000n,
+          latencyMs: 100,
+          createdAt: new Date(),
+          encryptedInput: 'encrypted-input',
+          encryptedResult: 'encrypted-result',
+          isBackup: false,
+          source: 'dashboard',
+        },
+      ]);
+
+      const result = await service.exportVerifications({
+        format: 'xlsx',
+        organizationId: 'org-1',
+      });
+
+      expect(result.contentType).toBe(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      expect(result.filename).toMatch(/^verifications-\d{8}\.xlsx$/);
+      // XLSX is a ZIP archive — real workbook bytes, not a CSV fallback.
+      expect(result.buffer.subarray(0, 2).toString('binary')).toBe('PK');
+      expect(result.buffer.length).toBeGreaterThan(1000);
     });
 
     it('should handle empty rows', async () => {
@@ -82,9 +132,17 @@ describe('ExportService', () => {
   describe('getResultName', () => {
     it('should extract name from result', () => {
       const service = new ExportService({} as any);
-      expect((service as any).getResultName('iprs_standard', { fullName: 'John Doe' })).toBe('John Doe');
-      expect((service as any).getResultName('kra_pin_verification', { taxpayerName: 'Jane Smith' })).toBe('Jane Smith');
-      expect((service as any).getResultName('bank_account_verification', { accountName: 'John Account' })).toBe('John Account');
+      expect((service as any).getResultName('iprs_standard', { fullName: 'John Doe' })).toBe(
+        'John Doe',
+      );
+      expect(
+        (service as any).getResultName('kra_pin_verification', { taxpayerName: 'Jane Smith' }),
+      ).toBe('Jane Smith');
+      expect(
+        (service as any).getResultName('bank_account_verification', {
+          accountName: 'John Account',
+        }),
+      ).toBe('John Account');
     });
   });
 });

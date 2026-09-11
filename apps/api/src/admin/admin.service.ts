@@ -26,7 +26,10 @@ const MAX_ANALYTICS_ROWS = 10000;
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async analytics(organizationId: string | undefined, query: AnalyticsQuery): Promise<AnalyticsResult> {
+  async analytics(
+    organizationId: string | undefined,
+    query: AnalyticsQuery,
+  ): Promise<AnalyticsResult> {
     const where: Prisma.VerificationRequestWhereInput = {};
     if (organizationId) where.organizationId = organizationId;
 
@@ -71,7 +74,8 @@ export class AdminService {
         { source: { contains: search, mode: 'insensitive' } },
       ];
       if (matchingTypes.length) or.push({ type: { in: matchingTypes as unknown as never } });
-      if (matchingStatuses.length) or.push({ status: { in: matchingStatuses as unknown as never } });
+      if (matchingStatuses.length)
+        or.push({ status: { in: matchingStatuses as unknown as never } });
       where.OR = or;
     }
 
@@ -98,7 +102,8 @@ export class AdminService {
 
     for (const r of records) {
       costMinorTotal += r.costMinor as bigint;
-      if (typeof r.latencyMs === 'number' && Number.isFinite(r.latencyMs)) latencies.push(r.latencyMs);
+      if (typeof r.latencyMs === 'number' && Number.isFinite(r.latencyMs))
+        latencies.push(r.latencyMs);
       const s = String(r.status).toLowerCase();
       statusCounts[s] = (statusCounts[s] ?? 0) + 1;
       const t = String(r.type);
@@ -111,7 +116,9 @@ export class AdminService {
       costByProduct[k] = Math.round(Number(v)) / 100;
     }
 
-    const avgLatencyMs = latencies.length ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) : null;
+    const avgLatencyMs = latencies.length
+      ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+      : null;
 
     return {
       dateRange: {

@@ -1,7 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fleek/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@fleek/ui';
 import { DashboardIcon, type DashboardIconName } from '@/components/dashboard-icons';
 import { StatusBadge } from '@/components/status-badge';
 import { EmptyState } from '@/components/empty-state';
@@ -27,7 +35,14 @@ import {
 } from '@/lib/overview';
 
 // Re-export for external consumers (Task 7 extends this file)
-export type { OverviewStats, OverviewVerification, OverviewProduct, OverviewAnalytics, OverviewWallet, ServerAnalytics };
+export type {
+  OverviewStats,
+  OverviewVerification,
+  OverviewProduct,
+  OverviewAnalytics,
+  OverviewWallet,
+  ServerAnalytics,
+};
 
 export interface OverviewProps {
   stats: OverviewStats;
@@ -41,7 +56,17 @@ export interface OverviewProps {
   onRetry: () => void;
 }
 
-export function Overview({ stats, recentItems, products, analytics: analyticsProp, serverAnalytics, wallet, loading, error, onRetry }: OverviewProps) {
+export function Overview({
+  stats,
+  recentItems,
+  products,
+  analytics: analyticsProp,
+  serverAnalytics,
+  wallet,
+  loading,
+  error,
+  onRetry,
+}: OverviewProps) {
   const successful = getSuccessfulCount(recentItems);
   const successRate = calculateSuccessRate(recentItems);
   const recentCost = summarizeRecentCost(recentItems);
@@ -53,12 +78,15 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Operations overview</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+            Operations overview
+          </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">
             Good morning. Here is your verification workspace.
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Monitor activity, run checks, and keep your organization ready for the next verification.
+            Monitor activity, run checks, and keep your organization ready for the next
+            verification.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -75,17 +103,35 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
       </div>
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true" aria-live="polite">
+        <div
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          aria-busy="true"
+          aria-live="polite"
+        >
           {[0, 1, 2, 3].map((item) => (
-            <div key={item} className="h-28 animate-pulse rounded-xl bg-white ring-1 ring-slate-200" aria-hidden="true" />
+            <div
+              key={item}
+              className="h-28 animate-pulse rounded-xl bg-white ring-1 ring-slate-200"
+              aria-hidden="true"
+            />
           ))}
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5" role="alert" aria-live="assertive">
+        <div
+          className="rounded-xl border border-red-200 bg-red-50 p-5"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex flex-wrap items-start gap-3">
-            <DashboardIcon name="alert" className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <DashboardIcon
+              name="alert"
+              className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
+              aria-hidden="true"
+            />
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-semibold text-red-700">Workspace data could not be loaded</h2>
+              <h2 className="text-sm font-semibold text-red-700">
+                Workspace data could not be loaded
+              </h2>
               <p className="mt-1 break-words text-sm text-red-700/80">{error}</p>
             </div>
             <Button size="sm" variant="secondary" onClick={onRetry} className="h-11 shrink-0">
@@ -95,11 +141,18 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
         </div>
       ) : (
         <>
-          <section aria-label="Workspace metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section
+            aria-label="Workspace metrics"
+            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          >
             <MetricCard
               label="Available wallet balance"
               value={wallet?.balance != null ? formatCurrencyKes(wallet.balance) : '—'}
-              hint={wallet?.recentMovement != null ? `Recent movement ${formatCurrencyKes(wallet.recentMovement)}` : 'Top up via M-Pesa, card, or bank'}
+              hint={
+                wallet?.recentMovement != null
+                  ? `Recent movement ${formatCurrencyKes(wallet.recentMovement)}`
+                  : 'Top up via M-Pesa, card, or bank'
+              }
               icon="wallet"
               tone="navy"
             />
@@ -113,7 +166,11 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
             <MetricCard
               label="Recent success rate"
               value={successRate == null ? '—' : `${successRate}%`}
-              hint={recentItems.length ? `${successful} of ${recentItems.length} recent checks succeeded` : 'No recent checks'}
+              hint={
+                recentItems.length
+                  ? `${successful} of ${recentItems.length} recent checks succeeded`
+                  : 'No recent checks'
+              }
               icon="check"
               tone="blue"
             />
@@ -133,7 +190,9 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Recent activity</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  Recent activity
+                </span>
                 <span className="text-xs text-slate-400" aria-live="polite">
                   {activitySummary}
                 </span>
@@ -160,26 +219,43 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
             <div className="mt-2 flex flex-wrap gap-1.5" aria-hidden="true">
               {recentItems.slice(0, 8).map((it) => {
                 const tone =
-                  it.status === 'success' ? 'bg-teal-500' : it.status === 'failed' ? 'bg-red-500' : it.status === 'not_found' ? 'bg-amber-500' : 'bg-slate-300';
-                return <span key={it.id} className={`h-2 w-2 rounded-full ${tone}`} title={it.status} />;
+                  it.status === 'success'
+                    ? 'bg-teal-500'
+                    : it.status === 'failed'
+                      ? 'bg-red-500'
+                      : it.status === 'not_found'
+                        ? 'bg-amber-500'
+                        : 'bg-slate-300';
+                return (
+                  <span key={it.id} className={`h-2 w-2 rounded-full ${tone}`} title={it.status} />
+                );
               })}
             </div>
           </section>
 
           {/* Server-backed trends — accessible bars + tables, text summary */}
           {serverAnalytics ? (
-            <section aria-label="Trends and distribution" className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <section
+              aria-label="Trends and distribution"
+              className="rounded-xl border border-slate-200 bg-white shadow-sm"
+            >
               <div className="border-b border-slate-100 px-5 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold text-navy-900">Trends and distribution</h2>
                     <p className="mt-1 text-xs text-slate-500" aria-live="polite">
-                      {formatDateRangeLabel(serverAnalytics.dateRange)} · {formatServerAnalyticsSummary(serverAnalytics)}
+                      {formatDateRangeLabel(serverAnalytics.dateRange)} ·{' '}
+                      {formatServerAnalyticsSummary(serverAnalytics)}
                       {serverAnalytics.truncated ? ' · capped at 10k' : ''}
                     </p>
                     {serverAnalytics.truncated && (
-                      <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 ring-1 ring-inset ring-amber-600/15" role="status" aria-live="polite">
-                        Showing first 10,000 records — totals are truncated. Narrow date/type/status/search to see exact totals.
+                      <p
+                        className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 ring-1 ring-inset ring-amber-600/15"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        Showing first 10,000 records — totals are truncated. Narrow
+                        date/type/status/search to see exact totals.
                       </p>
                     )}
                   </div>
@@ -191,7 +267,9 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
               <div className="grid gap-6 p-5 md:grid-cols-2">
                 {/* Status distribution */}
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">By status</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    By status
+                  </h3>
                   {Object.keys(serverAnalytics.statusCounts).length === 0 ? (
                     <p className="mt-2 text-sm text-slate-400">No data for this range.</p>
                   ) : (
@@ -221,10 +299,15 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                                 <td className="py-2 pr-2">
                                   <StatusBadge status={status} />
                                 </td>
-                                <td className="py-2 text-right tabular-nums text-navy-900">{formatMetricCount(count)}</td>
+                                <td className="py-2 text-right tabular-nums text-navy-900">
+                                  {formatMetricCount(count)}
+                                </td>
                                 <td className="w-28 py-2 pl-3">
                                   <div className="h-2 rounded-full bg-slate-100" aria-hidden="true">
-                                    <div className="h-2 rounded-full bg-teal-500 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${w}%` }} />
+                                    <div
+                                      className="h-2 rounded-full bg-teal-500 transition-[width] duration-200 motion-reduce:transition-none"
+                                      style={{ width: `${w}%` }}
+                                    />
                                   </div>
                                 </td>
                               </tr>
@@ -234,14 +317,21 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                     </table>
                   )}
                   <p className="mt-2 text-xs text-slate-400">
-                    Text summary: {Object.entries(serverAnalytics.statusCounts).map(([k, v]) => `${v} ${k}`).join(' · ') || 'No statuses'}
-                    {serverAnalytics.totals.avgLatencyMs != null ? ` · avg ${serverAnalytics.totals.avgLatencyMs}ms` : ''}
+                    Text summary:{' '}
+                    {Object.entries(serverAnalytics.statusCounts)
+                      .map(([k, v]) => `${v} ${k}`)
+                      .join(' · ') || 'No statuses'}
+                    {serverAnalytics.totals.avgLatencyMs != null
+                      ? ` · avg ${serverAnalytics.totals.avgLatencyMs}ms`
+                      : ''}
                   </p>
                 </div>
 
                 {/* Product distribution */}
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">By product (top 6 by volume)</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    By product (top 6 by volume)
+                  </h3>
                   {Object.keys(serverAnalytics.productCounts).length === 0 ? (
                     <p className="mt-2 text-sm text-slate-400">No product data for this range.</p>
                   ) : (
@@ -272,14 +362,26 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                               <tr key={type} className="border-t border-slate-100">
                                 <td className="py-2 pr-2">
                                   <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-navy-900">{humanise(type)}</span>
-                                    <span className="h-1.5 w-full rounded-full bg-slate-100" aria-hidden="true">
-                                      <span className="block h-1.5 rounded-full bg-navy-900 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${w}%` }} />
+                                    <span className="text-sm font-medium text-navy-900">
+                                      {humanise(type)}
+                                    </span>
+                                    <span
+                                      className="h-1.5 w-full rounded-full bg-slate-100"
+                                      aria-hidden="true"
+                                    >
+                                      <span
+                                        className="block h-1.5 rounded-full bg-navy-900 transition-[width] duration-200 motion-reduce:transition-none"
+                                        style={{ width: `${w}%` }}
+                                      />
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-2 text-right tabular-nums text-navy-900">{formatMetricCount(count)}</td>
-                                <td className="py-2 text-right tabular-nums text-slate-600">{formatCurrencyKes(cost)}</td>
+                                <td className="py-2 text-right tabular-nums text-navy-900">
+                                  {formatMetricCount(count)}
+                                </td>
+                                <td className="py-2 text-right tabular-nums text-slate-600">
+                                  {formatCurrencyKes(cost)}
+                                </td>
                               </tr>
                             );
                           })}
@@ -287,7 +389,8 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                     </table>
                   )}
                   <p className="mt-2 text-xs text-slate-400">
-                    Total {formatMetricCount(serverAnalytics.totals.verifications)} checks · {formatCurrencyKes(serverAnalytics.totals.cost)} total cost
+                    Total {formatMetricCount(serverAnalytics.totals.verifications)} checks ·{' '}
+                    {formatCurrencyKes(serverAnalytics.totals.cost)} total cost
                     {serverAnalytics.truncated ? ' · truncated at 10k' : ''}
                   </p>
                 </div>
@@ -307,7 +410,8 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                     href="/console/history"
                     className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition-colors hover:border-teal-500 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
                   >
-                    View history <DashboardIcon name="arrowRight" className="h-4 w-4" aria-hidden="true" />
+                    View history{' '}
+                    <DashboardIcon name="arrowRight" className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 </div>
               </CardHeader>
@@ -327,16 +431,23 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                         className="group flex flex-wrap items-center gap-3 px-5 py-4 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-navy-900">{humanise(item.type)}</p>
+                          <p className="truncate text-sm font-medium text-navy-900">
+                            {humanise(item.type)}
+                          </p>
                           <p className="truncate text-xs text-slate-400">
-                            {maskSubject(item.subject)} · {new Date(item.createdAt).toLocaleString()}
+                            {maskSubject(item.subject)} ·{' '}
+                            {new Date(item.createdAt).toLocaleString()}
                           </p>
                         </div>
                         <StatusBadge status={item.status} />
                         <span className="shrink-0 text-sm font-medium tabular-nums text-navy-900">
                           {item.cost > 0 ? formatCurrencyKes(item.cost) : 'Free'}
                         </span>
-                        <DashboardIcon name="arrowRight" className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-teal-600" aria-hidden="true" />
+                        <DashboardIcon
+                          name="arrowRight"
+                          className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-teal-600"
+                          aria-hidden="true"
+                        />
                       </Link>
                     ))}
                   </div>
@@ -363,7 +474,10 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
               </CardHeader>
               <CardContent className="space-y-1 p-3">
                 {products.length === 0 ? (
-                  <EmptyState title="No products loaded" description="Product availability is still being checked." />
+                  <EmptyState
+                    title="No products loaded"
+                    description="Product availability is still being checked."
+                  />
                 ) : (
                   <>
                     {products.slice(0, 8).map((product) => {
@@ -374,9 +488,14 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
                           className="flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2.5 transition-colors hover:border-slate-200 hover:bg-slate-50"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-navy-900">{product.label}</p>
+                            <p className="truncate text-sm font-medium text-navy-900">
+                              {product.label}
+                            </p>
                             <p className="truncate text-xs text-slate-400">
-                              {product.category} · {product.unitPriceKes != null ? formatCurrencyKes(product.unitPriceKes) : '—'}
+                              {product.category} ·{' '}
+                              {product.unitPriceKes != null
+                                ? formatCurrencyKes(product.unitPriceKes)
+                                : '—'}
                               {product.backupAvailable ? ' · backup available' : ''}
                             </p>
                           </div>
@@ -421,9 +540,24 @@ export function Overview({ stats, recentItems, products, analytics: analyticsPro
           </div>
 
           <section aria-label="Quick actions" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <QuickAction icon="layers" title="Start a bulk batch" description="Upload up to 1,000 records and track progress in one place." href="/console/bulk" />
-            <QuickAction icon="wallet" title="Manage wallet credit" description="Top up with M-Pesa, bank transfer, card, PayPal, or invoice." href="/console/wallet" />
-            <QuickAction icon="clipboard" title="Review history" description="Filter, export, and open evidence records for every check." href="/console/history" />
+            <QuickAction
+              icon="layers"
+              title="Start a bulk batch"
+              description="Upload up to 1,000 records and track progress in one place."
+              href="/console/bulk"
+            />
+            <QuickAction
+              icon="wallet"
+              title="Manage wallet credit"
+              description="Top up with M-Pesa, bank transfer, card, PayPal, or invoice."
+              href="/console/wallet"
+            />
+            <QuickAction
+              icon="clipboard"
+              title="Review history"
+              description="Filter, export, and open evidence records for every check."
+              href="/console/history"
+            />
           </section>
         </>
       )}
@@ -455,31 +589,53 @@ function MetricCard({
   return (
     <Card className="overflow-hidden p-0">
       <div className="p-5">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 ${iconTone}`} aria-hidden="true">
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 ${iconTone}`}
+          aria-hidden="true"
+        >
           <DashboardIcon name={icon} className="h-5 w-5" />
         </div>
         <p className="mt-3 text-xs font-medium text-slate-500">{label}</p>
-        <p className="mt-1 truncate text-2xl font-semibold tracking-tight tabular-nums text-navy-900">{value}</p>
+        <p className="mt-1 truncate text-2xl font-semibold tracking-tight tabular-nums text-navy-900">
+          {value}
+        </p>
         <p className="mt-1 line-clamp-2 text-xs text-slate-400">{hint}</p>
       </div>
     </Card>
   );
 }
 
-function QuickAction({ icon, title, description, href }: { icon: DashboardIconName; title: string; description: string; href: string }) {
+function QuickAction({
+  icon,
+  title,
+  description,
+  href,
+}: {
+  icon: DashboardIconName;
+  title: string;
+  description: string;
+  href: string;
+}) {
   return (
     <Link
       href={href}
       className="group flex min-h-24 items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-[border-color,box-shadow,transform,opacity] duration-200 hover:border-teal-300 hover:shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 motion-reduce:transition-none"
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100" aria-hidden="true">
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100"
+        aria-hidden="true"
+      >
         <DashboardIcon name={icon} className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-navy-900">{title}</p>
         <p className="mt-1 line-clamp-2 text-xs text-slate-500">{description}</p>
       </div>
-      <DashboardIcon name="arrowRight" className="ml-auto h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-teal-600" aria-hidden="true" />
+      <DashboardIcon
+        name="arrowRight"
+        className="ml-auto h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-teal-600"
+        aria-hidden="true"
+      />
     </Link>
   );
 }

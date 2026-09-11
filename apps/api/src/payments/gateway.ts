@@ -26,7 +26,11 @@ export interface StkQueryResult {
 export interface PaymentGateway {
   readonly name: string;
   readonly live: boolean;
-  initiateStk(input: { amountMinor: bigint; phone: string; reference: string }): Promise<StkInitiation>;
+  initiateStk(input: {
+    amountMinor: bigint;
+    phone: string;
+    reference: string;
+  }): Promise<StkInitiation>;
   queryStk(checkoutRequestId: string): Promise<StkQueryResult>;
 }
 
@@ -69,15 +73,17 @@ export class DarajaGateway implements PaymentGateway {
   private async accessToken(): Promise<string> {
     if (this.token && Date.now() < this.tokenExpiresAt) return this.token;
 
-    const auth = Buffer.from(`${this.cfg.consumerKey}:${this.cfg.consumerSecret}`).toString('base64');
-    const res = await fetch(
-      `${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`,
-      { headers: { Authorization: `Basic ${auth}` } },
+    const auth = Buffer.from(`${this.cfg.consumerKey}:${this.cfg.consumerSecret}`).toString(
+      'base64',
     );
+    const res = await fetch(`${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
+      headers: { Authorization: `Basic ${auth}` },
+    });
     if (!res.ok) throw new DarajaError(`Token request failed (${res.status})`);
     const data = (await res.json()) as { access_token: string; expires_in: string };
     this.token = data.access_token;
-    this.tokenExpiresAt = Date.now() + Math.min(parseInt(data.expires_in ?? '3599', 10) * 1000, TOKEN_TTL_MS);
+    this.tokenExpiresAt =
+      Date.now() + Math.min(parseInt(data.expires_in ?? '3599', 10) * 1000, TOKEN_TTL_MS);
     if (!this.token) throw new DarajaError('No access token in response');
     return this.token;
   }
@@ -92,7 +98,11 @@ export class DarajaGateway implements PaymentGateway {
     return Buffer.from(`${this.cfg.shortcode}${this.cfg.passkey}${timestamp}`).toString('base64');
   }
 
-  async initiateStk(input: { amountMinor: bigint; phone: string; reference: string }): Promise<StkInitiation> {
+  async initiateStk(input: {
+    amountMinor: bigint;
+    phone: string;
+    reference: string;
+  }): Promise<StkInitiation> {
     const token = await this.accessToken();
     const timestamp = this.timestamp();
 
@@ -175,7 +185,11 @@ export class MockGateway implements PaymentGateway {
 
   constructor(private readonly onAutoComplete?: (checkoutRequestId: string) => void) {}
 
-  async initiateStk(_input: { amountMinor: bigint; phone: string; reference: string }): Promise<StkInitiation> {
+  async initiateStk(_input: {
+    amountMinor: bigint;
+    phone: string;
+    reference: string;
+  }): Promise<StkInitiation> {
     const checkoutRequestId = `ws_CO_MOCK_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
     this.completions.set(
       checkoutRequestId,
@@ -189,6 +203,10 @@ export class MockGateway implements PaymentGateway {
 
   async queryStk(checkoutRequestId: string): Promise<StkQueryResult> {
     if (this.completions.has(checkoutRequestId)) return { status: 'pending' };
-    return { status: 'paid', mpesaReceipt: `MOCK${checkoutRequestId.slice(-8)}`, resultDesc: 'Mock payment accepted' };
+    return {
+      status: 'paid',
+      mpesaReceipt: `MOCK${checkoutRequestId.slice(-8)}`,
+      resultDesc: 'Mock payment accepted',
+    };
   }
 }

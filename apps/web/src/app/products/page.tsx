@@ -22,7 +22,9 @@ export default function ProductsPage() {
             >
               <h2 className="text-xl font-semibold group-hover:text-teal-brand">{p.title}</h2>
               <p className="mt-2 text-slate-500">{p.description}</p>
-              <span className="mt-4 inline-block text-sm font-medium text-teal-brand">Explore →</span>
+              <span className="mt-4 inline-block text-sm font-medium text-teal-brand">
+                Explore →
+              </span>
             </Link>
           ))}
         </div>

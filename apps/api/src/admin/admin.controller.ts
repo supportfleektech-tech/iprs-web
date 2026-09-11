@@ -1,16 +1,16 @@
-import {
-  Body,
-  Controller,
-  ForbiddenException,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsDateString, IsEnum, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { VerificationType } from '@fleek/types';
 import { Auth, CurrentUser } from '../auth/auth.decorators';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,7 +22,8 @@ export class ReviewTopUpDto {
   @IsBoolean()
   approve!: boolean;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   note?: string;
 }
 
@@ -31,7 +32,8 @@ export class SetPricingDto {
   type!: VerificationType;
 
   /** Price in KES (e.g. 50 = KES 50.00). */
-  @IsNumber() @Min(1)
+  @IsNumber()
+  @Min(1)
   price!: number;
 }
 
@@ -44,33 +46,47 @@ export class CreateTierDto {
   @IsEnum(VerificationType)
   productType!: VerificationType;
 
-  @IsNumber() @Min(0)
+  @IsNumber()
+  @Min(0)
   minVolume!: number;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   maxVolume?: number | null;
 
-  @IsNumber() @Min(1)
+  @IsNumber()
+  @Min(1)
   unitPriceMinor!: number;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   backupPriceMinor?: number | null;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   vatExclusive?: boolean = true;
 }
 
 export class UpdateTierDto {
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   maxVolume?: number | null;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   unitPriceMinor?: number;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   backupPriceMinor?: number | null;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   vatExclusive?: boolean;
 }
 
@@ -78,33 +94,47 @@ export class CreateOrgPricingTierDto {
   @IsEnum(VerificationType)
   productType!: VerificationType;
 
-  @IsNumber() @Min(0)
+  @IsNumber()
+  @Min(0)
   minVolume!: number;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   maxVolume?: number | null;
 
-  @IsNumber() @Min(1)
+  @IsNumber()
+  @Min(1)
   unitPriceMinor!: number;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   backupPriceMinor?: number | null;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   vatExclusive?: boolean = true;
 }
 
 export class UpdateOrgPricingTierDto {
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   maxVolume?: number | null;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   unitPriceMinor?: number;
 
-  @IsOptional() @IsNumber() @Min(1)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   backupPriceMinor?: number | null;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   vatExclusive?: boolean;
 }
 
@@ -119,21 +149,31 @@ export class OrgEnabledChecksDto {
 export class AnalyticsQueryDto {
   @IsOptional()
   @IsDateString({}, { message: 'from must be an ISO 8601 date string' })
-  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value?.trim(),
+  )
   from?: string;
 
   @IsOptional()
   @IsDateString({}, { message: 'to must be an ISO 8601 date string' })
-  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value?.trim(),
+  )
   to?: string;
 
   @IsOptional()
-  @IsEnum(VerificationType, { message: `type must be one of: ${Object.values(VerificationType).join(', ')}` })
-  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
+  @IsEnum(VerificationType, {
+    message: `type must be one of: ${Object.values(VerificationType).join(', ')}`,
+  })
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value?.trim(),
+  )
   type?: VerificationType;
 
   @IsOptional()
-  @IsIn(['pending', 'success', 'not_found', 'failed'], { message: 'status must be one of: pending, success, not_found, failed' })
+  @IsIn(['pending', 'success', 'not_found', 'failed'], {
+    message: 'status must be one of: pending, success, not_found, failed',
+  })
   @Transform(({ value }) => {
     if (typeof value !== 'string') return value;
     const t = value.trim();
@@ -144,7 +184,9 @@ export class AnalyticsQueryDto {
 
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value?.trim()))
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value?.trim(),
+  )
   search?: string;
 }
 
@@ -206,11 +248,7 @@ export class AdminController {
   }
 
   @Post('top-ups/:id/review')
-  review(
-    @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
-    @Body() dto: ReviewTopUpDto,
-  ) {
+  review(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: ReviewTopUpDto) {
     const orgScope = user.isPlatformAdmin ? undefined : user.organizationId!;
     return this.wallet.reviewTopUp(id, user.sub!, dto.approve, dto.note, orgScope);
   }
@@ -302,7 +340,8 @@ export class AdminController {
       data: {
         maxVolume: dto.maxVolume ?? undefined,
         unitPriceMinor: dto.unitPriceMinor ?? undefined,
-        backupPriceMinor: dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ?? null) : undefined,
+        backupPriceMinor:
+          dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ?? null) : undefined,
         vatExclusive: dto.vatExclusive ?? undefined,
       },
     });
@@ -401,7 +440,8 @@ export class AdminController {
       data: {
         maxVolume: dto.maxVolume ?? undefined,
         unitPriceMinor: dto.unitPriceMinor ?? undefined,
-        backupPriceMinor: dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ?? null) : undefined,
+        backupPriceMinor:
+          dto.backupPriceMinor !== undefined ? (dto.backupPriceMinor ?? null) : undefined,
         vatExclusive: dto.vatExclusive ?? undefined,
       },
     });

@@ -1,9 +1,12 @@
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
-import { VerificationType, VERIFICATION_TYPES, PRODUCT_LABELS, PRODUCT_CATEGORIES, CB_CONSENT_REQUIRED_TYPES, type VerificationResult } from '@fleek/types';
+  VerificationType,
+  VERIFICATION_TYPES,
+  PRODUCT_LABELS,
+  PRODUCT_CATEGORIES,
+  CB_CONSENT_REQUIRED_TYPES,
+  type VerificationResult,
+} from '@fleek/types';
 import { AggregatorAdapter, ProviderRegistry, ProviderError } from '@fleek/providers';
 import { PrismaService } from '../prisma/prisma.service';
 import { InsufficientFundsException } from '../common/exceptions';
@@ -13,7 +16,14 @@ import { RunVerificationDto } from './dto';
 /** Live upstream wiring — credential-gated; absent config = full sandbox. */
 function buildRegistry(): ProviderRegistry {
   const enabled = new Set(appConfig.enabledChecks);
-  const { UPSTREAM_BASE_URL, UPSTREAM_API_KEY, LIVE_CHECKS, BACKUP_BASE_URL, BACKUP_API_KEY, BACKUP_CHECKS } = process.env;
+  const {
+    UPSTREAM_BASE_URL,
+    UPSTREAM_API_KEY,
+    LIVE_CHECKS,
+    BACKUP_BASE_URL,
+    BACKUP_API_KEY,
+    BACKUP_CHECKS,
+  } = process.env;
 
   if (!appConfig.useLiveUpstream || !UPSTREAM_BASE_URL || !UPSTREAM_API_KEY) {
     return new ProviderRegistry(enabled);
@@ -39,7 +49,13 @@ function buildRegistry(): ProviderRegistry {
     );
   }
 
-  return new ProviderRegistry(enabled, new AggregatorAdapter({ baseUrl: UPSTREAM_BASE_URL, apiKey: UPSTREAM_API_KEY }), backupProvider, liveTypes, backupTypes);
+  return new ProviderRegistry(
+    enabled,
+    new AggregatorAdapter({ baseUrl: UPSTREAM_BASE_URL, apiKey: UPSTREAM_API_KEY }),
+    backupProvider,
+    liveTypes,
+    backupTypes,
+  );
 }
 
 @Injectable()
@@ -52,11 +68,11 @@ export class VerificationsService {
     const pricing = await this.prisma.client.productPricing.findMany();
     const priceByType = new Map(pricing.map((p) => [p.type, p]));
     const overrides = await this.orgOverrides(organizationId);
-    
+
     // Get current month for volume calculation
     const now = new Date();
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
+
     let monthlyUsage = new Map<string, number>();
     if (organizationId) {
       const usage = await this.prisma.client.organizationMonthlyUsage.findMany({
@@ -76,9 +92,11 @@ export class VerificationsService {
         const enabled = globalEnabled && (orgCheck ?? true);
         // Org pricing override (set in admin) replaces global tier prices.
         const orgTier = overrides.tiers.get(type);
-        const unitMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : tier?.unitPriceMinor ?? null;
+        const unitMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : (tier?.unitPriceMinor ?? null);
         const backupMinor = orgTier
-          ? (orgTier.backupPriceMinor != null ? BigInt(orgTier.backupPriceMinor) : null)
+          ? orgTier.backupPriceMinor != null
+            ? BigInt(orgTier.backupPriceMinor)
+            : null
           : (tier?.backupPriceMinor ?? null);
 
         return {
@@ -91,19 +109,21 @@ export class VerificationsService {
           active: productPricing?.active ?? false,
           unitPriceKes: unitMinor != null ? Number(unitMinor) / 100 : null,
           backupPriceKes: backupMinor != null ? Number(backupMinor) / 100 : null,
-          currentTier: tier ? {
-            minVolume: tier.minVolume,
-            maxVolume: tier.maxVolume,
-            unitPriceMinor: Number(tier.unitPriceMinor),
-            backupPriceMinor: tier.backupPriceMinor ? Number(tier.backupPriceMinor) : null,
-          } : null,
+          currentTier: tier
+            ? {
+                minVolume: tier.minVolume,
+                maxVolume: tier.maxVolume,
+                unitPriceMinor: Number(tier.unitPriceMinor),
+                backupPriceMinor: tier.backupPriceMinor ? Number(tier.backupPriceMinor) : null,
+              }
+            : null,
           vatExclusive: tier?.vatExclusive ?? true,
           cbConsentRequired: CB_CONSENT_REQUIRED_TYPES.includes(type),
           requiresFileUpload: this.requiresFileUpload(type),
           fileTypes: this.getFileTypes(type),
           backupAvailable: this.registry.hasBackup(type),
         };
-      })
+      }),
     );
     return results;
   }
@@ -116,7 +136,11 @@ export class VerificationsService {
   }
 
   private requiresFileUpload(type: VerificationType): boolean {
-    return [VerificationType.FACE_ID_MATCH, VerificationType.SCANNED_STATEMENT, VerificationType.BRS].includes(type);
+    return [
+      VerificationType.FACE_ID_MATCH,
+      VerificationType.SCANNED_STATEMENT,
+      VerificationType.BRS,
+    ].includes(type);
   }
 
   private getFileTypes(type: VerificationType): string[] {
@@ -139,7 +163,10 @@ export class VerificationsService {
   }> {
     const out = {
       enabled: new Map<VerificationType, boolean>(),
-      tiers: new Map<VerificationType, { unitPriceMinor: number; backupPriceMinor: number | null }>(),
+      tiers: new Map<
+        VerificationType,
+        { unitPriceMinor: number; backupPriceMinor: number | null }
+      >(),
     };
     if (!organizationId) return out;
     const [checks, tiers] = await Promise.all([
@@ -161,10 +188,7 @@ export class VerificationsService {
       where: {
         productType: type,
         minVolume: { lte: volume },
-        OR: [
-          { maxVolume: { gte: volume } },
-          { maxVolume: null },
-        ],
+        OR: [{ maxVolume: { gte: volume } }, { maxVolume: null }],
       },
       orderBy: { minVolume: 'desc' },
     });
@@ -183,7 +207,9 @@ export class VerificationsService {
     }
 
     // Check if product is active
-    const productPricing = await this.prisma.client.productPricing.findUnique({ where: { type: dto.type } });
+    const productPricing = await this.prisma.client.productPricing.findUnique({
+      where: { type: dto.type },
+    });
     if (!productPricing?.active) throw new BadRequestException('Product not priced/inactive');
 
     // Enforce per-org availability set in admin (no row = enabled).
@@ -194,7 +220,9 @@ export class VerificationsService {
 
     // Check CB consent for required types
     if (CB_CONSENT_REQUIRED_TYPES.includes(dto.type) && !dto.cbConsent) {
-      throw new BadRequestException('Credit bureau consent (cbConsent) is required for this verification type');
+      throw new BadRequestException(
+        'Credit bureau consent (cbConsent) is required for this verification type',
+      );
     }
 
     this.validateInput(dto);
@@ -203,7 +231,9 @@ export class VerificationsService {
     const now = new Date();
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const usage = await this.prisma.client.organizationMonthlyUsage.findUnique({
-      where: { orgId_month_productType: { orgId: organizationId, month: monthKey, productType: dto.type } },
+      where: {
+        orgId_month_productType: { orgId: organizationId, month: monthKey, productType: dto.type },
+      },
     });
     const currentVolume = usage?.successCount ?? 0;
 
@@ -215,7 +245,9 @@ export class VerificationsService {
     const orgTier = overrides.tiers.get(dto.type);
     const unitPriceMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : tier.unitPriceMinor;
     const tierBackupPriceMinor = orgTier
-      ? (orgTier.backupPriceMinor != null ? BigInt(orgTier.backupPriceMinor) : null)
+      ? orgTier.backupPriceMinor != null
+        ? BigInt(orgTier.backupPriceMinor)
+        : null
       : tier.backupPriceMinor;
 
     // Determine if using backup
@@ -232,13 +264,17 @@ export class VerificationsService {
     try {
       const provider = this.registry.resolve(dto.type, useBackup);
       isBackup = useBackup;
-      
+
       result = await this.executeVerification(provider, dto);
     } catch (err) {
       if (err instanceof ProviderError) {
         if (err.code === 'NOT_FOUND') {
           status = 'not_found';
-        } else if (err.code === 'UPSTREAM_DOWN' && !useBackup && this.registry.hasBackup(dto.type)) {
+        } else if (
+          err.code === 'UPSTREAM_DOWN' &&
+          !useBackup &&
+          this.registry.hasBackup(dto.type)
+        ) {
           // Primary failed, backup available - return info about backup
           status = 'failed';
           errorMessage = err.message;
@@ -284,9 +320,20 @@ export class VerificationsService {
       // Update monthly usage counter on success
       if (status === 'success') {
         await tx.organizationMonthlyUsage.upsert({
-          where: { orgId_month_productType: { orgId: organizationId, month: monthKey, productType: dto.type } },
+          where: {
+            orgId_month_productType: {
+              orgId: organizationId,
+              month: monthKey,
+              productType: dto.type,
+            },
+          },
           update: { successCount: { increment: 1 } },
-          create: { orgId: organizationId, month: monthKey, productType: dto.type, successCount: 1 },
+          create: {
+            orgId: organizationId,
+            month: monthKey,
+            productType: dto.type,
+            successCount: 1,
+          },
         });
       }
 
@@ -348,7 +395,10 @@ export class VerificationsService {
     };
   }
 
-  private async executeVerification(provider: ReturnType<ProviderRegistry['resolve']>, dto: RunVerificationDto): Promise<VerificationResult> {
+  private async executeVerification(
+    provider: ReturnType<ProviderRegistry['resolve']>,
+    dto: RunVerificationDto,
+  ): Promise<VerificationResult> {
     switch (dto.type) {
       // Identity — Standard
       case VerificationType.IPRS_STANDARD:
@@ -356,11 +406,21 @@ export class VerificationsService {
       case VerificationType.MATCH_ID_PHONE:
         return provider.matchIdPhone({ idNumber: dto.idNumber!, phoneNumber: dto.phoneNumber! });
       case VerificationType.EMPLOYER_VERIFICATION:
-        return provider.employerVerification({ idNumber: dto.idNumber!, employerName: dto.employerName! });
+        return provider.employerVerification({
+          idNumber: dto.idNumber!,
+          employerName: dto.employerName!,
+        });
       case VerificationType.FACE_ID_MATCH:
-        return provider.faceIdMatch({ idNumber: dto.idNumber!, faceImageBase64: dto.faceImageBase64! });
+        return provider.faceIdMatch({
+          idNumber: dto.idNumber!,
+          faceImageBase64: dto.faceImageBase64!,
+        });
       case VerificationType.BANK_ACCOUNT_VERIFICATION:
-        return provider.bankAccountVerification({ accountNumber: dto.accountNumber!, bankCode: dto.bankCode!, idNumber: dto.idNumber });
+        return provider.bankAccountVerification({
+          accountNumber: dto.accountNumber!,
+          bankCode: dto.bankCode!,
+          idNumber: dto.idNumber,
+        });
 
       // Identity — Premium
       case VerificationType.ALIEN_ID:
@@ -368,7 +428,10 @@ export class VerificationsService {
       case VerificationType.AML_PEP_SCREEN:
         return provider.amlPepScreen(dto.idNumber!);
       case VerificationType.PASSPORT_CHECK:
-        return provider.passportCheck({ passportNumber: dto.passportNumber!, nationality: dto.nationality! });
+        return provider.passportCheck({
+          passportNumber: dto.passportNumber!,
+          nationality: dto.nationality!,
+        });
 
       // Utility
       case VerificationType.SIM_SWAP_CHECK:
@@ -414,14 +477,28 @@ export class VerificationsService {
       case VerificationType.SPIN_SCORE_ONLY:
         return provider.spinScoreOnly(dto.idNumber!);
       case VerificationType.SCANNED_STATEMENT:
-        return provider.scannedStatementAnalysis({ statementPages: dto.statementPages!, fileBase64: dto.statementFileBase64 });
+        return provider.scannedStatementAnalysis({
+          statementPages: dto.statementPages!,
+          fileBase64: dto.statementFileBase64,
+        });
 
       default:
         throw new BadRequestException(`Unknown verification type: ${dto.type}`);
     }
   }
 
-  async history(orgId: string, opts: { type?: VerificationType; limit: number; offset: number; from?: string; to?: string; status?: string; search?: string }) {
+  async history(
+    orgId: string,
+    opts: {
+      type?: VerificationType;
+      limit: number;
+      offset: number;
+      from?: string;
+      to?: string;
+      status?: string;
+      search?: string;
+    },
+  ) {
     const where: Record<string, unknown> = { organizationId: orgId };
     if (opts.type) where.type = opts.type;
     if (opts.status) where.status = opts.status;
@@ -452,8 +529,15 @@ export class VerificationsService {
         take: Math.min(opts.limit, 200),
         skip: opts.offset,
         select: {
-          id: true, type: true, status: true, source: true, costMinor: true,
-          latencyMs: true, createdAt: true, encryptedInput: true, isBackup: true,
+          id: true,
+          type: true,
+          status: true,
+          source: true,
+          costMinor: true,
+          latencyMs: true,
+          createdAt: true,
+          encryptedInput: true,
+          isBackup: true,
         },
       }),
       this.prisma.client.verificationRequest.count({ where }),
@@ -516,17 +600,20 @@ export class VerificationsService {
         if (!dto.idNumber) throw new BadRequestException('idNumber is required');
         break;
       case VerificationType.MATCH_ID_PHONE:
-        if (!dto.idNumber || !dto.phoneNumber) throw new BadRequestException('idNumber and phoneNumber are required');
+        if (!dto.idNumber || !dto.phoneNumber)
+          throw new BadRequestException('idNumber and phoneNumber are required');
         break;
       case VerificationType.BANK_ACCOUNT_VERIFICATION:
-        if (!dto.accountNumber || !dto.bankCode) throw new BadRequestException('accountNumber and bankCode are required');
+        if (!dto.accountNumber || !dto.bankCode)
+          throw new BadRequestException('accountNumber and bankCode are required');
         break;
       // Identity — Premium
       case VerificationType.ALIEN_ID:
         if (!dto.alienId) throw new BadRequestException('alienId is required');
         break;
       case VerificationType.PASSPORT_CHECK:
-        if (!dto.passportNumber || !dto.nationality) throw new BadRequestException('passportNumber and nationality are required');
+        if (!dto.passportNumber || !dto.nationality)
+          throw new BadRequestException('passportNumber and nationality are required');
         break;
       // Utility
       case VerificationType.SIM_SWAP_CHECK:
@@ -537,7 +624,8 @@ export class VerificationsService {
         if (!dto.meterNumber) throw new BadRequestException('meterNumber is required');
         break;
       case VerificationType.KRA_PIN_VERIFICATION:
-        if (!dto.kraPin && !dto.idNumber) throw new BadRequestException('kraPin or idNumber is required');
+        if (!dto.kraPin && !dto.idNumber)
+          throw new BadRequestException('kraPin or idNumber is required');
         break;
       // Vehicle
       case VerificationType.MOTOR_VEHICLE_OWNERSHIP:
@@ -552,7 +640,8 @@ export class VerificationsService {
         break;
       // Analytics
       case VerificationType.SCANNED_STATEMENT:
-        if (!dto.statementPages || dto.statementPages < 1) throw new BadRequestException('statementPages must be at least 1');
+        if (!dto.statementPages || dto.statementPages < 1)
+          throw new BadRequestException('statementPages must be at least 1');
         break;
     }
   }
@@ -564,7 +653,22 @@ export class VerificationsService {
    * Falls through to the topmost open-ended tier if no tighter match.
    * Returns null if volume is below the smallest tier's minVolume.
    */
-  static selectTierInMemory(tiers: { minVolume: number; maxVolume: number | null; unitPriceMinor: bigint; backupPriceMinor: bigint | null; vatExclusive: boolean }[], volume: number): { unitPriceMinor: bigint; backupPriceMinor: bigint | null; minVolume: number; maxVolume: number | null; vatExclusive: boolean } | null {
+  static selectTierInMemory(
+    tiers: {
+      minVolume: number;
+      maxVolume: number | null;
+      unitPriceMinor: bigint;
+      backupPriceMinor: bigint | null;
+      vatExclusive: boolean;
+    }[],
+    volume: number,
+  ): {
+    unitPriceMinor: bigint;
+    backupPriceMinor: bigint | null;
+    minVolume: number;
+    maxVolume: number | null;
+    vatExclusive: boolean;
+  } | null {
     // Primary loop: find first tier where minVolume <= volume <= maxVolume (or null maxVolume)
     for (const tier of tiers) {
       if (tier.minVolume <= volume && (tier.maxVolume === null || tier.maxVolume >= volume)) {
@@ -598,8 +702,21 @@ export class VerificationsService {
 
   private summarizeSubject(encryptedInput: string): string {
     try {
-      const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<string, string | number | null | undefined>;
-      const subject = input.kraPin ?? input.phoneNumber ?? input.idNumber ?? input.alienId ?? input.passportNumber ?? input.vehicleRegNumber ?? input.dlNumber ?? input.businessRegNumber ?? input.meterNumber ?? (input.statementPages ? String(input.statementPages) : '—');
+      const input = JSON.parse(this.prisma.decrypt(encryptedInput)) as Record<
+        string,
+        string | number | null | undefined
+      >;
+      const subject =
+        input.kraPin ??
+        input.phoneNumber ??
+        input.idNumber ??
+        input.alienId ??
+        input.passportNumber ??
+        input.vehicleRegNumber ??
+        input.dlNumber ??
+        input.businessRegNumber ??
+        input.meterNumber ??
+        (input.statementPages ? String(input.statementPages) : '—');
       return String(subject);
     } catch {
       return '—';

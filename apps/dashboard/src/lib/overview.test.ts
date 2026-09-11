@@ -45,7 +45,9 @@ describe('calculateSuccessRate', () => {
   });
   it('calculates rounded percentage', () => {
     expect(calculateSuccessRate([{ status: 'success' }, { status: 'failed' }])).toBe(50);
-    expect(calculateSuccessRate([{ status: 'success' }, { status: 'success' }, { status: 'failed' }])).toBe(67);
+    expect(
+      calculateSuccessRate([{ status: 'success' }, { status: 'success' }, { status: 'failed' }]),
+    ).toBe(67);
     expect(calculateSuccessRate([{ status: 'success' }, { status: 'success' }])).toBe(100);
     expect(calculateSuccessRate([{ status: 'failed' }])).toBe(0);
   });
@@ -56,7 +58,9 @@ describe('calculateSuccessRate', () => {
 
 describe('getSuccessfulCount', () => {
   it('counts only success', () => {
-    expect(getSuccessfulCount([{ status: 'success' }, { status: 'failed' }, { status: 'success' }])).toBe(2);
+    expect(
+      getSuccessfulCount([{ status: 'success' }, { status: 'failed' }, { status: 'success' }]),
+    ).toBe(2);
     expect(getSuccessfulCount([])).toBe(0);
   });
 });
@@ -95,7 +99,9 @@ describe('summarizeRecentCost', () => {
 
 describe('buildStatusDistribution', () => {
   it('builds counts case-insensitive', () => {
-    expect(buildStatusDistribution([{ status: 'success' }, { status: 'Success' }, { status: 'failed' }])).toEqual({
+    expect(
+      buildStatusDistribution([{ status: 'success' }, { status: 'Success' }, { status: 'failed' }]),
+    ).toEqual({
       success: 2,
       failed: 1,
     });
@@ -108,8 +114,26 @@ describe('buildStatusDistribution', () => {
 describe('buildOverviewAnalytics', () => {
   it('computes analytics from verifications', () => {
     const items = [
-      { id: '1', type: 'iprs_standard', status: 'success', source: 'dashboard', cost: 30, latencyMs: 120, createdAt: new Date().toISOString(), subject: '123' },
-      { id: '2', type: 'iprs_standard', status: 'failed', source: 'dashboard', cost: 0, latencyMs: 200, createdAt: new Date().toISOString(), subject: '456' },
+      {
+        id: '1',
+        type: 'iprs_standard',
+        status: 'success',
+        source: 'dashboard',
+        cost: 30,
+        latencyMs: 120,
+        createdAt: new Date().toISOString(),
+        subject: '123',
+      },
+      {
+        id: '2',
+        type: 'iprs_standard',
+        status: 'failed',
+        source: 'dashboard',
+        cost: 0,
+        latencyMs: 200,
+        createdAt: new Date().toISOString(),
+        subject: '456',
+      },
     ];
     const a = buildOverviewAnalytics(items);
     expect(a.totalCost).toBe(30);
@@ -118,7 +142,18 @@ describe('buildOverviewAnalytics', () => {
     expect(a.points.length).toBe(2);
   });
   it('handles no latencies', () => {
-    const items = [{ id: '1', type: 'iprs_standard', status: 'success', source: 'dashboard', cost: 30, latencyMs: null, createdAt: new Date().toISOString(), subject: '123' }];
+    const items = [
+      {
+        id: '1',
+        type: 'iprs_standard',
+        status: 'success',
+        source: 'dashboard',
+        cost: 30,
+        latencyMs: null,
+        createdAt: new Date().toISOString(),
+        subject: '123',
+      },
+    ];
     expect(buildOverviewAnalytics(items).avgLatencyMs).toBeNull();
   });
 });
@@ -126,9 +161,45 @@ describe('buildOverviewAnalytics', () => {
 describe('getAvailableProducts', () => {
   it('filters by enabled and active', () => {
     const products = [
-      { type: 'a', label: 'A', category: 'X', enabled: true, active: true, unitPriceKes: 10, backupPriceKes: null, cbConsentRequired: false, requiresFileUpload: false, backupAvailable: false, live: true },
-      { type: 'b', label: 'B', category: 'X', enabled: true, active: false, unitPriceKes: 10, backupPriceKes: null, cbConsentRequired: false, requiresFileUpload: false, backupAvailable: false, live: true },
-      { type: 'c', label: 'C', category: 'X', enabled: false, active: true, unitPriceKes: 10, backupPriceKes: null, cbConsentRequired: false, requiresFileUpload: false, backupAvailable: false, live: true },
+      {
+        type: 'a',
+        label: 'A',
+        category: 'X',
+        enabled: true,
+        active: true,
+        unitPriceKes: 10,
+        backupPriceKes: null,
+        cbConsentRequired: false,
+        requiresFileUpload: false,
+        backupAvailable: false,
+        live: true,
+      },
+      {
+        type: 'b',
+        label: 'B',
+        category: 'X',
+        enabled: true,
+        active: false,
+        unitPriceKes: 10,
+        backupPriceKes: null,
+        cbConsentRequired: false,
+        requiresFileUpload: false,
+        backupAvailable: false,
+        live: true,
+      },
+      {
+        type: 'c',
+        label: 'C',
+        category: 'X',
+        enabled: false,
+        active: true,
+        unitPriceKes: 10,
+        backupPriceKes: null,
+        cbConsentRequired: false,
+        requiresFileUpload: false,
+        backupAvailable: false,
+        live: true,
+      },
     ];
     expect(getAvailableProducts(products).map((p) => p.type)).toEqual(['a']);
   });
@@ -136,9 +207,16 @@ describe('getAvailableProducts', () => {
 
 describe('formatActivitySummary', () => {
   it('returns no activity for zero', () => {
-    expect(formatActivitySummary({ points: [], totalCost: 0, avgLatencyMs: null, statusCounts: {} }, 0)).toBe('No activity yet');
+    expect(
+      formatActivitySummary({ points: [], totalCost: 0, avgLatencyMs: null, statusCounts: {} }, 0),
+    ).toBe('No activity yet');
   });
   it('summarises statuses', () => {
-    expect(formatActivitySummary({ points: [], totalCost: 0, avgLatencyMs: 120, statusCounts: { success: 2, failed: 1 } }, 3)).toBe('2 succeeded · 1 failed · avg 120ms');
+    expect(
+      formatActivitySummary(
+        { points: [], totalCost: 0, avgLatencyMs: 120, statusCounts: { success: 2, failed: 1 } },
+        3,
+      ),
+    ).toBe('2 succeeded · 1 failed · avg 120ms');
   });
 });

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 type Tx = Parameters<Parameters<PrismaService['client']['$transaction']>[0]>[0];
@@ -93,11 +89,21 @@ export class WalletService {
 
       await tx.topUpRequest.update({
         where: { id: topUpId },
-        data: { status: approve ? 'approved' : 'rejected', reviewedById: adminId, reviewedAt: new Date(), adminNote: note },
+        data: {
+          status: approve ? 'approved' : 'rejected',
+          reviewedById: adminId,
+          reviewedAt: new Date(),
+          adminNote: note,
+        },
       });
 
       if (approve) {
-        await this.credit(tx, topUp.organizationId, topUp.amountMinor, `Invoice top-up approved (${topUpId})`);
+        await this.credit(
+          tx,
+          topUp.organizationId,
+          topUp.amountMinor,
+          `Invoice top-up approved (${topUpId})`,
+        );
       }
       return { id: topUpId, approved: approve };
     });

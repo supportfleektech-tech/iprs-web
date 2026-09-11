@@ -64,7 +64,13 @@ export default function RegisterPage() {
           </div>
           <div>
             <Label htmlFor="org">Organization name</Label>
-            <Input id="org" required value={form.organizationName} onChange={set('organizationName')} placeholder="Acme Lender Ltd" />
+            <Input
+              id="org"
+              required
+              value={form.organizationName}
+              onChange={set('organizationName')}
+              placeholder="Acme Lender Ltd"
+            />
           </div>
           <div>
             <Label htmlFor="email">Work email</Label>
@@ -72,7 +78,14 @@ export default function RegisterPage() {
           </div>
           <div>
             <Label htmlFor="password">Password (min 8 characters)</Label>
-            <Input id="password" type="password" required minLength={8} value={form.password} onChange={set('password')} />
+            <Input
+              id="password"
+              type="password"
+              required
+              minLength={8}
+              value={form.password}
+              onChange={set('password')}
+            />
           </div>
           <FieldError>{error}</FieldError>
           <Button type="submit" disabled={busy} className="w-full">

@@ -9,13 +9,21 @@ export function generateStaticParams() {
   return PRODUCTS.map((p) => ({ slug: p.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const product = getProductBySlug(params.slug);
   return { title: product ? `${product.title} | Fleek IPRS` : 'Product Not Found' };
 }
 
 function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(price);
+  return new Intl.NumberFormat('en-KE', {
+    style: 'currency',
+    currency: 'KES',
+    minimumFractionDigits: 0,
+  }).format(price);
 }
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
@@ -35,10 +43,24 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             <h1 className="text-4xl font-bold font-display">{product.title}</h1>
             <p className="mt-4 max-w-2xl text-slate-300">{product.description}</p>
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
-              <span className="font-semibold text-teal-brand">{formatPrice(product.basePriceKes)}/check</span>
-              {product.vatExclusive && <span className="px-2 py-1 rounded-full bg-amber-500/20 text-amber-400">VAT Exclusive</span>}
-              {product.cbConsentRequired && <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">CB Consent Required</span>}
-              {product.requiresFileUpload && <span className="px-2 py-1 rounded-full bg-slate-500/20 text-slate-400">File Upload</span>}
+              <span className="font-semibold text-teal-brand">
+                {formatPrice(product.basePriceKes)}/check
+              </span>
+              {product.vatExclusive && (
+                <span className="px-2 py-1 rounded-full bg-amber-500/20 text-amber-400">
+                  VAT Exclusive
+                </span>
+              )}
+              {product.cbConsentRequired && (
+                <span className="px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">
+                  CB Consent Required
+                </span>
+              )}
+              {product.requiresFileUpload && (
+                <span className="px-2 py-1 rounded-full bg-slate-500/20 text-slate-400">
+                  File Upload
+                </span>
+              )}
             </div>
           </div>
         </section>
@@ -48,18 +70,26 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             {/* You provide / We return */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">You provide</div>
-                <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3 font-mono text-sm">{product.inputExample}</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  You provide
+                </div>
+                <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3 font-mono text-sm">
+                  {product.inputExample}
+                </div>
                 <div className="mt-2 text-sm text-slate-500">{product.inputLabel}</div>
                 {product.requiresFileUpload && (
                   <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
                     <p className="text-xs text-blue-800 font-medium">File upload required</p>
-                    <p className="text-xs text-blue-700 mt-1">Accepted: {product.fileTypes.join(', ')}</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Accepted: {product.fileTypes.join(', ')}
+                    </p>
                   </div>
                 )}
               </div>
               <div className="rounded-xl border border-teal-brand/40 bg-teal-brand/5 p-6 shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-teal-brand">We return instantly</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-teal-brand">
+                  We return instantly
+                </div>
                 <ul className="mt-3 space-y-1.5 text-sm">
                   {product.outputs.map((o) => (
                     <li key={o} className="flex items-center gap-2">
@@ -96,32 +126,91 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                   <tbody className="text-slate-600">
                     {product.slug === 'spin_score_only' ? (
                       <>
-                        <tr className="border-b border-slate-100"><td className="py-2">1 – 1,000</td><td className="py-2 text-right font-medium">{formatPrice(130)}</td></tr>
-                        <tr className="border-b border-slate-100 bg-slate-50"><td className="py-2">1,001 – 5,000</td><td className="py-2 text-right font-medium">{formatPrice(125)}</td></tr>
-                        <tr className="border-b border-slate-100"><td className="py-2">5,001 – 10,000</td><td className="py-2 text-right font-medium">{formatPrice(120)}</td></tr>
-                        <tr className="border-b border-slate-100 bg-slate-50"><td className="py-2">10,001 – 20,000</td><td className="py-2 text-right font-medium">{formatPrice(115)}</td></tr>
-                        <tr className="border-b border-slate-100"><td className="py-2">20,001 – 50,000</td><td className="py-2 text-right font-medium">{formatPrice(105)}</td></tr>
-                        <tr className="bg-slate-50"><td className="py-2">50,000 – 100,000</td><td className="py-2 text-right font-medium">{formatPrice(95)}</td></tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="py-2">1 – 1,000</td>
+                          <td className="py-2 text-right font-medium">{formatPrice(130)}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          <td className="py-2">1,001 – 5,000</td>
+                          <td className="py-2 text-right font-medium">{formatPrice(125)}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="py-2">5,001 – 10,000</td>
+                          <td className="py-2 text-right font-medium">{formatPrice(120)}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          <td className="py-2">10,001 – 20,000</td>
+                          <td className="py-2 text-right font-medium">{formatPrice(115)}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="py-2">20,001 – 50,000</td>
+                          <td className="py-2 text-right font-medium">{formatPrice(105)}</td>
+                        </tr>
+                        <tr className="bg-slate-50">
+                          <td className="py-2">50,000 – 100,000</td>
+                          <td className="py-2 text-right font-medium">{formatPrice(95)}</td>
+                        </tr>
                       </>
                     ) : product.slug === 'scanned_statement' ? (
-                      <tr className="bg-slate-50"><td className="py-2" colSpan={2}>KES 120 + KES 4 per page</td></tr>
-                    ) : product.slug === 'creditinfo_crb_status' || product.slug === 'creditinfo_comprehensive' ? (
-                      <tr className="bg-slate-50"><td className="py-2" colSpan={2}>Flat rate: {formatPrice(product.basePriceKes)} (no volume tiers)</td></tr>
+                      <tr className="bg-slate-50">
+                        <td className="py-2" colSpan={2}>
+                          KES 120 + KES 4 per page
+                        </td>
+                      </tr>
+                    ) : product.slug === 'creditinfo_crb_status' ||
+                      product.slug === 'creditinfo_comprehensive' ? (
+                      <tr className="bg-slate-50">
+                        <td className="py-2" colSpan={2}>
+                          Flat rate: {formatPrice(product.basePriceKes)} (no volume tiers)
+                        </td>
+                      </tr>
                     ) : (
                       <>
-                        <tr className="border-b border-slate-100"><td className="py-2">0 – 500</td><td className="py-2 text-right font-medium">{formatPrice(product.basePriceKes)}</td></tr>
-                        <tr className="border-b border-slate-100 bg-slate-50"><td className="py-2">501 – 2,500</td><td className="py-2 text-right font-medium">{formatPrice(Math.round(product.basePriceKes * 0.93))}</td></tr>
-                        <tr className="border-b border-slate-100"><td className="py-2">2,501 – 5,000</td><td className="py-2 text-right font-medium">{formatPrice(Math.round(product.basePriceKes * 0.87))}</td></tr>
-                        <tr className="border-b border-slate-100 bg-slate-50"><td className="py-2">5,001 – 10,000</td><td className="py-2 text-right font-medium">{formatPrice(Math.round(product.basePriceKes * 0.8))}</td></tr>
-                        <tr className="border-b border-slate-100"><td className="py-2">10,001 – 30,000</td><td className="py-2 text-right font-medium">{formatPrice(Math.round(product.basePriceKes * 0.73))}</td></tr>
-                        <tr className="bg-slate-50"><td className="py-2">30,001+</td><td className="py-2 text-right font-medium">{formatPrice(Math.round(product.basePriceKes * 0.67))}</td></tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="py-2">0 – 500</td>
+                          <td className="py-2 text-right font-medium">
+                            {formatPrice(product.basePriceKes)}
+                          </td>
+                        </tr>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          <td className="py-2">501 – 2,500</td>
+                          <td className="py-2 text-right font-medium">
+                            {formatPrice(Math.round(product.basePriceKes * 0.93))}
+                          </td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="py-2">2,501 – 5,000</td>
+                          <td className="py-2 text-right font-medium">
+                            {formatPrice(Math.round(product.basePriceKes * 0.87))}
+                          </td>
+                        </tr>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          <td className="py-2">5,001 – 10,000</td>
+                          <td className="py-2 text-right font-medium">
+                            {formatPrice(Math.round(product.basePriceKes * 0.8))}
+                          </td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="py-2">10,001 – 30,000</td>
+                          <td className="py-2 text-right font-medium">
+                            {formatPrice(Math.round(product.basePriceKes * 0.73))}
+                          </td>
+                        </tr>
+                        <tr className="bg-slate-50">
+                          <td className="py-2">30,001+</td>
+                          <td className="py-2 text-right font-medium">
+                            {formatPrice(Math.round(product.basePriceKes * 0.67))}
+                          </td>
+                        </tr>
                       </>
                     )}
                   </tbody>
                 </table>
                 <p className="mt-3 text-xs text-slate-400">
-                  Prices are VAT exclusive. Backup rates available on primary source failure (explicit toggle required).
-                  {product.cbConsentRequired && ' Credit bureau consent (cbConsent) required for this product.'}
+                  Prices are VAT exclusive. Backup rates available on primary source failure
+                  (explicit toggle required).
+                  {product.cbConsentRequired &&
+                    ' Credit bureau consent (cbConsent) required for this product.'}
                 </p>
               </div>
             </div>
@@ -129,7 +218,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
 
           <aside className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm h-fit">
             <h3 className="font-semibold">Try it now</h3>
-            <p className="text-sm text-slate-500 mb-4">Run this check from the console or via the REST API with a sandbox key.</p>
+            <p className="text-sm text-slate-500 mb-4">
+              Run this check from the console or via the REST API with a sandbox key.
+            </p>
             <Link
               href={`${APP_URL}/console`}
               className="block rounded-lg bg-teal-brand px-4 py-2.5 text-center text-sm font-semibold text-navy-950 hover:bg-teal-light"

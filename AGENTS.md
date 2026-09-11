@@ -10,7 +10,7 @@ Monorepo: pnpm workspaces + Turborepo, Node ≥ 22, TypeScript strict.
 pnpm install
 pnpm -w build                            # ALWAYS first from clean checkout or after touching packages/* or prisma schema
 pnpm -w lint && pnpm -w typecheck && pnpm -w test   # quality gates, same order as CI
-pnpm exec playwright test                # E2E (see prerequisites below)
+pnpm exec playwright test --workers=1     # E2E (see prerequisites below; --workers=1 required on small/low-memory machines)
 ```
 
 - Run one package: `pnpm --filter @fleek/api <script>` (names: `@fleek/{web,dashboard,api,types,providers,database,ui}`).
@@ -29,15 +29,15 @@ Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflo
 
 ## Layout & boundaries
 
-| Path | Role |
-|---|---|
-| `apps/web` | Marketing site, Next.js App Router, port 3000 |
-| `apps/dashboard` | Client console + admin panel, Next.js, port 3001 |
-| `apps/api` | NestJS REST API, global prefix `/v1`, OpenAPI at `/docs`, port 4000 |
-| `packages/types` | Shared verification product/result types — the cross-app contract |
+| Path                 | Role                                                                     |
+| -------------------- | ------------------------------------------------------------------------ |
+| `apps/web`           | Marketing site, Next.js App Router, port 3000                            |
+| `apps/dashboard`     | Client console + admin panel, Next.js, port 3001                         |
+| `apps/api`           | NestJS REST API, global prefix `/v1`, OpenAPI at `/docs`, port 4000      |
+| `packages/types`     | Shared verification product/result types — the cross-app contract        |
 | `packages/providers` | `VerificationProvider` interface; `MockProvider` = deterministic sandbox |
-| `packages/database` | Prisma schema/client + field-level AES-256-GCM encryption |
-| `packages/ui` | Shared UI components (Button, Card, Badge, Input, Label, StatCard) |
+| `packages/database`  | Prisma schema/client + field-level AES-256-GCM encryption                |
+| `packages/ui`        | Shared UI components (Button, Card, Badge, Input, Label, StatCard)       |
 
 API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY` or it won't start (see `apps/api/.env.example`).
 
@@ -56,6 +56,7 @@ API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`
 ## Tiered Pricing (PDF-exact, VAT-exclusive)
 
 Volume bands: `0-500`, `501-2500`, `2501-5000`, `5001-10000`, `10001-30000`, `30001+`
+
 - SPIN Score uses special bands: `1-1000`, `1001-5000`, `5001-10000`, `10001-20000`, `20001-50000`, `50000-100000`
 - Identity Standard: 30/28/26/24/22/20 (backup: 45/43/42/38/34/32)
 - Utility: 20/18/16/14/12/10
@@ -86,6 +87,7 @@ GET/POST/PUT /admin/organizations/:id/pricing-tiers # Org-level pricing override
 ## Key DTOs (`apps/api/src/verifications/dto.ts`)
 
 `RunVerificationDto` — all 24 types + optional fields:
+
 - `idNumber`, `kraPin`, `phoneNumber`, `alienId`, `passportNumber`, `nationality`
 - `bankCode`, `accountNumber`, `employerName`, `meterNumber`, `vehicleRegNumber`, `dlNumber`
 - `businessRegNumber`, `faceImageBase64`, `statementPages`, `statementFileBase64`
@@ -103,6 +105,7 @@ Frontend: `NEXT_PUBLIC_API_URL` (inlined at build), `NEXT_PUBLIC_APP_URL`
 ## Providers & Backup Routing
 
 `ProviderRegistry` at `packages/providers/src/registry.ts`:
+
 - `enabledTypes` — which checks exist at all
 - `primaryProvider` — main live upstream (AggregatorAdapter)
 - `backupProvider` — fallback upstream
@@ -133,6 +136,7 @@ AggregatorAdapter expects SPIN-compatible endpoints under `/kenya/*`.
 ## Dashboard Build Blocker
 
 Dashboard uses Next.js 14.2.33 but requires `@next/swc-linux-x64-gnu@14.2.33` binary. Network issues prevent pnpm install of correct binary. Workaround when network available:
+
 ```bash
 cd apps/dashboard && pnpm add -D @next/swx-linux-x64-gnu@14.2.33
 NEXT_IGNORE_INCORRECT_LOCKFILE=1 pnpm build
@@ -146,7 +150,7 @@ Both Dockerfiles encode fixes from a crash-loop incident — don't simplify them
 - Installs use a pnpm store cache mount; fetch retries/timeouts live in `/root/.npmrc` inside the image (pnpm ignores uppercase `NPM_CONFIG_*` env vars).
 - api runner copies root `node_modules` **plus** per-package `node_modules` and internal package roots (`dist/` + `package.json`). pnpm resolves workspace deps via relative symlinks — missing any piece ⇒ runtime `MODULE_NOT_FOUND` (`dotenv`, `@fleek/database`, …). The Prisma schema dir is copied for one-off migrations.
 - openssl must be installed **before** `pnpm install` / `prisma generate`, else Prisma's platform detection bakes OpenSSL-1.1 engines that fail at runtime. That's why api is `bookworm-slim`; `Dockerfile.next` stays alpine (Next standalone has no native engines).
-- `Dockerfile.next`: `${APP}` in CMD expands at *runtime* — the ARG must be re-exported as ENV.
+- `Dockerfile.next`: `${APP}` in CMD expands at _runtime_ — the ARG must be re-exported as ENV.
 
 ## Deployment
 

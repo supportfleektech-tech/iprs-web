@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { createHash } from 'node:crypto';
 import type { Request } from 'express';
@@ -18,10 +13,7 @@ function rawApiKey(req: Request): string | null {
   return token && (token.startsWith('flk_live_') || token.startsWith('flk_test_')) ? token : null;
 }
 
-async function validateApiKey(
-  prisma: PrismaService,
-  raw: string,
-): Promise<ApiKey> {
+async function validateApiKey(prisma: PrismaService, raw: string): Promise<ApiKey> {
   const hashedKey = createHash('sha256').update(raw).digest('hex');
   const key = await prisma.client.apiKey.findUnique({ where: { hashedKey } });
   if (!key || key.revokedAt) throw new UnauthorizedException('Invalid or revoked API key');

@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fleek/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@fleek/ui';
 import { apiFetch, useAuth } from '@/lib/auth';
 import { parseCsv, csvRowsToInputs, toCsv, type CsvRow } from '@/lib/csv';
 import { VerificationType, PRODUCT_LABELS, PRODUCT_CATEGORIES } from '@fleek/types';
@@ -34,7 +42,10 @@ const PRODUCT_HINTS: Record<VerificationType, { hint: string; cbRequired: boolea
   [VerificationType.MATCH_ID_PHONE]: { hint: 'id_number, phone_number', cbRequired: false },
   [VerificationType.EMPLOYER_VERIFICATION]: { hint: 'id_number, employer_name', cbRequired: false },
   [VerificationType.FACE_ID_MATCH]: { hint: 'id_number, face_image_base64', cbRequired: false },
-  [VerificationType.BANK_ACCOUNT_VERIFICATION]: { hint: 'account_number, bank_code, id_number', cbRequired: false },
+  [VerificationType.BANK_ACCOUNT_VERIFICATION]: {
+    hint: 'account_number, bank_code, id_number',
+    cbRequired: false,
+  },
   [VerificationType.ALIEN_ID]: { hint: 'alien_id', cbRequired: false },
   [VerificationType.AML_PEP_SCREEN]: { hint: 'id_number', cbRequired: false },
   [VerificationType.PASSPORT_CHECK]: { hint: 'passport_number, nationality', cbRequired: false },
@@ -53,7 +64,10 @@ const PRODUCT_HINTS: Record<VerificationType, { hint: string; cbRequired: boolea
   [VerificationType.CREDITINFO_CRB_STATUS]: { hint: 'id_number', cbRequired: true },
   [VerificationType.BRS]: { hint: 'business_reg_number', cbRequired: true },
   [VerificationType.SPIN_SCORE_ONLY]: { hint: 'id_number', cbRequired: true },
-  [VerificationType.SCANNED_STATEMENT]: { hint: 'statement_pages, statement_file_base64', cbRequired: false },
+  [VerificationType.SCANNED_STATEMENT]: {
+    hint: 'statement_pages, statement_file_base64',
+    cbRequired: false,
+  },
 };
 
 export default function BulkPage() {
@@ -93,12 +107,22 @@ export default function BulkPage() {
     reader.onload = () => {
       try {
         const records = parseCsv(String(reader.result ?? ''));
-        const inputs = csvRowsToInputs(records).filter((r) => 
-          r.idNumber || r.phoneNumber || r.kraPin || r.alienId || r.passportNumber || 
-          r.meterNumber || r.vehicleRegNumber || r.dlNumber || r.businessRegNumber
+        const inputs = csvRowsToInputs(records).filter(
+          (r) =>
+            r.idNumber ||
+            r.phoneNumber ||
+            r.kraPin ||
+            r.alienId ||
+            r.passportNumber ||
+            r.meterNumber ||
+            r.vehicleRegNumber ||
+            r.dlNumber ||
+            r.businessRegNumber,
         );
-        if (inputs.length === 0) throw new Error('No usable rows found — include a header like id_number or phone_number');
-        if (inputs.length > 1000) throw new Error(`Too many rows (${inputs.length}) — max is 1000 per batch`);
+        if (inputs.length === 0)
+          throw new Error('No usable rows found — include a header like id_number or phone_number');
+        if (inputs.length > 1000)
+          throw new Error(`Too many rows (${inputs.length}) — max is 1000 per batch`);
         setRows(inputs);
       } catch (err) {
         setParseError(err instanceof Error ? err.message : 'Could not parse CSV');
@@ -135,7 +159,9 @@ export default function BulkPage() {
   }
 
   async function downloadResults(batchId: string) {
-    const results = await apiFetch<BatchResultRow[]>(`/verifications/batches/${batchId}/results`, { token });
+    const results = await apiFetch<BatchResultRow[]>(`/verifications/batches/${batchId}/results`, {
+      token,
+    });
     const csv = toCsv(
       ['subject', 'status', 'name', 'detail', 'cost_kes'],
       results.map((r) => [r.subject, r.status, r.name, r.detail, r.cost]),
@@ -155,7 +181,8 @@ export default function BulkPage() {
     <div className="mx-auto max-w-4xl p-8">
       <h1 className="mb-1 text-2xl font-bold font-display">Bulk verification</h1>
       <p className="mb-6 text-sm text-slate-500">
-        Upload a CSV of up to 1,000 rows. Include a header row with the required columns for your selected product.
+        Upload a CSV of up to 1,000 rows. Include a header row with the required columns for your
+        selected product.
       </p>
 
       <Card>
@@ -202,14 +229,17 @@ export default function BulkPage() {
           {!rows && !parseError && (
             <p className="mt-4 text-xs text-slate-400">
               Expected columns for this product: <strong>{hint.hint}</strong>
-              {hint.cbRequired && <span className="ml-2 text-amber-600">(CB consent required per row)</span>}
+              {hint.cbRequired && (
+                <span className="ml-2 text-amber-600">(CB consent required per row)</span>
+              )}
             </p>
           )}
 
           {rows && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-teal-brand/5 border border-teal-brand/30 px-4 py-3">
               <div className="text-sm">
-                <span className="font-medium">{fileName}</span> — {rows.length.toLocaleString()} rows
+                <span className="font-medium">{fileName}</span> — {rows.length.toLocaleString()}{' '}
+                rows
               </div>
               <Button onClick={() => void startBatch()}>Start batch</Button>
             </div>
@@ -220,7 +250,15 @@ export default function BulkPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">
                   Batch …{activeBatch.id.slice(-8)}{' '}
-                  <Badge tone={activeBatch.status === 'completed' ? 'green' : activeBatch.status === 'failed' ? 'red' : 'blue'}>
+                  <Badge
+                    tone={
+                      activeBatch.status === 'completed'
+                        ? 'green'
+                        : activeBatch.status === 'failed'
+                          ? 'red'
+                          : 'blue'
+                    }
+                  >
                     {activeBatch.status}
                   </Badge>
                 </span>
@@ -231,18 +269,27 @@ export default function BulkPage() {
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full bg-teal-brand transition-all duration-500"
-                  style={{ width: `${Math.round((activeBatch.processedRows / Math.max(activeBatch.totalRows, 1)) * 100)}%` }}
+                  style={{
+                    width: `${Math.round((activeBatch.processedRows / Math.max(activeBatch.totalRows, 1)) * 100)}%`,
+                  }}
                 />
               </div>
               {activeBatch.status === 'processing' && (
-                <p className="mt-2 text-xs text-slate-400">Processing… you can leave this page and check history later.</p>
+                <p className="mt-2 text-xs text-slate-400">
+                  Processing… you can leave this page and check history later.
+                </p>
               )}
               {activeBatch.status === 'completed' && (
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-xs text-slate-500">
-                    ✓ {activeBatch.successCount} verified · ⚠ {activeBatch.notFoundCount} not found · ✕ {activeBatch.failedCount} failed
+                    ✓ {activeBatch.successCount} verified · ⚠ {activeBatch.notFoundCount} not found
+                    · ✕ {activeBatch.failedCount} failed
                   </p>
-                  <Button size="sm" variant="secondary" onClick={() => void downloadResults(activeBatch.id)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void downloadResults(activeBatch.id)}
+                  >
                     Download results CSV
                   </Button>
                 </div>

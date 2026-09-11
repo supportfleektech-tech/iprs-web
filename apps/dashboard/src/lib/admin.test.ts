@@ -87,9 +87,33 @@ describe('selectTierForVolume', () => {
 describe('groupTiersByProduct', () => {
   it('groups and sorts by minVolume', () => {
     const tiers = [
-      { id: '2', productType: 'iprs_standard', minVolume: 501, maxVolume: 2500, unitPriceMinor: 2800, backupPriceMinor: null, vatExclusive: true },
-      { id: '1', productType: 'iprs_standard', minVolume: 0, maxVolume: 500, unitPriceMinor: 3000, backupPriceMinor: null, vatExclusive: true },
-      { id: '3', productType: 'kra_pin_verification', minVolume: 0, maxVolume: 500, unitPriceMinor: 2000, backupPriceMinor: null, vatExclusive: true },
+      {
+        id: '2',
+        productType: 'iprs_standard',
+        minVolume: 501,
+        maxVolume: 2500,
+        unitPriceMinor: 2800,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
+      {
+        id: '1',
+        productType: 'iprs_standard',
+        minVolume: 0,
+        maxVolume: 500,
+        unitPriceMinor: 3000,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
+      {
+        id: '3',
+        productType: 'kra_pin_verification',
+        minVolume: 0,
+        maxVolume: 500,
+        unitPriceMinor: 2000,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
     ] as unknown as Parameters<typeof groupTiersByProduct>[0];
     const grouped = groupTiersByProduct(tiers);
     expect(grouped.get('iprs_standard')?.[0].id).toBe('1');
@@ -101,8 +125,24 @@ describe('groupTiersByProduct', () => {
 describe('normalizeOrgPricingTiers', () => {
   it('normalizes edits and ids maps', () => {
     const tiers = [
-      { id: 'a', productType: 'iprs_standard', minVolume: 0, maxVolume: null, unitPriceMinor: 3000, backupPriceMinor: null, vatExclusive: true },
-      { id: 'b', productType: 'kra_pin_verification', minVolume: 0, maxVolume: null, unitPriceMinor: 2000, backupPriceMinor: 2500, vatExclusive: true },
+      {
+        id: 'a',
+        productType: 'iprs_standard',
+        minVolume: 0,
+        maxVolume: null,
+        unitPriceMinor: 3000,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
+      {
+        id: 'b',
+        productType: 'kra_pin_verification',
+        minVolume: 0,
+        maxVolume: null,
+        unitPriceMinor: 2000,
+        backupPriceMinor: 2500,
+        vatExclusive: true,
+      },
     ] as unknown as Parameters<typeof normalizeOrgPricingTiers>[0];
     const { edits, ids } = normalizeOrgPricingTiers(tiers);
     expect(edits['iprs_standard']).toBe('3000');
@@ -118,8 +158,24 @@ describe('normalizeOrgPricingTiers', () => {
   });
   it('keeps last occurrence per productType', () => {
     const tiers = [
-      { id: 'first', productType: 'iprs_standard', minVolume: 0, maxVolume: null, unitPriceMinor: 3000, backupPriceMinor: null, vatExclusive: true },
-      { id: 'second', productType: 'iprs_standard', minVolume: 0, maxVolume: null, unitPriceMinor: 3500, backupPriceMinor: null, vatExclusive: true },
+      {
+        id: 'first',
+        productType: 'iprs_standard',
+        minVolume: 0,
+        maxVolume: null,
+        unitPriceMinor: 3000,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
+      {
+        id: 'second',
+        productType: 'iprs_standard',
+        minVolume: 0,
+        maxVolume: null,
+        unitPriceMinor: 3500,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
     ] as unknown as Parameters<typeof normalizeOrgPricingTiers>[0];
     const { edits, ids } = normalizeOrgPricingTiers(tiers);
     expect(edits['iprs_standard']).toBe('3500');
@@ -130,8 +186,24 @@ describe('normalizeOrgPricingTiers', () => {
 describe('normalizeGlobalTiers', () => {
   it('groups by productType sorted asc', () => {
     const tiers = [
-      { id: '2', productType: 'iprs_standard', minVolume: 501, maxVolume: 2500, unitPriceMinor: 2800, backupPriceMinor: null, vatExclusive: true },
-      { id: '1', productType: 'iprs_standard', minVolume: 0, maxVolume: 500, unitPriceMinor: 3000, backupPriceMinor: null, vatExclusive: true },
+      {
+        id: '2',
+        productType: 'iprs_standard',
+        minVolume: 501,
+        maxVolume: 2500,
+        unitPriceMinor: 2800,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
+      {
+        id: '1',
+        productType: 'iprs_standard',
+        minVolume: 0,
+        maxVolume: 500,
+        unitPriceMinor: 3000,
+        backupPriceMinor: null,
+        vatExclusive: true,
+      },
     ] as unknown as Parameters<typeof normalizeGlobalTiers>[0];
     const out = normalizeGlobalTiers(tiers);
     expect(out['iprs_standard'][0].id).toBe('1');

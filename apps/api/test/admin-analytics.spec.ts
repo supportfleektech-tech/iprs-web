@@ -20,9 +20,27 @@ describe('AdminService.analytics', () => {
 
   it('aggregates status/product counts, cost totals, latency averages without PII', async () => {
     mockPrisma.client.verificationRequest.findMany.mockResolvedValue([
-      { type: 'iprs_standard', status: 'success', costMinor: 3000n, latencyMs: 100, createdAt: new Date('2026-09-01') },
-      { type: 'iprs_standard', status: 'success', costMinor: 3000n, latencyMs: 200, createdAt: new Date('2026-09-02') },
-      { type: 'kra_pin_verification', status: 'failed', costMinor: 0n, latencyMs: 150, createdAt: new Date('2026-09-03') },
+      {
+        type: 'iprs_standard',
+        status: 'success',
+        costMinor: 3000n,
+        latencyMs: 100,
+        createdAt: new Date('2026-09-01'),
+      },
+      {
+        type: 'iprs_standard',
+        status: 'success',
+        costMinor: 3000n,
+        latencyMs: 200,
+        createdAt: new Date('2026-09-02'),
+      },
+      {
+        type: 'kra_pin_verification',
+        status: 'failed',
+        costMinor: 0n,
+        latencyMs: 150,
+        createdAt: new Date('2026-09-03'),
+      },
     ]);
     const res = await service.analytics('org-1', {});
     expect(res.totals.verifications).toBe(3);
@@ -43,7 +61,12 @@ describe('AdminService.analytics', () => {
 
   it('applies date range and type/status filters server-side', async () => {
     mockPrisma.client.verificationRequest.findMany.mockResolvedValue([]);
-    await service.analytics('org-1', { from: '2026-09-01T00:00:00.000Z', to: '2026-09-30T23:59:59.000Z', type: 'iprs_standard', status: 'success' });
+    await service.analytics('org-1', {
+      from: '2026-09-01T00:00:00.000Z',
+      to: '2026-09-30T23:59:59.000Z',
+      type: 'iprs_standard',
+      status: 'success',
+    });
     const where = mockPrisma.client.verificationRequest.findMany.mock.calls[0][0].where;
     expect(where.type).toBe('iprs_standard');
     expect(where.status).toBe('success');
@@ -97,24 +120,47 @@ describe('AdminService.analytics', () => {
       ]),
     );
     // Should also match type iprs_standard
-    expect(where.OR).toEqual(expect.arrayContaining([expect.objectContaining({ type: expect.objectContaining({ in: expect.arrayContaining(['iprs_standard']) }) })]));
+    expect(where.OR).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: expect.objectContaining({ in: expect.arrayContaining(['iprs_standard']) }),
+        }),
+      ]),
+    );
   });
 
   it('applies search for status term', async () => {
     mockPrisma.client.verificationRequest.findMany.mockResolvedValue([]);
     await service.analytics('org-1', { search: 'success' });
     const where = mockPrisma.client.verificationRequest.findMany.mock.calls[0][0].where;
-    expect(where.OR).toEqual(expect.arrayContaining([expect.objectContaining({ status: expect.objectContaining({ in: expect.arrayContaining(['success']) }) })]));
+    expect(where.OR).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: expect.objectContaining({ in: expect.arrayContaining(['success']) }),
+        }),
+      ]),
+    );
   });
 
   it('rejects inverted date range (from > to) with 400', async () => {
     mockPrisma.client.verificationRequest.findMany.mockResolvedValue([]);
-    await expect(service.analytics('org-1', { from: '2026-09-30T00:00:00.000Z', to: '2026-09-01T00:00:00.000Z' })).rejects.toThrow('from must be <= to');
+    await expect(
+      service.analytics('org-1', {
+        from: '2026-09-30T00:00:00.000Z',
+        to: '2026-09-01T00:00:00.000Z',
+      }),
+    ).rejects.toThrow('from must be <= to');
     expect(mockPrisma.client.verificationRequest.findMany).not.toHaveBeenCalled();
   });
 
   it('sets truncated true when hitting 10k limit', async () => {
-    const rows = Array.from({ length: 10000 }, () => ({ type: 'iprs_standard', status: 'success', costMinor: 100n, latencyMs: 10, createdAt: new Date() }));
+    const rows = Array.from({ length: 10000 }, () => ({
+      type: 'iprs_standard',
+      status: 'success',
+      costMinor: 100n,
+      latencyMs: 10,
+      createdAt: new Date(),
+    }));
     mockPrisma.client.verificationRequest.findMany.mockResolvedValue(rows);
     const res = await service.analytics('org-1', {});
     expect(res.truncated).toBe(true);
@@ -125,8 +171,20 @@ describe('AdminService.analytics', () => {
 
   it('uses BigInt sum for costByProduct (single BigInt path)', async () => {
     mockPrisma.client.verificationRequest.findMany.mockResolvedValue([
-      { type: 'iprs_standard', status: 'success', costMinor: 199n, latencyMs: 10, createdAt: new Date() },
-      { type: 'iprs_standard', status: 'success', costMinor: 201n, latencyMs: 10, createdAt: new Date() },
+      {
+        type: 'iprs_standard',
+        status: 'success',
+        costMinor: 199n,
+        latencyMs: 10,
+        createdAt: new Date(),
+      },
+      {
+        type: 'iprs_standard',
+        status: 'success',
+        costMinor: 201n,
+        latencyMs: 10,
+        createdAt: new Date(),
+      },
     ]);
     const res = await service.analytics('org-1', {});
     // 199+201=400 minor => 4.00 KES

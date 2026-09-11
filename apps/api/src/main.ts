@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
@@ -27,7 +27,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Fleek IPRS API')
-    .setDescription('Identity verification API by Fleektech LTD — IPRS, KRA, phone and SIM-swap checks.')
+    .setDescription(
+      'Identity verification API by Fleektech LTD — IPRS, KRA, phone and SIM-swap checks.',
+    )
     .setVersion('1.0')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'jwt')
     .addApiKey({ type: 'apiKey', name: 'Authorization', in: 'header' }, 'apiKey')
@@ -35,7 +37,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
 
   await app.listen(process.env.PORT ?? 4000);
-  console.log(`API ready on :${process.env.PORT ?? 4000} — OpenAPI at /docs`);
+  new Logger('Bootstrap').log(`API ready on :${process.env.PORT ?? 4000} — OpenAPI at /docs`);
 }
 
 bootstrap();

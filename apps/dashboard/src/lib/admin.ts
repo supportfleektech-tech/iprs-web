@@ -132,7 +132,9 @@ export function selectTierForVolume<T extends { minVolume: number; maxVolume: nu
 /**
  * Group tiers by productType, sorted asc by minVolume within each group.
  */
-export function groupTiersByProduct(tiers: ProductPricingTier[]): Map<string, ProductPricingTier[]> {
+export function groupTiersByProduct(
+  tiers: ProductPricingTier[],
+): Map<string, ProductPricingTier[]> {
   const map = new Map<string, ProductPricingTier[]>();
   for (const t of tiers) {
     const arr = map.get(t.productType) ?? [];
@@ -171,7 +173,9 @@ export function normalizeOrgPricingTiers(tiers: OrgPricingTier[]): {
 /**
  * Normalize global tiers into edit state: map productType -> tiers[]
  */
-export function normalizeGlobalTiers(tiers: ProductPricingTier[]): Record<string, ProductPricingTier[]> {
+export function normalizeGlobalTiers(
+  tiers: ProductPricingTier[],
+): Record<string, ProductPricingTier[]> {
   const out: Record<string, ProductPricingTier[]> = {};
   for (const t of tiers) {
     if (!out[t.productType]) out[t.productType] = [];
@@ -227,7 +231,8 @@ export function requiresFileUpload(type: string): boolean {
 
 export function getFileTypes(type: string): string[] {
   if (type === 'face_id_match') return ['image/jpeg', 'image/png'];
-  if (type === 'scanned_statement' || type === 'brs') return ['application/pdf', 'image/jpeg', 'image/png'];
+  if (type === 'scanned_statement' || type === 'brs')
+    return ['application/pdf', 'image/jpeg', 'image/png'];
   return [];
 }
 

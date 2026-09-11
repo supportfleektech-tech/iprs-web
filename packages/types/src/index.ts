@@ -396,7 +396,7 @@ export const PRODUCT_LABELS: Record<VerificationType, string> = {
   [VerificationType.SEARCH_NAME_BY_PHONE]: 'Search Name by Phone Number',
   [VerificationType.SEARCH_PHONES_BY_ID]: 'Search Phone Numbers by ID',
   [VerificationType.MOTOR_VEHICLE_OWNERSHIP]: 'Motor Vehicle Ownership',
-  [VerificationType.DRIVERS_LICENSE_VERIFICATION]: 'Driver\'s License Verification',
+  [VerificationType.DRIVERS_LICENSE_VERIFICATION]: "Driver's License Verification",
   [VerificationType.METROPOL_SCORE_ONLY]: 'Metropol Score Only',
   [VerificationType.METROPOL_STANDARD_REPORT]: 'Metropol Standard Report',
   [VerificationType.METROPOL_FULL_REPORT]: 'Metropol Full Report',
@@ -427,9 +427,7 @@ export const PRODUCT_CATEGORIES: Record<string, VerificationType[]> = {
     VerificationType.KRA_PIN_VERIFICATION,
     VerificationType.SEARCH_NAME_BY_PHONE,
   ],
-  'Identity & CRB': [
-    VerificationType.SEARCH_PHONES_BY_ID,
-  ],
+  'Identity & CRB': [VerificationType.SEARCH_PHONES_BY_ID],
   Vehicle: [
     VerificationType.MOTOR_VEHICLE_OWNERSHIP,
     VerificationType.DRIVERS_LICENSE_VERIFICATION,
@@ -444,13 +442,8 @@ export const PRODUCT_CATEGORIES: Record<string, VerificationType[]> = {
     VerificationType.CREDITINFO_COMPREHENSIVE,
     VerificationType.CREDITINFO_CRB_STATUS,
   ],
-  KYB: [
-    VerificationType.BRS,
-  ],
-  Analytics: [
-    VerificationType.SPIN_SCORE_ONLY,
-    VerificationType.SCANNED_STATEMENT,
-  ],
+  KYB: [VerificationType.BRS],
+  Analytics: [VerificationType.SPIN_SCORE_ONLY, VerificationType.SCANNED_STATEMENT],
 };
 
 export const CB_CONSENT_REQUIRED_TYPES: VerificationType[] = [

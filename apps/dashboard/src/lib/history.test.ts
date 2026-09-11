@@ -46,7 +46,10 @@ describe('buildHistoryQuery', () => {
   });
 
   it('supports startDate/endDate aliases', () => {
-    const qs = buildHistoryQuery({ startDate: '2026-02-01', endDate: '2026-02-28' } as unknown as Record<string, string>);
+    const qs = buildHistoryQuery({
+      startDate: '2026-02-01',
+      endDate: '2026-02-28',
+    } as unknown as Record<string, string>);
     const p = new URLSearchParams(qs);
     expect(p.get('from')).toBe('2026-02-01');
     expect(p.get('to')).toBe('2026-02-28');
@@ -60,13 +63,18 @@ describe('buildHistoryQuery', () => {
   });
 
   it('buildHistoryQueryString adds leading ?', () => {
-    expect(buildHistoryQueryString({ type: 'kra_pin_verification' })).toBe('?type=kra_pin_verification');
+    expect(buildHistoryQueryString({ type: 'kra_pin_verification' })).toBe(
+      '?type=kra_pin_verification',
+    );
   });
 });
 
 describe('buildVerificationsExportUrl', () => {
   it('builds export URL with format and filters', () => {
-    const url = buildVerificationsExportUrl({ type: 'iprs_standard', status: 'success', from: '2026-01-01' }, 'csv');
+    const url = buildVerificationsExportUrl(
+      { type: 'iprs_standard', status: 'success', from: '2026-01-01' },
+      'csv',
+    );
     const p = new URLSearchParams(url.split('?')[1]);
     expect(url.startsWith('/exports/verifications?')).toBe(true);
     expect(p.get('format')).toBe('csv');
@@ -117,11 +125,14 @@ describe('escapeCsvCell', () => {
 
 describe('toCsv', () => {
   it('joins header and rows with escaping', () => {
-    const csv = toCsv(['id', 'subject', 'cost'], [
-      ['1', '12345678', 30],
-      ['2', 'a,b', 20],
-      ['3', 'a"b', null],
-    ]);
+    const csv = toCsv(
+      ['id', 'subject', 'cost'],
+      [
+        ['1', '12345678', 30],
+        ['2', 'a,b', 20],
+        ['3', 'a"b', null],
+      ],
+    );
     const lines = csv.split('\n');
     expect(lines[0]).toBe('id,subject,cost');
     expect(lines[1]).toBe('1,12345678,30');

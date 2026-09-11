@@ -26,7 +26,7 @@ services:
       - key: PASSWORD_RESET_URL
         value: https://iprs-dashboard.vercel.app/reset-password
       - key: TRUST_PROXY
-        value: "true"
+        value: 'true'
 
 databases:
   - name: fleek-iprs-db

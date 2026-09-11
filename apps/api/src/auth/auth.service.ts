@@ -32,7 +32,9 @@ export class LoginBody {
   @IsEmail()
   email!: string;
 
-  @IsString() @IsNotEmpty() @MinLength(8)
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
   password!: string;
 }
 
@@ -93,7 +95,9 @@ export class AuthService {
 
     if (user?.lockedUntil && user.lockedUntil > new Date()) {
       const mins = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60_000);
-      throw new UnauthorizedException(`Account temporarily locked. Try again in ${mins} minute(s).`);
+      throw new UnauthorizedException(
+        `Account temporarily locked. Try again in ${mins} minute(s).`,
+      );
     }
 
     if (!user || !compareSync(password, user.passwordHash)) {
@@ -137,9 +141,7 @@ export class AuthService {
   }
 
   /** Always returns success — never reveals whether the email exists. */
-  async requestPasswordReset(
-    email: string,
-  ): Promise<{ ok: true; devResetToken?: string }> {
+  async requestPasswordReset(email: string): Promise<{ ok: true; devResetToken?: string }> {
     const user = await this.prisma.client.user.findUnique({ where: { email } });
     if (!user) return { ok: true };
 
@@ -153,7 +155,11 @@ export class AuthService {
     });
 
     const link = `${process.env.PASSWORD_RESET_URL ?? 'http://localhost:3001/reset-password'}?token=${raw}`;
-    await this.mailer.send(user.email, 'Reset your Fleek IPRS password', `Reset link (valid 1 hour): ${link}`);
+    await this.mailer.send(
+      user.email,
+      'Reset your Fleek IPRS password',
+      `Reset link (valid 1 hour): ${link}`,
+    );
 
     // Dev/test affordance so the full flow is verifiable without an inbox.
     if (process.env.NODE_ENV !== 'production') {
@@ -205,17 +211,27 @@ export class AuthService {
     return this.prisma.client.apiKey.findMany({
       where: { organizationId: orgId },
       select: {
-        id: true, name: true, prefix: true, environment: true,
-        lastUsedAt: true, revokedAt: true, createdAt: true,
+        id: true,
+        name: true,
+        prefix: true,
+        environment: true,
+        lastUsedAt: true,
+        revokedAt: true,
+        createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async revokeApiKey(orgId: string, keyId: string) {
-    const key = await this.prisma.client.apiKey.findFirst({ where: { id: keyId, organizationId: orgId } });
+    const key = await this.prisma.client.apiKey.findFirst({
+      where: { id: keyId, organizationId: orgId },
+    });
     if (!key) throw new BadRequestException('API key not found');
-    return this.prisma.client.apiKey.update({ where: { id: keyId }, data: { revokedAt: new Date() } });
+    return this.prisma.client.apiKey.update({
+      where: { id: keyId },
+      data: { revokedAt: new Date() },
+    });
   }
 
   private async issueTokens(user: User, rotatingFromId?: string): Promise<AuthTokens> {
@@ -262,19 +278,16 @@ export class AuthService {
         lockedUntil: shouldLock ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000) : null,
       },
     });
-    await this.audit(
-      userId,
-      shouldLock ? 'auth.locked_out' : 'auth.failed_login',
-      'user',
-      userId,
-    );
+    await this.audit(userId, shouldLock ? 'auth.locked_out' : 'auth.failed_login', 'user', userId);
   }
 
   private revokeAllSessions(userId: string, reason: string) {
-    return this.prisma.client.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    }).then(() => this.audit(null, `auth.sessions_revoked:${reason}`, 'user', userId));
+    return this.prisma.client.refreshToken
+      .updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      })
+      .then(() => this.audit(null, `auth.sessions_revoked:${reason}`, 'user', userId));
   }
 
   audit(actorId: string | null, action: string, entity: string, entityId?: string) {
@@ -290,9 +303,13 @@ function ms(duration: string): number {
   if (!match) return 7 * 86_400_000;
   const value = parseInt(match[1]!, 10);
   switch (match[2]) {
-    case 's': return value * 1000;
-    case 'm': return value * 60_000;
-    case 'h': return value * 3_600_000;
-    default: return value * 86_400_000;
+    case 's':
+      return value * 1000;
+    case 'm':
+      return value * 60_000;
+    case 'h':
+      return value * 3_600_000;
+    default:
+      return value * 86_400_000;
   }
 }

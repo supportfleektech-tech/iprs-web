@@ -3,7 +3,8 @@ import { SiteFooter, SiteHeader } from '@/components/site-chrome';
 
 export const metadata = {
   title: 'Developers — Build with the Fleek IPRS API',
-  description: 'REST API reference, quickstarts and sandbox access for Fleek IPRS identity verification.',
+  description:
+    'REST API reference, quickstarts and sandbox access for Fleek IPRS identity verification.',
 };
 
 const SNIPPET = `# 1. Create a key in the console (flk_test_… for sandbox)
@@ -48,8 +49,8 @@ export default function DevelopersPage() {
             Designed for <span className="brand-gradient-text">developers</span>
           </h1>
           <p className="mt-4 max-w-2xl text-slate-300">
-            One REST endpoint to verify anyone. Sandbox keys return deterministic mock data so you can
-            integrate before going live.
+            One REST endpoint to verify anyone. Sandbox keys return deterministic mock data so you
+            can integrate before going live.
           </p>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-5">
@@ -60,9 +61,14 @@ export default function DevelopersPage() {
               <h2 className="font-semibold">Endpoints</h2>
               <ul className="mt-4 space-y-3 text-sm">
                 {ENDPOINTS.map(([method, path, desc]) => (
-                  <li key={path + method} className="border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                  <li
+                    key={path + method}
+                    className="border-b border-white/5 pb-3 last:border-0 last:pb-0"
+                  >
                     <div>
-                      <span className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-bold ${method === 'GET' ? 'bg-sky-400/20 text-sky-300' : 'bg-teal-brand/20 text-teal-brand'}`}>
+                      <span
+                        className={`mr-2 rounded px-1.5 py-0.5 text-[11px] font-bold ${method === 'GET' ? 'bg-sky-400/20 text-sky-300' : 'bg-teal-brand/20 text-teal-brand'}`}
+                      >
                         {method}
                       </span>
                       <code className="text-slate-200">{path}</code>
@@ -82,8 +88,14 @@ export default function DevelopersPage() {
 
           <div className="mt-16 grid gap-6 md:grid-cols-3">
             {[
-              ['Sandbox first', 'Deterministic mock provider mirrors live response shapes exactly.'],
-              ['Consent built-in', 'Every call records who collected consent — DPA compliant by default.'],
+              [
+                'Sandbox first',
+                'Deterministic mock provider mirrors live response shapes exactly.',
+              ],
+              [
+                'Consent built-in',
+                'Every call records who collected consent — DPA compliant by default.',
+              ],
               ['Per-key rate limits', 'Protect your infrastructure with automatic throttling.'],
             ].map(([t, d]) => (
               <div key={t} className="rounded-xl border border-white/10 bg-white/5 p-6">

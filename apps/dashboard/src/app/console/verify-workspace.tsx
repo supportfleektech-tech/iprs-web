@@ -40,7 +40,7 @@ export function VerifyWorkspace() {
         if (prev) return prev;
         if (list.length) {
           const firstAvailable = list.find((p) => p.enabled && p.active);
-          return ((firstAvailable ?? list[0])!.type as VerificationType);
+          return (firstAvailable ?? list[0])!.type as VerificationType;
         }
         return prev;
       });
@@ -69,7 +69,9 @@ export function VerifyWorkspace() {
 
   const handleBackupRetry = useCallback(async () => {
     if (!token || !lastPayload) {
-      setFormError('Original request details are no longer available. Please refill the form and submit again.');
+      setFormError(
+        'Original request details are no longer available. Please refill the form and submit again.',
+      );
       return;
     }
     setBackupPending(true);
@@ -81,7 +83,9 @@ export function VerifyWorkspace() {
         body: JSON.stringify(payload),
         token,
       });
-      const detail = await apiFetch<VerificationResultPayload>(`/verifications/${run.id}`, { token });
+      const detail = await apiFetch<VerificationResultPayload>(`/verifications/${run.id}`, {
+        token,
+      });
       setResult(detail);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Backup verification failed';
@@ -101,14 +105,29 @@ export function VerifyWorkspace() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-5" role="alert" aria-live="assertive">
+      <div
+        className="rounded-xl border border-red-200 bg-red-50 p-5"
+        role="alert"
+        aria-live="assertive"
+      >
         <div className="flex flex-wrap items-start gap-3">
-          <DashboardIcon name="alert" className="h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+          <DashboardIcon
+            name="alert"
+            className="h-5 w-5 shrink-0 text-red-600"
+            aria-hidden="true"
+          />
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold text-red-700">Verification workspace could not be loaded</h2>
+            <h2 className="text-sm font-semibold text-red-700">
+              Verification workspace could not be loaded
+            </h2>
             <p className="mt-1 break-words text-sm text-red-700/80">{error}</p>
           </div>
-          <Button size="sm" variant="secondary" onClick={() => void fetchProducts()} className="h-11 shrink-0">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => void fetchProducts()}
+            className="h-11 shrink-0"
+          >
             Retry
           </Button>
         </div>
@@ -127,45 +146,62 @@ export function VerifyWorkspace() {
   }
 
   if (!selectedProduct) {
-    return <EmptyState title="No product selected" description="Choose a verification product to begin." />;
+    return (
+      <EmptyState
+        title="No product selected"
+        description="Choose a verification product to begin."
+      />
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Verification workspace</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">Run a verification</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+            Verification workspace
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">
+            Run a verification
+          </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Choose a product, provide the required evidence, and review the structured result. Backup pricing is shown only when the
-            primary provider is unavailable.
+            Choose a product, provide the required evidence, and review the structured result.
+            Backup pricing is shown only when the primary provider is unavailable.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
-            <span className="h-2 w-2 rounded-full bg-teal-500" aria-hidden="true" /> {products.filter((p) => p.enabled && p.active).length} of{' '}
-            {products.length} available
+            <span className="h-2 w-2 rounded-full bg-teal-500" aria-hidden="true" />{' '}
+            {products.filter((p) => p.enabled && p.active).length} of {products.length} available
           </span>
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(260px,340px)_minmax(0,1fr)]">
         {/* Product catalog */}
-        <section aria-labelledby="product-catalog-title" className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <section
+          aria-labelledby="product-catalog-title"
+          className="rounded-xl border border-slate-200 bg-white shadow-sm"
+        >
           <div className="border-b border-slate-100 px-5 py-4">
             <h2 id="product-catalog-title" className="text-sm font-semibold text-navy-900">
               Product catalog
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              {products.filter((p) => p.enabled && p.active).length} available · {products.length} total · grouped by category
+              {products.filter((p) => p.enabled && p.active).length} available · {products.length}{' '}
+              total · grouped by category
             </p>
           </div>
           <div className="max-h-[640px] overflow-y-auto px-3 py-4">
             {Array.from(grouped.entries()).map(([category, categoryProducts]) => (
               <div key={category} className="mb-5 last:mb-0">
                 <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.09em] text-slate-500">{category}</h3>
-                  <span className="text-[11px] font-medium text-slate-400">{categoryProducts.length}</span>
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.09em] text-slate-500">
+                    {category}
+                  </h3>
+                  <span className="text-[11px] font-medium text-slate-400">
+                    {categoryProducts.length}
+                  </span>
                 </div>
                 <div className="space-y-1.5">
                   {categoryProducts.map((product) => {
@@ -190,22 +226,36 @@ export function VerifyWorkspace() {
                               : 'border-slate-100 bg-slate-50/60 opacity-70'
                         }`}
                       >
-                        <span className={`text-sm font-medium leading-tight ${isSelected ? 'text-navy-900' : 'text-slate-700'}`}>
+                        <span
+                          className={`text-sm font-medium leading-tight ${isSelected ? 'text-navy-900' : 'text-slate-700'}`}
+                        >
                           {product.label}
                         </span>
                         <span className="flex flex-wrap items-center gap-1.5">
-                          {available ? <Badge tone="green">Active</Badge> : <Badge tone="slate">Inactive</Badge>}
+                          {available ? (
+                            <Badge tone="green">Active</Badge>
+                          ) : (
+                            <Badge tone="slate">Inactive</Badge>
+                          )}
                           {product.cbConsentRequired && <Badge tone="amber">CB consent</Badge>}
                           {product.requiresFileUpload && <Badge tone="blue">File</Badge>}
                         </span>
                         <span className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                          <span className={available ? 'font-medium text-slate-600' : 'text-slate-400'}>
-                            {available && product.unitPriceKes != null ? formatCurrency(product.unitPriceKes) : 'Unavailable'}
+                          <span
+                            className={available ? 'font-medium text-slate-600' : 'text-slate-400'}
+                          >
+                            {available && product.unitPriceKes != null
+                              ? formatCurrency(product.unitPriceKes)
+                              : 'Unavailable'}
                           </span>
                           {product.backupAvailable && product.backupPriceKes != null && (
-                            <span className="text-slate-400">backup {formatCurrency(product.backupPriceKes)}</span>
+                            <span className="text-slate-400">
+                              backup {formatCurrency(product.backupPriceKes)}
+                            </span>
                           )}
-                          {!product.backupAvailable && <span className="text-slate-300">no backup</span>}
+                          {!product.backupAvailable && (
+                            <span className="text-slate-300">no backup</span>
+                          )}
                         </span>
                       </button>
                     );
@@ -220,11 +270,18 @@ export function VerifyWorkspace() {
         <section aria-labelledby="verification-form-title" className="min-w-0 space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">New verification</p>
-              <h2 id="verification-form-title" className="mt-1 text-xl font-semibold tracking-tight text-navy-900">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">
+                New verification
+              </p>
+              <h2
+                id="verification-form-title"
+                className="mt-1 text-xl font-semibold tracking-tight text-navy-900"
+              >
                 {getVerificationLabel(selectedProduct.type as VerificationType)}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">Provide the minimum evidence required for this check.</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Provide the minimum evidence required for this check.
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {selectedProduct.active && selectedProduct.enabled ? (
@@ -233,8 +290,14 @@ export function VerifyWorkspace() {
                 <StatusBadge status="inactive" label="Unavailable" />
               )}
               {selectedProduct.vatExclusive && <StatusBadge status="slate" label="VAT exclusive" />}
-              {selectedProduct.requiresFileUpload && <StatusBadge status="blue" label="File required" />}
-              {selectedProduct.live ? <Badge tone="blue">Live</Badge> : <Badge tone="slate">Sandbox</Badge>}
+              {selectedProduct.requiresFileUpload && (
+                <StatusBadge status="blue" label="File required" />
+              )}
+              {selectedProduct.live ? (
+                <Badge tone="blue">Live</Badge>
+              ) : (
+                <Badge tone="slate">Sandbox</Badge>
+              )}
             </div>
           </div>
 
@@ -247,9 +310,17 @@ export function VerifyWorkspace() {
           />
 
           {formError && !result && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert" aria-live="assertive">
+            <div
+              className="rounded-xl border border-red-200 bg-red-50 p-4"
+              role="alert"
+              aria-live="assertive"
+            >
               <div className="flex gap-3">
-                <DashboardIcon name="alert" className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
+                <DashboardIcon
+                  name="alert"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-red-600"
+                  aria-hidden="true"
+                />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-red-700">Verification failed</p>
                   <p className="mt-1 break-words text-sm text-red-700/80">{formError}</p>
@@ -259,7 +330,11 @@ export function VerifyWorkspace() {
           )}
 
           {result && (
-            <ResultPanel detail={result} onRetryBackup={result.backupAvailable ? handleBackupRetry : undefined} backupPending={backupPending} />
+            <ResultPanel
+              detail={result}
+              onRetryBackup={result.backupAvailable ? handleBackupRetry : undefined}
+              backupPending={backupPending}
+            />
           )}
         </section>
       </div>

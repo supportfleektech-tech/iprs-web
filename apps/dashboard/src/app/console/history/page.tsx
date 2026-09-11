@@ -143,7 +143,16 @@ export default function HistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, debouncedFilters.type, debouncedFilters.status, debouncedFilters.from, debouncedFilters.to, debouncedFilters.startDate, debouncedFilters.endDate, debouncedFilters.search]);
+  }, [
+    token,
+    debouncedFilters.type,
+    debouncedFilters.status,
+    debouncedFilters.from,
+    debouncedFilters.to,
+    debouncedFilters.startDate,
+    debouncedFilters.endDate,
+    debouncedFilters.search,
+  ]);
 
   function handleFilterChange(next: HistoryFilters) {
     // Reset offset when filters change (except pagination itself)
@@ -249,7 +258,10 @@ export default function HistoryPage() {
         sortable: true,
         className: 'max-w-[180px]',
         render: (row) => (
-          <span className="inline-block max-w-[180px] break-all font-mono text-xs tabular-nums" title={row.subject}>
+          <span
+            className="inline-block max-w-[180px] break-all font-mono text-xs tabular-nums"
+            title={row.subject}
+          >
             {row.subject}
           </span>
         ),
@@ -260,7 +272,8 @@ export default function HistoryPage() {
         sortable: true,
         render: (row) => (
           <span className="whitespace-nowrap text-xs font-medium text-navy-900">
-            {PRODUCT_LABELS[row.type as keyof typeof PRODUCT_LABELS] ?? String(row.type).replace(/_/g, ' ')}
+            {PRODUCT_LABELS[row.type as keyof typeof PRODUCT_LABELS] ??
+              String(row.type).replace(/_/g, ' ')}
           </span>
         ),
       },
@@ -270,7 +283,10 @@ export default function HistoryPage() {
         sortable: true,
         render: (row) => (
           <span className="inline-flex items-center gap-1.5">
-            <StatusBadge tone={classifyHistoryStatus(row.status)} label={getHistoryStatusLabel(row.status)} />
+            <StatusBadge
+              tone={classifyHistoryStatus(row.status)}
+              label={getHistoryStatusLabel(row.status)}
+            />
             {row.isBackup && (
               <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/15">
                 backup
@@ -290,7 +306,11 @@ export default function HistoryPage() {
         sortable: true,
         align: 'right',
         className: 'tabular-nums',
-        render: (row) => <span className="whitespace-nowrap tabular-nums text-navy-900">{formatCost(row.cost)}</span>,
+        render: (row) => (
+          <span className="whitespace-nowrap tabular-nums text-navy-900">
+            {formatCost(row.cost)}
+          </span>
+        ),
       },
       {
         key: 'latencyMs',
@@ -298,7 +318,11 @@ export default function HistoryPage() {
         sortable: true,
         align: 'right',
         className: 'tabular-nums',
-        render: (row) => <span className="whitespace-nowrap tabular-nums text-slate-500">{formatLatency(row.latencyMs)}</span>,
+        render: (row) => (
+          <span className="whitespace-nowrap tabular-nums text-slate-500">
+            {formatLatency(row.latencyMs)}
+          </span>
+        ),
       },
       {
         key: 'createdAt',
@@ -307,7 +331,10 @@ export default function HistoryPage() {
         align: 'right',
         className: 'tabular-nums',
         render: (row) => (
-          <span className="whitespace-nowrap text-xs tabular-nums text-slate-500" title={row.createdAt}>
+          <span
+            className="whitespace-nowrap text-xs tabular-nums text-slate-500"
+            title={row.createdAt}
+          >
             {new Date(row.createdAt).toLocaleString()}
           </span>
         ),
@@ -347,8 +374,12 @@ export default function HistoryPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Reporting</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">Verification history</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+            Reporting
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl">
+            Verification history
+          </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
             Filter, sort, and export every check. Certificates are available per record.
           </p>
@@ -390,28 +421,55 @@ export default function HistoryPage() {
       {/* Report summary cards — server aggregation when available, fallback to visible */}
       <section aria-label="Report summary" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total cost (report)</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Total cost (report)
+          </p>
           <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
-            KES {(serverAnalytics ? serverAnalytics.totals.cost : metrics.totalCost).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            KES{' '}
+            {(serverAnalytics ? serverAnalytics.totals.cost : metrics.totalCost).toLocaleString(
+              'en-KE',
+              { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+            )}
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            {serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} records (server${serverAnalytics.truncated ? ' · truncated at 10k' : ''})` : `${metrics.total} records (visible)`} · {metrics.totalCost !== (serverAnalytics?.totals.cost ?? metrics.totalCost) ? `visible ${formatCost(metrics.totalCost)}` : serverAnalytics?.truncated ? 'first 10k rows — filter to refine' : 'bounded to 10k rows, no PII'}
+            {serverAnalytics
+              ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} records (server${serverAnalytics.truncated ? ' · truncated at 10k' : ''})`
+              : `${metrics.total} records (visible)`}{' '}
+            ·{' '}
+            {metrics.totalCost !== (serverAnalytics?.totals.cost ?? metrics.totalCost)
+              ? `visible ${formatCost(metrics.totalCost)}`
+              : serverAnalytics?.truncated
+                ? 'first 10k rows — filter to refine'
+                : 'bounded to 10k rows, no PII'}
           </p>
           {serverAnalytics?.truncated && (
-            <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-[11px] text-amber-700 ring-1 ring-inset ring-amber-600/15" role="status">
+            <p
+              className="mt-2 rounded bg-amber-50 px-2 py-1 text-[11px] text-amber-700 ring-1 ring-inset ring-amber-600/15"
+              role="status"
+            >
               Truncated — showing first 10,000 matching records.
             </p>
           )}
         </Card>
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Average latency</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
-            {(serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs) != null ? `${serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs}ms` : '—'}
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Average latency
           </p>
-          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? `Server aggregate · bounded 10k${serverAnalytics.truncated ? ' · truncated' : ''}` : 'Across visible records'}</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
+            {(serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs) != null
+              ? `${serverAnalytics?.totals.avgLatencyMs ?? metrics.avgLatencyMs}ms`
+              : '—'}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            {serverAnalytics
+              ? `Server aggregate · bounded 10k${serverAnalytics.truncated ? ' · truncated' : ''}`
+              : 'Across visible records'}
+          </p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Status distribution</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Status distribution
+          </p>
           <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite">
             {(() => {
               const sc = serverAnalytics?.statusCounts ?? metrics.statusCounts;
@@ -419,19 +477,34 @@ export default function HistoryPage() {
                 <span className="text-xs text-slate-400">No data</span>
               ) : (
                 Object.entries(sc).map(([s, count]) => (
-                  <span key={s} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium tabular-nums text-slate-700 ring-1 ring-inset ring-slate-200">
-                    <StatusBadge tone={classifyHistoryStatus(s)} label={getHistoryStatusLabel(s)} className="scale-90" />
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium tabular-nums text-slate-700 ring-1 ring-inset ring-slate-200"
+                  >
+                    <StatusBadge
+                      tone={classifyHistoryStatus(s)}
+                      label={getHistoryStatusLabel(s)}
+                      className="scale-90"
+                    />
                     <span className="tabular-nums">{count}</span>
                   </span>
                 ))
               );
             })()}
           </div>
-          <p className="mt-1 text-xs text-slate-400">{serverAnalytics ? `Server totals${serverAnalytics.truncated ? ' · truncated at 10k' : ''}` : 'Visible page'}</p>
+          <p className="mt-1 text-xs text-slate-400">
+            {serverAnalytics
+              ? `Server totals${serverAnalytics.truncated ? ' · truncated at 10k' : ''}`
+              : 'Visible page'}
+          </p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total records</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">{total.toLocaleString('en-KE')}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Total records
+          </p>
+          <p className="mt-1 text-xl font-semibold tabular-nums text-navy-900">
+            {total.toLocaleString('en-KE')}
+          </p>
           <p className="mt-1 text-xs text-slate-400">
             Showing {rangeStart}–{rangeEnd} · page {Math.floor(offset / limit) + 1}
           </p>
@@ -439,10 +512,15 @@ export default function HistoryPage() {
       </section>
 
       {/* Export context — what current filters will export */}
-      <section aria-label="Export context" className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:px-5">
+      <section
+        aria-label="Export context"
+        className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:px-5"
+      >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Export context</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Export context
+            </h2>
             <p className="mt-1 text-sm text-slate-600" aria-live="polite">
               {(() => {
                 const parts: string[] = [];
@@ -455,20 +533,31 @@ export default function HistoryPage() {
                 if (to) parts.push(`to ${to}`);
                 if (f.search) parts.push(`search “${f.search.trim()}”`);
                 const filterText = parts.length ? parts.join(' · ') : 'All records (no filters)';
-                const countText = serverAnalytics ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} matching (server${serverAnalytics.truncated ? ' · truncated at 10k' : ''})` : `${total.toLocaleString('en-KE')} matching`;
-                const costText = serverAnalytics ? `KES ${serverAnalytics.totals.cost.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total` : '';
+                const countText = serverAnalytics
+                  ? `${serverAnalytics.totals.verifications.toLocaleString('en-KE')} matching (server${serverAnalytics.truncated ? ' · truncated at 10k' : ''})`
+                  : `${total.toLocaleString('en-KE')} matching`;
+                const costText = serverAnalytics
+                  ? `KES ${serverAnalytics.totals.cost.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total`
+                  : '';
                 return `${filterText} · ${countText}${costText ? ` · ${costText}` : ''}`;
               })()}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              Exports use the same server filters (type/status/date/search). Bounded server aggregation (max 10k) shows totals without PII. Certificates are per-record PDFs.
-              {serverAnalytics?.truncated ? ' Truncated — first 10k only; refine filters for exact export totals.' : ''}
+              Exports use the same server filters (type/status/date/search). Bounded server
+              aggregation (max 10k) shows totals without PII. Certificates are per-record PDFs.
+              {serverAnalytics?.truncated
+                ? ' Truncated — first 10k only; refine filters for exact export totals.'
+                : ''}
             </p>
           </div>
           <span
             className={`inline-flex h-7 shrink-0 items-center rounded-full px-2.5 text-[11px] font-medium ring-1 ring-inset ${serverAnalytics?.truncated ? 'bg-amber-50 text-amber-700 ring-amber-600/15' : 'bg-slate-100 text-slate-600 ring-slate-200'}`}
           >
-            {serverAnalytics ? (serverAnalytics.truncated ? 'Truncated at 10k' : 'Server-synced') : 'Visible page'}
+            {serverAnalytics
+              ? serverAnalytics.truncated
+                ? 'Truncated at 10k'
+                : 'Server-synced'
+              : 'Visible page'}
           </span>
         </div>
       </section>
@@ -478,7 +567,11 @@ export default function HistoryPage() {
 
       {/* Error state */}
       {error && !loading && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert" aria-live="assertive">
+        <div
+          className="rounded-xl border border-red-200 bg-red-50 p-4"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-red-700">{error}</p>
             <button
@@ -492,7 +585,11 @@ export default function HistoryPage() {
         </div>
       )}
       {exportError && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" role="alert" aria-live="assertive">
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-4"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-amber-800">{exportError}</p>
             <button
@@ -535,8 +632,10 @@ export default function HistoryPage() {
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
           <p className="text-xs tabular-nums text-slate-500" aria-live="polite">
-            Showing <span className="font-semibold text-navy-900">{rangeStart}</span>–<span className="font-semibold text-navy-900">{rangeEnd}</span> of{' '}
-            <span className="font-semibold text-navy-900">{total.toLocaleString('en-KE')}</span> records
+            Showing <span className="font-semibold text-navy-900">{rangeStart}</span>–
+            <span className="font-semibold text-navy-900">{rangeEnd}</span> of{' '}
+            <span className="font-semibold text-navy-900">{total.toLocaleString('en-KE')}</span>{' '}
+            records
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <label htmlFor="history-limit" className="text-xs font-medium text-slate-600">
@@ -545,7 +644,9 @@ export default function HistoryPage() {
             <select
               id="history-limit"
               value={String(limit)}
-              onChange={(e) => setFilters((prev) => ({ ...prev, limit: Number(e.target.value), offset: 0 }))}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, limit: Number(e.target.value), offset: 0 }))
+              }
               aria-label="Select number of rows per page"
               className="h-11 cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-sm focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
             >
@@ -558,7 +659,12 @@ export default function HistoryPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setFilters((prev) => ({ ...prev, offset: Math.max(0, (prev.offset ?? 0) - limit) }))}
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    offset: Math.max(0, (prev.offset ?? 0) - limit),
+                  }))
+                }
                 disabled={offset === 0 || loading}
                 aria-label="Previous page"
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -567,7 +673,9 @@ export default function HistoryPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setFilters((prev) => ({ ...prev, offset: (prev.offset ?? 0) + limit }))}
+                onClick={() =>
+                  setFilters((prev) => ({ ...prev, offset: (prev.offset ?? 0) + limit }))
+                }
                 disabled={offset + limit >= total || loading}
                 aria-label="Next page"
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"

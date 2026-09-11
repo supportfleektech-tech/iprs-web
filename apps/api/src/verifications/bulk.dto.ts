@@ -14,43 +14,58 @@ import {
 import { VerificationType } from '@fleek/types';
 
 export class BulkRowDto {
-  @IsOptional() @IsNumberString({}, { message: 'idNumber must be digits' })
+  @IsOptional()
+  @IsNumberString({}, { message: 'idNumber must be digits' })
   idNumber?: string;
 
-  @IsOptional() @IsString() @Matches(/^[AP]\d{9}[A-Z]$/, { message: 'Invalid KRA PIN format' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[AP]\d{9}[A-Z]$/, { message: 'Invalid KRA PIN format' })
   kraPin?: string;
 
-  @IsOptional() @IsString() @Matches(/^(\+?254|0)7\d{8}$/, { message: 'Invalid phone number format' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^(\+?254|0)7\d{8}$/, { message: 'Invalid phone number format' })
   phoneNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   alienId?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   passportNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   nationality?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   bankCode?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   accountNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   employerName?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   meterNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   vehicleRegNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   dlNumber?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   businessRegNumber?: string;
 }
 
@@ -58,7 +73,9 @@ export class CreateBatchDto {
   @IsEnum(VerificationType)
   type!: VerificationType;
 
-  @IsString() @IsNotEmpty() @MaxLength(160)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
   consentCollectedBy!: string;
 
   @IsArray()

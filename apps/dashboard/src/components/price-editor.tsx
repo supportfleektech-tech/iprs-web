@@ -3,14 +3,28 @@
 import { useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from '@fleek/ui';
 import { ProductPricingTier } from '@/lib/admin';
-import { formatPriceMinor, tierRangeLabel, validatePriceInput, validateMinorInput } from '@/lib/admin';
+import {
+  formatPriceMinor,
+  tierRangeLabel,
+  validatePriceInput,
+  validateMinorInput,
+} from '@/lib/admin';
 
 export interface PriceEditorProps {
   tiers: ProductPricingTier[];
   pricing: { id: string; type: string; priceMinor: string | number | bigint; active: boolean }[];
   onSavePricing: (type: string, priceKes: number) => Promise<void>;
-  onUpdateTier: (id: string, dto: { unitPriceMinor?: number; backupPriceMinor?: number | null }) => Promise<void>;
-  onCreateTier?: (dto: { productType: string; minVolume: number; maxVolume: number | null; unitPriceMinor: number; backupPriceMinor?: number | null }) => Promise<void>;
+  onUpdateTier: (
+    id: string,
+    dto: { unitPriceMinor?: number; backupPriceMinor?: number | null },
+  ) => Promise<void>;
+  onCreateTier?: (dto: {
+    productType: string;
+    minVolume: number;
+    maxVolume: number | null;
+    unitPriceMinor: number;
+    backupPriceMinor?: number | null;
+  }) => Promise<void>;
 }
 
 /**
@@ -24,7 +38,9 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
   const [simpleMsg, setSimpleMsg] = useState<Record<string, string>>({});
   const [simpleErr, setSimpleErr] = useState<Record<string, string>>({});
 
-  const [tierEdits, setTierEdits] = useState<Record<string, { unitPrice: string; backupPrice: string }>>({});
+  const [tierEdits, setTierEdits] = useState<
+    Record<string, { unitPrice: string; backupPrice: string }>
+  >({});
   const [tierSaving, setTierSaving] = useState<string | null>(null);
   const [tierMsg, setTierMsg] = useState<Record<string, string>>({});
   const [tierErr, setTierErr] = useState<Record<string, string>>({});
@@ -67,7 +83,10 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
   }
 
   async function handleTierSave(tier: ProductPricingTier) {
-    const edit = tierEdits[tier.id] ?? { unitPrice: String(tier.unitPriceMinor), backupPrice: tier.backupPriceMinor != null ? String(tier.backupPriceMinor) : '' };
+    const edit = tierEdits[tier.id] ?? {
+      unitPrice: String(tier.unitPriceMinor),
+      backupPrice: tier.backupPriceMinor != null ? String(tier.backupPriceMinor) : '',
+    };
     const unitStr = edit.unitPrice;
     const backupStr = edit.backupPrice;
     const unitErr = validateMinorInput(unitStr ?? '');
@@ -108,12 +127,16 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
             <Badge tone="slate">{pricing.length} products</Badge>
           </CardTitle>
           <p className="text-xs text-slate-500">
-            VAT-exclusive tier prices are source of truth — this panel also supports a simple per-product price for legacy checks. Backup rates apply only on explicit user toggle after upstream failure.
+            VAT-exclusive tier prices are source of truth — this panel also supports a simple
+            per-product price for legacy checks. Backup rates apply only on explicit user toggle
+            after upstream failure.
           </p>
         </CardHeader>
         <CardContent>
           {pricing.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">No pricing records. Tiers below control live pricing.</p>
+            <p className="py-8 text-center text-sm text-slate-400">
+              No pricing records. Tiers below control live pricing.
+            </p>
           ) : (
             <ul className="space-y-3" aria-label="Global product pricing">
               {pricing.map((p) => {
@@ -121,9 +144,13 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                 return (
                   <li key={p.type} className="rounded-xl border border-slate-200 p-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="min-w-0 flex-1 text-sm font-medium text-navy-900">{p.type}</span>
+                      <span className="min-w-0 flex-1 text-sm font-medium text-navy-900">
+                        {p.type}
+                      </span>
                       <span className="text-xs text-slate-500">{priceLabel}</span>
-                      <Badge tone={p.active ? 'green' : 'red'}>{p.active ? 'Active' : 'Inactive'}</Badge>
+                      <Badge tone={p.active ? 'green' : 'red'}>
+                        {p.active ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
                     <div className="mt-3 flex flex-wrap items-end gap-2">
                       <div className="w-36">
@@ -135,7 +162,9 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                           step={1}
                           placeholder={String(Number(p.priceMinor ?? 0) / 100)}
                           value={simpleEdits[p.type] ?? ''}
-                          onChange={(e) => setSimpleEdits((v) => ({ ...v, [p.type]: e.target.value }))}
+                          onChange={(e) =>
+                            setSimpleEdits((v) => ({ ...v, [p.type]: e.target.value }))
+                          }
                           aria-describedby={simpleErr[p.type] ? `err-price-${p.type}` : undefined}
                           className="h-11"
                         />
@@ -152,7 +181,11 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                       </Button>
                     </div>
                     {simpleErr[p.type] && (
-                      <p id={`err-price-${p.type}`} role="alert" className="mt-2 flex items-center gap-2 text-xs text-red-600">
+                      <p
+                        id={`err-price-${p.type}`}
+                        role="alert"
+                        className="mt-2 flex items-center gap-2 text-xs text-red-600"
+                      >
                         <span>{simpleErr[p.type]}</span>
                         <button
                           type="button"
@@ -163,7 +196,11 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                         </button>
                       </p>
                     )}
-                    {simpleMsg[p.type] && <p role="status" aria-live="polite" className="mt-2 text-xs text-teal-700">{simpleMsg[p.type]}</p>}
+                    {simpleMsg[p.type] && (
+                      <p role="status" aria-live="polite" className="mt-2 text-xs text-teal-700">
+                        {simpleMsg[p.type]}
+                      </p>
+                    )}
                   </li>
                 );
               })}
@@ -180,32 +217,47 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
             <Badge tone="blue">{tiers.length} tiers</Badge>
           </CardTitle>
           <p className="text-xs text-slate-500">
-            Volume bands 0–500 · 501–2500 · 2501–5000 · 5001–10k · 10k–30k · 30k+ (SPIN Score uses its own bands). Prices are in minor units (KES ×100), VAT-exclusive. Backup price applies only on explicit user toggle.
+            Volume bands 0–500 · 501–2500 · 2501–5000 · 5001–10k · 10k–30k · 30k+ (SPIN Score uses
+            its own bands). Prices are in minor units (KES ×100), VAT-exclusive. Backup price
+            applies only on explicit user toggle.
           </p>
         </CardHeader>
         <CardContent>
           {tiers.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">No tiers configured. Create tiers per product type in the API.</p>
+            <p className="py-8 text-center text-sm text-slate-400">
+              No tiers configured. Create tiers per product type in the API.
+            </p>
           ) : (
             <div className="space-y-6">
               {Array.from(tiersByProduct.entries()).map(([productType, productTiers]) => (
-                <div key={productType} className="rounded-xl border border-slate-200 overflow-hidden">
+                <div
+                  key={productType}
+                  className="rounded-xl border border-slate-200 overflow-hidden"
+                >
                   <div className="bg-slate-50/60 px-4 py-3 flex items-center justify-between border-b border-slate-200">
                     <span className="text-sm font-semibold text-navy-900">{productType}</span>
                     <Badge tone="slate">{productTiers.length} bands</Badge>
                   </div>
                   <ul className="divide-y divide-slate-100">
                     {productTiers.map((tier) => {
-                      const edit = tierEdits[tier.id] ?? { unitPrice: String(tier.unitPriceMinor), backupPrice: tier.backupPriceMinor != null ? String(tier.backupPriceMinor) : '' };
+                      const edit = tierEdits[tier.id] ?? {
+                        unitPrice: String(tier.unitPriceMinor),
+                        backupPrice:
+                          tier.backupPriceMinor != null ? String(tier.backupPriceMinor) : '',
+                      };
                       const range = tierRangeLabel(tier.minVolume, tier.maxVolume);
                       return (
                         <li key={tier.id} className="px-4 py-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                              Volume {range} · {tier.vatExclusive ? 'VAT exclusive' : 'VAT inclusive'}
+                              Volume {range} ·{' '}
+                              {tier.vatExclusive ? 'VAT exclusive' : 'VAT inclusive'}
                             </span>
                             <span className="text-xs text-slate-400">
-                              Current {formatPriceMinor(tier.unitPriceMinor)}{tier.backupPriceMinor != null ? ` · backup ${formatPriceMinor(tier.backupPriceMinor)}` : ''}
+                              Current {formatPriceMinor(tier.unitPriceMinor)}
+                              {tier.backupPriceMinor != null
+                                ? ` · backup ${formatPriceMinor(tier.backupPriceMinor)}`
+                                : ''}
                             </span>
                           </div>
                           <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] items-end">
@@ -217,13 +269,28 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                                 min={100}
                                 step={100}
                                 value={edit.unitPrice}
-                                onChange={(e) => setTierEdits((v) => ({ ...v, [tier.id]: { unitPrice: e.target.value, backupPrice: v[tier.id]?.backupPrice ?? tier.backupPriceMinor != null ? String(tier.backupPriceMinor) : '' } }))}
-                                aria-describedby={tierErr[tier.id] ? `err-tier-${tier.id}` : undefined}
+                                onChange={(e) =>
+                                  setTierEdits((v) => ({
+                                    ...v,
+                                    [tier.id]: {
+                                      unitPrice: e.target.value,
+                                      backupPrice:
+                                        (v[tier.id]?.backupPrice ?? tier.backupPriceMinor != null)
+                                          ? String(tier.backupPriceMinor)
+                                          : '',
+                                    },
+                                  }))
+                                }
+                                aria-describedby={
+                                  tierErr[tier.id] ? `err-tier-${tier.id}` : undefined
+                                }
                                 className="h-11"
                               />
                             </div>
                             <div>
-                              <Label htmlFor={`tier-backup-${tier.id}`}>Backup price (minor, optional)</Label>
+                              <Label htmlFor={`tier-backup-${tier.id}`}>
+                                Backup price (minor, optional)
+                              </Label>
                               <Input
                                 id={`tier-backup-${tier.id}`}
                                 type="number"
@@ -231,7 +298,16 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                                 step={100}
                                 placeholder="—"
                                 value={edit.backupPrice}
-                                onChange={(e) => setTierEdits((v) => ({ ...v, [tier.id]: { unitPrice: v[tier.id]?.unitPrice ?? String(tier.unitPriceMinor), backupPrice: e.target.value } }))}
+                                onChange={(e) =>
+                                  setTierEdits((v) => ({
+                                    ...v,
+                                    [tier.id]: {
+                                      unitPrice:
+                                        v[tier.id]?.unitPrice ?? String(tier.unitPriceMinor),
+                                      backupPrice: e.target.value,
+                                    },
+                                  }))
+                                }
                                 className="h-11"
                               />
                             </div>
@@ -246,7 +322,11 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                             </Button>
                           </div>
                           {tierErr[tier.id] && (
-                            <p id={`err-tier-${tier.id}`} role="alert" className="mt-2 flex flex-wrap items-center gap-2 text-xs text-red-600">
+                            <p
+                              id={`err-tier-${tier.id}`}
+                              role="alert"
+                              className="mt-2 flex flex-wrap items-center gap-2 text-xs text-red-600"
+                            >
                               <span>{tierErr[tier.id]}</span>
                               <button
                                 type="button"
@@ -257,7 +337,15 @@ export function PriceEditor({ tiers, pricing, onSavePricing, onUpdateTier }: Pri
                               </button>
                             </p>
                           )}
-                          {tierMsg[tier.id] && <p role="status" aria-live="polite" className="mt-2 text-xs text-teal-700">{tierMsg[tier.id]}</p>}
+                          {tierMsg[tier.id] && (
+                            <p
+                              role="status"
+                              aria-live="polite"
+                              className="mt-2 text-xs text-teal-700"
+                            >
+                              {tierMsg[tier.id]}
+                            </p>
+                          )}
                         </li>
                       );
                     })}

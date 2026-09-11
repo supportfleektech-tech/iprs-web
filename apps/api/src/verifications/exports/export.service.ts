@@ -1,4 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { VerificationRequest } from '@prisma/client';
+import ExcelJS from 'exceljs';
+import PDFDocument from 'pdfkit';
 import { PrismaService } from '../../prisma/prisma.service';
 import { VerificationType, VERIFICATION_TYPES } from '@fleek/types';
 
@@ -34,7 +37,9 @@ interface CertificateOptions {
 export class ExportService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async exportVerifications(options: ExportOptions): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  async exportVerifications(
+    options: ExportOptions,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     const { format, type, from, to, status, search, organizationId } = options;
 
     const where: Record<string, unknown> = { organizationId };
@@ -64,8 +69,16 @@ export class ExportService {
       where,
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true, type: true, status: true, source: true, costMinor: true,
-        latencyMs: true, createdAt: true, encryptedInput: true, encryptedResult: true, isBackup: true,
+        id: true,
+        type: true,
+        status: true,
+        source: true,
+        costMinor: true,
+        latencyMs: true,
+        createdAt: true,
+        encryptedInput: true,
+        encryptedResult: true,
+        isBackup: true,
       },
     });
 
@@ -89,7 +102,9 @@ export class ExportService {
     return await this.generateExport(rows, format, `verifications-${this.getDateStamp()}`);
   }
 
-  async exportBatch(options: BatchExportOptions): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  async exportBatch(
+    options: BatchExportOptions,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     const { format, batchId, organizationId } = options;
 
     const batch = await this.prisma.client.verificationBatch.findFirst({
@@ -101,8 +116,16 @@ export class ExportService {
       where: { batchId },
       orderBy: { createdAt: 'asc' },
       select: {
-        id: true, type: true, status: true, source: true, costMinor: true,
-        latencyMs: true, createdAt: true, encryptedInput: true, encryptedResult: true, isBackup: true,
+        id: true,
+        type: true,
+        status: true,
+        source: true,
+        costMinor: true,
+        latencyMs: true,
+        createdAt: true,
+        encryptedInput: true,
+        encryptedResult: true,
+        isBackup: true,
       },
     });
 
@@ -121,10 +144,16 @@ export class ExportService {
       };
     });
 
-    return await this.generateExport(rows, format, `batch-${batchId.slice(0, 8)}-results-${this.getDateStamp()}`);
+    return await this.generateExport(
+      rows,
+      format,
+      `batch-${batchId.slice(0, 8)}-results-${this.getDateStamp()}`,
+    );
   }
 
-  async exportWalletStatement(options: WalletExportOptions): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  async exportWalletStatement(
+    options: WalletExportOptions,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     const { format, organizationId, from, to } = options;
 
     const where: Record<string, unknown> = { wallet: { organizationId } };
@@ -138,15 +167,21 @@ export class ExportService {
       where,
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true, type: true, amountMinor: true, balanceAfter: true,
-        description: true, createdAt: true, verificationId: true,
+        id: true,
+        type: true,
+        amountMinor: true,
+        balanceAfter: true,
+        description: true,
+        createdAt: true,
+        verificationId: true,
       },
     });
 
     const rows = transactions.map((t) => ({
       id: t.id,
       type: t.type,
-      amount_kes: t.type === 'topup' ? `+${Number(t.amountMinor) / 100}` : `-${Number(t.amountMinor) / 100}`,
+      amount_kes:
+        t.type === 'topup' ? `+${Number(t.amountMinor) / 100}` : `-${Number(t.amountMinor) / 100}`,
       balance_after_kes: Number(t.balanceAfter) / 100,
       description: t.description ?? '',
       created_at: t.createdAt.toISOString(),
@@ -155,15 +190,27 @@ export class ExportService {
     return await this.generateExport(rows, format, `wallet-statement-${this.getDateStamp()}`);
   }
 
-  async generateVerificationCertificate(options: CertificateOptions): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  async generateVerificationCertificate(
+    options: CertificateOptions,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     const { verificationId, organizationId } = options;
 
     const request = await this.prisma.client.verificationRequest.findFirst({
       where: { id: verificationId, organizationId },
       select: {
-        id: true, type: true, status: true, source: true, costMinor: true,
-        latencyMs: true, createdAt: true, encryptedInput: true, encryptedResult: true,
-        consent: true, consentCollectedBy: true, cbConsent: true, isBackup: true,
+        id: true,
+        type: true,
+        status: true,
+        source: true,
+        costMinor: true,
+        latencyMs: true,
+        createdAt: true,
+        encryptedInput: true,
+        encryptedResult: true,
+        consent: true,
+        consentCollectedBy: true,
+        cbConsent: true,
+        isBackup: true,
         organization: { select: { name: true } },
       },
     });
@@ -171,7 +218,9 @@ export class ExportService {
     if (!request) throw new NotFoundException('Verification not found');
 
     const input = JSON.parse(this.prisma.decrypt(request.encryptedInput));
-    const result = request.encryptedResult ? JSON.parse(this.prisma.decrypt(request.encryptedResult)) : null;
+    const result = request.encryptedResult
+      ? JSON.parse(this.prisma.decrypt(request.encryptedResult))
+      : null;
 
     const certificate = this.generateCertificatePDF(request, input, result);
     const filename = `certificate-${verificationId.slice(0, 8)}-${this.getDateStamp()}.pdf`;
@@ -210,7 +259,14 @@ export class ExportService {
       case VerificationType.MOTOR_VEHICLE_OWNERSHIP:
       case VerificationType.DRIVERS_LICENSE_VERIFICATION:
       case VerificationType.BRS:
-        return String(result.fullName ?? result.ownerName ?? result.taxpayerName ?? result.customerName ?? result.businessName ?? '');
+        return String(
+          result.fullName ??
+            result.ownerName ??
+            result.taxpayerName ??
+            result.customerName ??
+            result.businessName ??
+            '',
+        );
       case VerificationType.KRA_PIN_VERIFICATION:
       case VerificationType.BANK_ACCOUNT_VERIFICATION:
         return String(result.taxpayerName ?? result.accountName ?? '');
@@ -265,7 +321,11 @@ export class ExportService {
     return new Date().toISOString().slice(0, 10).replace(/-/g, '');
   }
 
-  private async generateExport(rows: Record<string, unknown>[], format: 'csv' | 'xlsx' | 'pdf', baseFilename: string): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  private async generateExport(
+    rows: Record<string, unknown>[],
+    format: 'csv' | 'xlsx' | 'pdf',
+    baseFilename: string,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     switch (format) {
       case 'csv':
         return this.generateCSV(rows, baseFilename);
@@ -276,7 +336,10 @@ export class ExportService {
     }
   }
 
-  private generateCSV(rows: Record<string, unknown>[], baseFilename: string): { buffer: Buffer; filename: string; contentType: string } {
+  private generateCSV(
+    rows: Record<string, unknown>[],
+    baseFilename: string,
+  ): { buffer: Buffer; filename: string; contentType: string } {
     if (rows.length === 0) {
       return { buffer: Buffer.from(''), filename: `${baseFilename}.csv`, contentType: 'text/csv' };
     }
@@ -285,46 +348,59 @@ export class ExportService {
     const csvRows = [
       headers.join(','),
       ...rows.map((row) =>
-        headers.map((h) => {
-          const val = row[h] ?? '';
-          const str = String(val).replace(/"/g, '""');
-          return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
-        }).join(',')
+        headers
+          .map((h) => {
+            const val = row[h] ?? '';
+            const str = String(val).replace(/"/g, '""');
+            return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+          })
+          .join(','),
       ),
     ];
     const csv = csvRows.join('\n');
-    return { buffer: Buffer.from(csv, 'utf-8'), filename: `${baseFilename}.csv`, contentType: 'text/csv' };
+    return {
+      buffer: Buffer.from(csv, 'utf-8'),
+      filename: `${baseFilename}.csv`,
+      contentType: 'text/csv',
+    };
   }
 
-  private generateXLSX(rows: Record<string, unknown>[], baseFilename: string): { buffer: Buffer; filename: string; contentType: string } {
+  private async generateXLSX(
+    rows: Record<string, unknown>[],
+    baseFilename: string,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const ExcelJS = require('exceljs');
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Export');
 
       if (rows.length > 0) {
         const headers = Object.keys(rows[0]);
-        worksheet.columns = headers.map((h) => ({ header: h, key: h, width: Math.max(h.length + 5, 20) }));
+        worksheet.columns = headers.map((h) => ({
+          header: h,
+          key: h,
+          width: Math.max(h.length + 5, 20),
+        }));
         worksheet.addRows(rows);
         worksheet.getRow(1).font = { bold: true };
       }
 
-      return workbook.xlsx.writeBuffer().then((buffer: Buffer) => ({
-        buffer,
+      const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+      return {
+        buffer: Buffer.from(buffer),
         filename: `${baseFilename}.xlsx`,
         contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      }));
+      };
     } catch (error) {
       console.error('XLSX generation failed, falling back to CSV:', error);
       return this.generateCSV(rows, baseFilename);
     }
   }
 
-  private generatePDF(rows: Record<string, unknown>[], baseFilename: string): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+  private generatePDF(
+    rows: Record<string, unknown>[],
+    baseFilename: string,
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const PDFDocument = require('pdfkit');
       const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' });
       const chunks: Buffer[] = [];
 
@@ -374,12 +450,24 @@ export class ExportService {
   }
 
   private generateCertificatePDF(
-    request: any,
+    request: Pick<
+      VerificationRequest,
+      | 'id'
+      | 'createdAt'
+      | 'type'
+      | 'status'
+      | 'source'
+      | 'encryptedInput'
+      | 'encryptedResult'
+      | 'costMinor'
+      | 'consent'
+      | 'consentCollectedBy'
+      | 'cbConsent'
+      | 'isBackup'
+    >,
     input: Record<string, unknown>,
-    result: Record<string, unknown> | null
+    result: Record<string, unknown> | null,
   ): Buffer {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const chunks: Buffer[] = [];
 
@@ -390,17 +478,21 @@ export class ExportService {
     doc.moveDown();
 
     doc.fontSize(10).text(`Certificate ID: ${request.id}`, { align: 'center' });
-    doc.fontSize(10).text(`Issued: ${new Date(request.createdAt).toLocaleString()}`, { align: 'center' });
+    doc
+      .fontSize(10)
+      .text(`Issued: ${new Date(request.createdAt).toLocaleString()}`, { align: 'center' });
     doc.moveDown(2);
 
     doc.fontSize(14).text('Verification Details', { underline: true });
     doc.moveDown(0.5);
     doc.fontSize(11);
-    doc.text(`Type: ${this.getTypeLabel(request.type)}`);
+    doc.text(`Type: ${this.getTypeLabel(request.type as VerificationType)}`);
     doc.text(`Status: ${request.status.toUpperCase()}`);
     doc.text(`Source: ${request.source}`);
     doc.text(`Cost: KES ${Number(request.costMinor) / 100}`);
-    doc.text(`Consent: ${request.consent ? 'Yes' : 'No'} (Collected by: ${request.consentCollectedBy})`);
+    doc.text(
+      `Consent: ${request.consent ? 'Yes' : 'No'} (Collected by: ${request.consentCollectedBy})`,
+    );
     if (request.cbConsent) doc.text('Credit Bureau Consent: Provided');
     if (request.isBackup) doc.text('Note: Verified via backup provider');
     doc.moveDown();
@@ -428,8 +520,15 @@ export class ExportService {
     }
 
     doc.moveDown(3);
-    doc.fontSize(9).text('This certificate confirms the verification was performed via Fleek IPRS.', { align: 'center' });
-    doc.text('Results are encrypted at rest per Kenya DPA 2019. Verify authenticity at api.fleekiprs.co.ke', { align: 'center' });
+    doc
+      .fontSize(9)
+      .text('This certificate confirms the verification was performed via Fleek IPRS.', {
+        align: 'center',
+      });
+    doc.text(
+      'Results are encrypted at rest per Kenya DPA 2019. Verify authenticity at api.fleekiprs.co.ke',
+      { align: 'center' },
+    );
 
     doc.end();
 

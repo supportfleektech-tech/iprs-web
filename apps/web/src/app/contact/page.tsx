@@ -58,12 +58,23 @@ export default function ContactPage() {
               </div>
               <div>
                 <Label htmlFor="email">Work email</Label>
-                <Input id="email" type="email" required value={form.email} onChange={set('email')} />
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={set('email')}
+                />
               </div>
             </div>
             <div>
               <Label htmlFor="company">Company</Label>
-              <Input id="company" placeholder="Optional" value={form.company} onChange={set('company')} />
+              <Input
+                id="company"
+                placeholder="Optional"
+                value={form.company}
+                onChange={set('company')}
+              />
             </div>
             <div>
               <Label htmlFor="message">Message</Label>

@@ -124,8 +124,12 @@ export function buildStatusDistribution(items: Array<{ status: string }>): Recor
 
 export function buildOverviewAnalytics(items: OverviewVerification[]): OverviewAnalytics {
   const totalCost = summarizeRecentCost(items);
-  const latencies = items.map((it) => it.latencyMs).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
-  const avgLatencyMs = latencies.length ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) : null;
+  const latencies = items
+    .map((it) => it.latencyMs)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  const avgLatencyMs = latencies.length
+    ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+    : null;
   const statusCounts = buildStatusDistribution(items);
   // Build a tiny series: last up to 8 items as points (oldest→newest) by cost
   const points: OverviewAnalyticsPoint[] = [...items]
@@ -142,9 +146,11 @@ export function getAvailableProducts(products: OverviewProduct[]): OverviewProdu
 export function formatActivitySummary(analytics: OverviewAnalytics, total: number): string {
   if (total === 0) return 'No activity yet';
   const parts: string[] = [];
-  if (analytics.statusCounts['success']) parts.push(`${analytics.statusCounts['success']} succeeded`);
+  if (analytics.statusCounts['success'])
+    parts.push(`${analytics.statusCounts['success']} succeeded`);
   if (analytics.statusCounts['failed']) parts.push(`${analytics.statusCounts['failed']} failed`);
-  if (analytics.statusCounts['not_found']) parts.push(`${analytics.statusCounts['not_found']} not found`);
+  if (analytics.statusCounts['not_found'])
+    parts.push(`${analytics.statusCounts['not_found']} not found`);
   if (analytics.statusCounts['pending']) parts.push(`${analytics.statusCounts['pending']} pending`);
   const suffix = analytics.avgLatencyMs != null ? ` · avg ${analytics.avgLatencyMs}ms` : '';
   return parts.length ? `${parts.join(' · ')}${suffix}` : `${total} checks${suffix}`;
@@ -159,11 +165,18 @@ export function formatServerAnalyticsSummary(a: ServerAnalytics): string {
   return parts.join(' · ');
 }
 
-export function formatDateRangeLabel(dateRange: { from: string | null; to: string | null }): string {
+export function formatDateRangeLabel(dateRange: {
+  from: string | null;
+  to: string | null;
+}): string {
   if (!dateRange.from && !dateRange.to) return 'All time';
   const fmt = (s: string) => {
     try {
-      return new Date(s).toLocaleDateString('en-KE', { year: 'numeric', month: 'short', day: 'numeric' });
+      return new Date(s).toLocaleDateString('en-KE', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
     } catch {
       return s;
     }

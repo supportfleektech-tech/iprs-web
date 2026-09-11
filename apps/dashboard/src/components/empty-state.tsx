@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { DashboardIcon } from './dashboard-icons';
 
 export type EmptyStateAction =
-  | { label: string; href: string }
-  | { label: string; onClick: () => void };
+  { label: string; href: string } | { label: string; onClick: () => void };
 
 export interface EmptyStateProps {
   title: string;
@@ -15,13 +14,26 @@ export interface EmptyStateProps {
   actionHref?: string;
 }
 
-export function EmptyState({ title, description, action, actionLabel, actionHref }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  action,
+  actionLabel,
+  actionHref,
+}: EmptyStateProps) {
   const resolvedAction: EmptyStateAction | undefined =
     action ?? (actionHref && actionLabel ? { label: actionLabel, href: actionHref } : undefined);
 
   return (
-    <div className="flex min-h-48 flex-col items-center justify-center px-6 py-12 text-center" role="status" aria-live="polite">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100" aria-hidden="true">
+    <div
+      className="flex min-h-48 flex-col items-center justify-center px-6 py-12 text-center"
+      role="status"
+      aria-live="polite"
+    >
+      <div
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100"
+        aria-hidden="true"
+      >
         <DashboardIcon name="clipboard" className="h-6 w-6" />
       </div>
       <h3 className="mt-4 text-sm font-semibold text-navy-900">{title}</h3>

@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Res, BadRequestException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { VerificationType, VERIFICATION_TYPES } from '@fleek/types';
 import { Auth, CurrentUser } from '../../auth/auth.decorators';
 import { ExportService } from '../exports/export.service';
 
@@ -35,7 +36,10 @@ export class ExportsController {
 
     const result = await this.exports.exportVerifications({
       format,
-      type: type as any,
+      type:
+        type && (VERIFICATION_TYPES as string[]).includes(type)
+          ? (type as VerificationType)
+          : undefined,
       from,
       to,
       status,

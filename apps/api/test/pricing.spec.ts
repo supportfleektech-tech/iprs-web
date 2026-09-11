@@ -11,12 +11,48 @@ interface TierRow {
 }
 
 const TIERS: TierRow[] = [
-  { minVolume: 0, maxVolume: 500, unitPriceMinor: 3000n, backupPriceMinor: 4500n, vatExclusive: true },
-  { minVolume: 501, maxVolume: 2500, unitPriceMinor: 2800n, backupPriceMinor: 4300n, vatExclusive: true },
-  { minVolume: 2501, maxVolume: 5000, unitPriceMinor: 2600n, backupPriceMinor: 4200n, vatExclusive: true },
-  { minVolume: 5001, maxVolume: 10000, unitPriceMinor: 2400n, backupPriceMinor: 3800n, vatExclusive: true },
-  { minVolume: 10001, maxVolume: 30000, unitPriceMinor: 2200n, backupPriceMinor: 3400n, vatExclusive: true },
-  { minVolume: 30001, maxVolume: null, unitPriceMinor: 2000n, backupPriceMinor: 3200n, vatExclusive: true },
+  {
+    minVolume: 0,
+    maxVolume: 500,
+    unitPriceMinor: 3000n,
+    backupPriceMinor: 4500n,
+    vatExclusive: true,
+  },
+  {
+    minVolume: 501,
+    maxVolume: 2500,
+    unitPriceMinor: 2800n,
+    backupPriceMinor: 4300n,
+    vatExclusive: true,
+  },
+  {
+    minVolume: 2501,
+    maxVolume: 5000,
+    unitPriceMinor: 2600n,
+    backupPriceMinor: 4200n,
+    vatExclusive: true,
+  },
+  {
+    minVolume: 5001,
+    maxVolume: 10000,
+    unitPriceMinor: 2400n,
+    backupPriceMinor: 3800n,
+    vatExclusive: true,
+  },
+  {
+    minVolume: 10001,
+    maxVolume: 30000,
+    unitPriceMinor: 2200n,
+    backupPriceMinor: 3400n,
+    vatExclusive: true,
+  },
+  {
+    minVolume: 30001,
+    maxVolume: null,
+    unitPriceMinor: 2000n,
+    backupPriceMinor: 3200n,
+    vatExclusive: true,
+  },
 ];
 
 describe('Pricing Service', () => {
@@ -31,7 +67,12 @@ describe('Pricing Service', () => {
         organizationMonthlyUsage: { findUnique: vi.fn(), findMany: vi.fn(), upsert: vi.fn() },
         wallet: { findUnique: vi.fn(), update: vi.fn() },
         transaction: { create: vi.fn() },
-        verificationRequest: { create: vi.fn(), findMany: vi.fn(), count: vi.fn(), findFirst: vi.fn() },
+        verificationRequest: {
+          create: vi.fn(),
+          findMany: vi.fn(),
+          count: vi.fn(),
+          findFirst: vi.fn(),
+        },
         verificationBatch: { create: vi.fn(), update: vi.fn() },
       },
     };
@@ -96,7 +137,15 @@ describe('Pricing Service', () => {
     });
 
     it('returns null when volume is below the smallest tier', () => {
-      const minHigh = [{ minVolume: 100, maxVolume: null, unitPriceMinor: 100n, backupPriceMinor: null, vatExclusive: true }];
+      const minHigh = [
+        {
+          minVolume: 100,
+          maxVolume: null,
+          unitPriceMinor: 100n,
+          backupPriceMinor: null,
+          vatExclusive: true,
+        },
+      ];
       expect(VerificationsService.selectTierInMemory(minHigh, 50)).toBeNull();
     });
   });

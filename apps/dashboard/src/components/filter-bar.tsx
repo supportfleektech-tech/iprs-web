@@ -28,8 +28,13 @@ export function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
     onChange({ ...filters, ...patch });
   }
 
-  const hasActive =
-    Boolean(filters.type?.trim() || filters.status?.trim() || filters.from?.trim() || filters.to?.trim() || filters.search?.trim());
+  const hasActive = Boolean(
+    filters.type?.trim() ||
+    filters.status?.trim() ||
+    filters.from?.trim() ||
+    filters.to?.trim() ||
+    filters.search?.trim(),
+  );
 
   return (
     <section
@@ -37,7 +42,9 @@ export function FilterBar({ filters, onChange, onReset }: FilterBarProps) {
       className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Filters</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+          Filters
+        </h2>
         {hasActive && (
           <button
             type="button"

@@ -36,7 +36,8 @@ test.describe.serial('dashboard happy path', () => {
 
     // Run an IPRS verification via the product-first workspace (consent-gated)
     await page.goto('/console/verify');
-    await expect(page.getByText('Verification workspace')).toBeVisible({ timeout: 10_000 });
+    // Generous readiness timeout: `next dev` cold-compiles this heavy route.
+    await expect(page.getByText('Verification workspace')).toBeVisible({ timeout: 20_000 });
     await page
       .getByLabel(/National ID number|ID number/i)
       .first()

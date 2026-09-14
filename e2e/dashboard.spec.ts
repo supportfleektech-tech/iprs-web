@@ -396,7 +396,7 @@ test.describe('responsive and reduced-motion', () => {
       await expect(
         page.getByRole('navigation', { name: 'Primary navigation' }).first(),
       ).toBeVisible({ timeout: 10_000 });
-      await expect(page.getByText('Identity operations')).toBeVisible();
+      await expect(page.getByText('Identity. Verification. Intelligence.')).toBeVisible();
     } catch {
       test.skip(true, 'API/stack unavailable — shell chrome check requires running API');
     }

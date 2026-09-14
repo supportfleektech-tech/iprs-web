@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumberString,
@@ -77,6 +78,16 @@ export class CreateBatchDto {
   @IsNotEmpty()
   @MaxLength(160)
   consentCollectedBy!: string;
+
+  /** Credit-bureau consent asserted by the uploader for every row. */
+  @IsOptional()
+  @IsBoolean()
+  cbConsent?: boolean;
+
+  /** Route every row via the backup provider (explicit opt-in). */
+  @IsOptional()
+  @IsBoolean()
+  useBackup?: boolean;
 
   @IsArray()
   @ArrayMaxSize(1000, { message: 'A batch may contain at most 1000 rows' })

@@ -64,6 +64,8 @@ Volume bands: `0-500`, `501-2500`, `2501-5000`, `5001-10000`, `10001-30000`, `30
 
 - SPIN Score uses special bands: `0-1000`, `1001-5000`, `5001-10000`, `10001-20000`, `20001-50000`, `50001+` (open-ended; tested in `apps/api/test/spin-bands.spec.ts`, data in `packages/database/prisma/tiers.ts`)
 - A tier gap falls back to the base `ProductPricing` price in `run()`/`products()` instead of 400ing — gaps must still be fixed at the data level
+- `scanned_statement` is priced at runtime (KES 120 + 4/page), not tiered; charges use the volume locked inside the wallet transaction (`FOR UPDATE`), backup is recorded only when actually routed, and backup retry is offered only with a known price
+- Batches require `cbConsent` upfront for CB types and reject file-upload types; estimates use the org's current-month volume
 - Identity Standard: 30/28/26/24/22/20 (backup: 45/43/42/38/34/32)
 - Utility: 20/18/16/14/12/10
 - Backup rates apply only on **explicit user toggle** after primary `UPSTREAM_DOWN`

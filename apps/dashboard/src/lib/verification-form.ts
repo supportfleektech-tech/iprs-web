@@ -363,7 +363,7 @@ export const VERIFICATION_FORM_FIELDS: Record<VerificationType, VerificationForm
     {
       key: 'statementPages',
       label: 'Statement pages',
-      hint: 'Enter the number of statement pages included in the upload.',
+      hint: 'Enter the number of statement pages included in the upload. Priced at KES 120 + KES 4 per page.',
       inputType: 'number',
       inputMode: 'numeric',
       placeholder: '6',

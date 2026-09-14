@@ -8,8 +8,13 @@ import {
   type VerificationResult,
 } from '@fleek/types';
 import { AggregatorAdapter, ProviderRegistry, ProviderError } from '@fleek/providers';
+import type { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { InsufficientFundsException } from '../common/exceptions';
+
+/** Scanned-statement runtime pricing (KES minor): base + per-page. PDF-exact. */
+export const SCANNED_STATEMENT_BASE_MINOR = BigInt(12000);
+export const SCANNED_STATEMENT_PAGE_MINOR = BigInt(400);
 import { appConfig } from '../config/configuration';
 import { RunVerificationDto } from './dto';
 
@@ -95,11 +100,16 @@ export class VerificationsService {
         const unitMinor = orgTier
           ? BigInt(orgTier.unitPriceMinor)
           : (tier?.unitPriceMinor ?? productPricing?.priceMinor ?? null);
-        const backupMinor = orgTier
-          ? orgTier.backupPriceMinor != null
-            ? BigInt(orgTier.backupPriceMinor)
-            : null
-          : (tier?.backupPriceMinor ?? null);
+        // A backup price is only advertised when backup is actually routed;
+        // otherwise the figure could never be charged.
+        const hasBackup = this.registry.hasBackup(type);
+        const backupMinor = hasBackup
+          ? orgTier
+            ? orgTier.backupPriceMinor != null
+              ? BigInt(orgTier.backupPriceMinor)
+              : null
+            : (tier?.backupPriceMinor ?? null)
+          : null;
 
         return {
           type,
@@ -123,7 +133,7 @@ export class VerificationsService {
           cbConsentRequired: CB_CONSENT_REQUIRED_TYPES.includes(type),
           requiresFileUpload: this.requiresFileUpload(type),
           fileTypes: this.getFileTypes(type),
-          backupAvailable: this.registry.hasBackup(type),
+          backupAvailable: hasBackup,
         };
       }),
     );
@@ -137,7 +147,7 @@ export class VerificationsService {
     return 'Other';
   }
 
-  private requiresFileUpload(type: VerificationType): boolean {
+  requiresFileUpload(type: VerificationType): boolean {
     return [
       VerificationType.FACE_ID_MATCH,
       VerificationType.SCANNED_STATEMENT,
@@ -185,8 +195,12 @@ export class VerificationsService {
     return out;
   }
 
-  async getCurrentTier(type: VerificationType, volume: number) {
-    return this.prisma.client.productPricingTier.findFirst({
+  async getCurrentTier(
+    type: VerificationType,
+    volume: number,
+    db: Pick<PrismaClient, 'productPricingTier'> = this.prisma.client,
+  ) {
+    return db.productPricingTier.findFirst({
       where: {
         productType: type,
         minVolume: { lte: volume },
@@ -241,20 +255,22 @@ export class VerificationsService {
 
     // Get tier pricing (org override from admin wins over global tiers).
     // A missing tier (e.g. an admin-created gap) falls back to the base
-    // product price instead of 400ing a billable check.
+    // product price instead of 400ing a billable check. This pre-read is only
+    // a quote for the backup offer — the locked tier inside the transaction
+    // decides the actual charge.
     const tier = await this.getCurrentTier(dto.type, currentVolume);
     const orgTier = overrides.tiers.get(dto.type);
-    const unitPriceMinor = orgTier
-      ? BigInt(orgTier.unitPriceMinor)
-      : (tier?.unitPriceMinor ?? productPricing.priceMinor);
     const tierBackupPriceMinor = orgTier
       ? orgTier.backupPriceMinor != null
         ? BigInt(orgTier.backupPriceMinor)
         : null
       : (tier?.backupPriceMinor ?? null);
 
-    // Determine if using backup
+    // Determine if using backup. resolve() falls through to primary/mock when
+    // no backup is routed, so the record must reflect what actually served —
+    // not what was requested.
     const useBackup = dto.useBackup === true;
+    const backupRouted = useBackup && this.registry.hasBackup(dto.type);
 
     const startedAt = Date.now();
     let result: VerificationResult | null = null;
@@ -266,7 +282,7 @@ export class VerificationsService {
 
     try {
       const provider = this.registry.resolve(dto.type, useBackup);
-      isBackup = useBackup;
+      isBackup = backupRouted;
 
       result = await this.executeVerification(provider, dto);
     } catch (err) {
@@ -276,9 +292,11 @@ export class VerificationsService {
         } else if (
           err.code === 'UPSTREAM_DOWN' &&
           !useBackup &&
-          this.registry.hasBackup(dto.type)
+          this.registry.hasBackup(dto.type) &&
+          tierBackupPriceMinor != null
         ) {
-          // Primary failed, backup available - return info about backup
+          // Primary failed and a priced backup is routed — offer the retry.
+          // Without a known backup price the offer would be a blank cheque.
           status = 'failed';
           errorMessage = err.message;
           backupAvailable = true;
@@ -293,16 +311,56 @@ export class VerificationsService {
       }
     }
 
-    // Calculate cost based on status and backup usage
+    // Charge + record atomically. Volume and wallet balance are re-read under
+    // row locks inside the transaction: the pre-provider tier above is only a
+    // quote (backup offer), while the locked tier decides the actual charge.
+    // This keeps concurrent runs from billing a stale tier at band boundaries
+    // and from overdrawing a wallet drained mid-flight.
     let costMinor = BigInt(0);
-    if (status === 'success') {
-      costMinor = isBackup && tierBackupPriceMinor ? tierBackupPriceMinor : unitPriceMinor;
-    }
 
     const record = await this.prisma.client.$transaction(async (tx) => {
+      const usageKey = {
+        orgId: organizationId,
+        month: monthKey,
+        productType: dto.type,
+      };
+      await tx.organizationMonthlyUsage.upsert({
+        where: { orgId_month_productType: usageKey },
+        update: {},
+        create: { ...usageKey, successCount: 0 },
+      });
+      const lockedUsage = await tx.$queryRaw<{ volume: number }[]>`
+        SELECT "success_count" AS "volume" FROM "organization_monthly_usage"
+        WHERE "org_id" = ${organizationId} AND "month" = ${monthKey}
+          AND "product_type" = ${dto.type}::"VerificationType" FOR UPDATE`;
+      const lockedVolume = lockedUsage[0]?.volume ?? 0;
+      const lockedTier = await this.getCurrentTier(dto.type, lockedVolume, tx);
+      let lockedUnit = orgTier
+        ? BigInt(orgTier.unitPriceMinor)
+        : (lockedTier?.unitPriceMinor ?? productPricing.priceMinor);
+      // Scanned statements are priced at runtime, not tiered (PDF-exact):
+      // KES 120 base + KES 4 per page. An explicit org override still wins.
+      if (dto.type === VerificationType.SCANNED_STATEMENT && !orgTier) {
+        lockedUnit =
+          SCANNED_STATEMENT_BASE_MINOR +
+          SCANNED_STATEMENT_PAGE_MINOR * BigInt(dto.statementPages ?? 1);
+      }
+      const lockedBackup = orgTier
+        ? orgTier.backupPriceMinor != null
+          ? BigInt(orgTier.backupPriceMinor)
+          : null
+        : (lockedTier?.backupPriceMinor ?? null);
+
+      if (status === 'success') {
+        costMinor = isBackup && lockedBackup ? lockedBackup : lockedUnit;
+      }
+
       if (costMinor > 0) {
-        const wallet = await tx.wallet.findUnique({ where: { organizationId } });
-        if (!wallet || wallet.balanceMinor < costMinor) {
+        const lockedWallets = await tx.$queryRaw<{ id: string; balanceMinor: bigint }[]>`
+          SELECT "id", "balanceMinor" FROM "wallets"
+          WHERE "organizationId" = ${organizationId} FOR UPDATE`;
+        const lockedWallet = lockedWallets[0];
+        if (!lockedWallet || lockedWallet.balanceMinor < costMinor) {
           throw new InsufficientFundsException();
         }
         const updated = await tx.wallet.update({
@@ -320,23 +378,11 @@ export class VerificationsService {
         });
       }
 
-      // Update monthly usage counter on success
+      // Update monthly usage counter on success (row exists by construction)
       if (status === 'success') {
-        await tx.organizationMonthlyUsage.upsert({
-          where: {
-            orgId_month_productType: {
-              orgId: organizationId,
-              month: monthKey,
-              productType: dto.type,
-            },
-          },
-          update: { successCount: { increment: 1 } },
-          create: {
-            orgId: organizationId,
-            month: monthKey,
-            productType: dto.type,
-            successCount: 1,
-          },
+        await tx.organizationMonthlyUsage.update({
+          where: { orgId_month_productType: usageKey },
+          data: { successCount: { increment: 1 } },
         });
       }
 

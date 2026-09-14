@@ -79,6 +79,8 @@ export default function BulkPage() {
   const [activeBatch, setActiveBatch] = useState<BatchSummary | null>(null);
   const [batches, setBatches] = useState<BatchSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [cbConsent, setCbConsent] = useState(false);
+  const [useBackup, setUseBackup] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadBatches = useCallback(async () => {
@@ -137,7 +139,13 @@ export default function BulkPage() {
     try {
       const summary = await apiFetch<BatchSummary>('/verifications/batches', {
         method: 'POST',
-        body: JSON.stringify({ type, consentCollectedBy: 'Fleek IPRS Console (bulk)', rows }),
+        body: JSON.stringify({
+          type,
+          consentCollectedBy: 'Fleek IPRS Console (bulk)',
+          cbConsent: cbConsent || undefined,
+          useBackup: useBackup || undefined,
+          rows,
+        }),
         token,
       });
       setActiveBatch(summary);
@@ -236,12 +244,42 @@ export default function BulkPage() {
           )}
 
           {rows && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-teal-brand/5 border border-teal-brand/30 px-4 py-3">
-              <div className="text-sm">
-                <span className="font-medium">{fileName}</span> — {rows.length.toLocaleString()}{' '}
-                rows
+            <div className="mt-4 space-y-3 rounded-lg bg-teal-brand/5 border border-teal-brand/30 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-sm">
+                  <span className="font-medium">{fileName}</span> — {rows.length.toLocaleString()}{' '}
+                  rows
+                </div>
+                <Button
+                  onClick={() => void startBatch()}
+                  disabled={hint.cbRequired && !cbConsent}
+                >
+                  Start batch
+                </Button>
               </div>
-              <Button onClick={() => void startBatch()}>Start batch</Button>
+              {hint.cbRequired && (
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={cbConsent}
+                    onChange={(e) => setCbConsent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-cyan-600"
+                  />
+                  <span>
+                    I confirm credit-bureau consent was collected for every row in this file
+                    (required).
+                  </span>
+                </label>
+              )}
+              <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={useBackup}
+                  onChange={(e) => setUseBackup(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-cyan-600"
+                />
+                <span>Route rows via the backup provider (billed at backup rates).</span>
+              </label>
             </div>
           )}
 

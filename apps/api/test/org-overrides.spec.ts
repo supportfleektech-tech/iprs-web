@@ -26,12 +26,25 @@ function buildMock() {
   const client: any = {
     productPricing: { findMany: vi.fn(), findUnique: vi.fn() },
     productPricingTier: { findMany: vi.fn(), findFirst: vi.fn() },
-    organizationMonthlyUsage: { findUnique: vi.fn(), findMany: vi.fn(), upsert: vi.fn() },
+    organizationMonthlyUsage: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+    },
     orgEnabledChecks: { findMany: vi.fn() },
     orgPricingTier: { findMany: vi.fn() },
     wallet: { findUnique: vi.fn(), update: vi.fn() },
     transaction: { create: vi.fn() },
     verificationRequest: { create: vi.fn() },
+    // Locked reads mirror the pre-read (volume 0, funded wallet).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $queryRaw: vi.fn(async (q: any) => {
+      const s = Array.isArray(q) ? q.join('?') : String(q);
+      if (s.includes('organization_monthly_usage')) return [{ volume: 0 }];
+      if (s.includes('wallets')) return [{ id: 'w1', balanceMinor: 1_000_000n }];
+      throw new Error(`unexpected query: ${s}`);
+    }),
   };
   // $transaction replays the callback against the mocked client.
   client.$transaction = vi.fn(async (cb: (tx: unknown) => unknown) => cb(client));

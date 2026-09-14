@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { VerificationType } from '@fleek/types';
+import { CB_CONSENT_REQUIRED_TYPES, VerificationType } from '@fleek/types';
 import type { VerificationBatch } from '@fleek/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { InsufficientFundsException } from '../common/exceptions';
@@ -38,6 +38,8 @@ export class BatchesService {
       throw new BadRequestException(`Check "${dto.type}" is not available`);
     }
 
+    // (Type-support and consent gates run after row validation below.)
+
     // Filter rows with at least one identifier
     const rows = dto.rows.filter(
       (r) =>
@@ -62,16 +64,44 @@ export class BatchesService {
       );
     }
 
-    // For batch, we estimate cost using the base tier price (will be actual per-row at runtime)
+    // CSV rows carry identifiers only — checks needing a file upload can
+    // never succeed row-by-row, so reject upfront instead of failing each row.
+    if (this.verifications.requiresFileUpload(dto.type)) {
+      throw new BadRequestException(
+        `Check "${dto.type}" requires a file upload and cannot run from CSV rows`,
+      );
+    }
+
+    // Credit-bureau checks need consent asserted for every row upfront —
+    // per-row 400s after charging nothing help nobody.
+    if (CB_CONSENT_REQUIRED_TYPES.includes(dto.type) && !dto.cbConsent) {
+      throw new BadRequestException(
+        'Credit bureau consent (cbConsent) is required for this verification type',
+      );
+    }
+
+    // Estimate from the org's CURRENT month volume — the same tier path the
+    // per-row run() will charge (org override wins, then tier, then base).
     const productPricing = await this.prisma.client.productPricing.findUnique({
       where: { type: dto.type },
     });
     const wallet = await this.prisma.client.wallet.findUnique({ where: { organizationId: orgId } });
     const basePriceMinor = productPricing?.priceMinor ?? BigInt(0);
     if (!productPricing?.active) throw new BadRequestException('Product not priced/inactive');
-    // Estimate max cost (all rows succeed at highest tier - conservative)
-    const tier = await this.verifications.getCurrentTier(dto.type, 0);
-    const estimatedPriceMinor = tier?.unitPriceMinor ?? basePriceMinor;
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const usage = await this.prisma.client.organizationMonthlyUsage.findUnique({
+      where: {
+        orgId_month_productType: { orgId, month: monthKey, productType: dto.type },
+      },
+    });
+    const currentVolume = usage?.successCount ?? 0;
+    const orgTiers = await this.prisma.client.orgPricingTier.findMany({ where: { orgId } });
+    const orgOverride = orgTiers.find((t) => t.productType === dto.type);
+    const tier = await this.verifications.getCurrentTier(dto.type, currentVolume);
+    const estimatedPriceMinor = orgOverride
+      ? BigInt(orgOverride.unitPriceMinor)
+      : (tier?.unitPriceMinor ?? basePriceMinor);
 
     if (!wallet || wallet.balanceMinor < estimatedPriceMinor * BigInt(rows.length)) {
       throw new InsufficientFundsException(
@@ -89,7 +119,16 @@ export class BatchesService {
       },
     });
 
-    void this.processBatch(batch.id, orgId, userId, dto.type, dto.consentCollectedBy, rows);
+    void this.processBatch(
+      batch.id,
+      orgId,
+      userId,
+      dto.type,
+      dto.consentCollectedBy,
+      rows,
+      dto.cbConsent,
+      dto.useBackup,
+    );
 
     return this.toSummary(batch);
   }
@@ -106,6 +145,8 @@ export class BatchesService {
     type: VerificationType,
     consentCollectedBy: string,
     rows: CsvRow[],
+    cbConsent?: boolean,
+    useBackup?: boolean,
   ): Promise<void> {
     let success = 0;
     let failed = 0;
@@ -121,7 +162,7 @@ export class BatchesService {
         try {
           const res = await this.verifications.run(
             orgId,
-            { type, ...row, consent: true, consentCollectedBy },
+            { type, ...row, consent: true, consentCollectedBy, cbConsent, useBackup },
             'dashboard',
             userId,
             null,

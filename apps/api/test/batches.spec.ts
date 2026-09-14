@@ -29,22 +29,41 @@ function makeDeps() {
     },
     verificationRequest: { findMany: vi.fn().mockResolvedValue([]) },
     productPricing: { findUnique: vi.fn() },
+    organizationMonthlyUsage: { findUnique: vi.fn().mockResolvedValue(null) },
+    orgPricingTier: { findMany: vi.fn().mockResolvedValue([]) },
     wallet: { findUnique: vi.fn() },
   };
   const prisma = { client, encrypt: (v: string) => v, decrypt: (v: string) => v } as never;
   const run = vi.fn();
   const isEnabled = vi.fn().mockReturnValue(true);
-  const getCurrentTier = vi.fn().mockResolvedValue({
-    minVolume: 0,
-    maxVolume: 500,
-    unitPriceMinor: 5000n,
-    backupPriceMinor: null,
-    vatExclusive: true,
-  });
+  // Volume-aware tiers: volume 0 → KES 50, volume ≥501 → KES 28.
+  const getCurrentTier = vi.fn(async (_type: unknown, volume: number) =>
+    volume >= 501
+      ? {
+          minVolume: 501,
+          maxVolume: 2500,
+          unitPriceMinor: 2800n,
+          backupPriceMinor: null,
+          vatExclusive: true,
+        }
+      : {
+          minVolume: 0,
+          maxVolume: 500,
+          unitPriceMinor: 5000n,
+          backupPriceMinor: null,
+          vatExclusive: true,
+        },
+  );
   const verifications = {
     registry: { isEnabled },
     run,
     getCurrentTier,
+    requiresFileUpload: (type: unknown) =>
+      [
+        VerificationType.FACE_ID_MATCH,
+        VerificationType.SCANNED_STATEMENT,
+        VerificationType.BRS,
+      ].includes(type as VerificationType),
   } as never;
   return {
     service: new BatchesService(prisma, verifications),
@@ -148,6 +167,55 @@ describe('BatchesService.createBatch', () => {
     expect(finalUpdate.data.errorMessage).toMatch(/credit/i);
     // Aborted well before all 50 rows
     expect(deps.run.mock.calls.length).toBeLessThan(50);
+  });
+
+  it('estimates from the current volume, not volume zero', async () => {
+    // Org already at volume 600 → KES 28/row (5600 for 2 rows). A volume-0
+    // estimate (KES 50/row = 10000) would wrongly refuse this wallet.
+    deps.client.organizationMonthlyUsage.findUnique.mockResolvedValue({ successCount: 600 });
+    deps.client.wallet.findUnique.mockResolvedValue({ balanceMinor: BigInt(5_700) });
+    const rows = [{ idNumber: '12345678' }, { idNumber: '87654321' }];
+    const summary = await deps.service.createBatch('org1', 'u1', { ...baseDto, rows });
+    expect(summary.id).toBe('batch1');
+  });
+
+  it('rejects credit-bureau types without cbConsent upfront', async () => {
+    await expect(
+      deps.service.createBatch('org1', 'u1', {
+        type: VerificationType.METROPOL_SCORE_ONLY,
+        consentCollectedBy: 'Acme Ltd',
+        rows: [{ idNumber: '12345678' }],
+      }),
+    ).rejects.toThrow(/cbConsent/i);
+    expect(deps.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects file-upload types that cannot run from CSV rows', async () => {
+    await expect(
+      deps.service.createBatch('org1', 'u1', {
+        type: VerificationType.FACE_ID_MATCH,
+        consentCollectedBy: 'Acme Ltd',
+        rows: [{ idNumber: '12345678' }],
+      }),
+    ).rejects.toThrow(/file/i);
+    expect(deps.run).not.toHaveBeenCalled();
+  });
+
+  it('passes cbConsent and useBackup through to every row', async () => {
+    deps.run.mockResolvedValue({ status: 'success' });
+    const rows = [{ idNumber: '12345678' }, { idNumber: '87654321' }];
+    await deps.service.createBatch('org1', 'u1', {
+      type: VerificationType.METROPOL_SCORE_ONLY,
+      consentCollectedBy: 'Acme Ltd',
+      cbConsent: true,
+      useBackup: true,
+      rows,
+    });
+    await settle();
+    expect(deps.run).toHaveBeenCalledTimes(2);
+    for (const call of deps.run.mock.calls) {
+      expect(call[1]).toMatchObject({ cbConsent: true, useBackup: true });
+    }
   });
 
   it('disables checks that are not enabled', async () => {

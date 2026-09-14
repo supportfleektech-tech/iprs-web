@@ -91,7 +91,12 @@ export class VerificationsService {
         const productPricing = priceByType.get(type);
         const currentVolume = monthlyUsage.get(type) ?? 0;
         const tier = await this.getCurrentTier(type, currentVolume);
-        const globalEnabled = this.registry.isEnabled(type) && productPricing?.active;
+        // Deployment-wide kill switch (ENABLED_CHECKS + global active flag).
+        // Per-org rows can only opt OUT — they can never enable a check the
+        // deployment disabled, so the UI needs this flag to avoid offering
+        // toggles that cannot take effect.
+        const deployEnabled = this.registry.isEnabled(type) && (productPricing?.active ?? false);
+        const globalEnabled = deployEnabled;
         // Org opt-out: no row = enabled; explicit row controls availability.
         const orgCheck = overrides.enabled.get(type);
         const enabled = globalEnabled && (orgCheck ?? true);
@@ -116,6 +121,7 @@ export class VerificationsService {
           label: PRODUCT_LABELS[type],
           category: this.getCategory(type),
           enabled,
+          deployEnabled,
           orgManaged: orgCheck !== undefined || orgTier !== undefined,
           live: this.registry.isLive(type),
           active: productPricing?.active ?? false,

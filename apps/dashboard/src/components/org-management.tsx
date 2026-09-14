@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Badge } from '@fleek/ui';
 import { VERIFICATION_TYPES } from '@fleek/types';
+import type { ProductOption } from '@/lib/verification-form';
 import { AdminTable } from './admin-table';
 import { formatPriceMinor, validateMinorInput } from '@/lib/admin';
 import { apiFetch } from '@/lib/auth';
@@ -47,6 +48,7 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
 
   const [enabledChecks, setEnabledChecks] = useState<OrgEnabledCheck[]>([]);
   const [checkEdits, setCheckEdits] = useState<Record<string, boolean>>({});
+  const [deployEnabled, setDeployEnabled] = useState<Record<string, boolean>>({});
   const [checksMsg, setChecksMsg] = useState<string | null>(null);
   const [checksErr, setChecksErr] = useState<string | null>(null);
   const [checksBusy, setChecksBusy] = useState(false);
@@ -66,11 +68,15 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
     setChecksMsg(null);
     setChecksErr(null);
     try {
-      const [enabled, tiers] = await Promise.all([
+      const [enabled, tiers, products] = await Promise.all([
         apiFetch<OrgEnabledCheck[]>(`/admin/organizations/${orgId}/enabled-checks`, { token }),
         apiFetch<OrgPricingTier[]>(`/admin/organizations/${orgId}/pricing-tiers`, { token }),
+        apiFetch<ProductOption[]>('/verifications/products', { token }),
       ]);
       setEnabledChecks(enabled);
+      setDeployEnabled(
+        Object.fromEntries(products.map((p) => [p.type, p.deployEnabled ?? true])),
+      );
       const byType = new Map(enabled.map((c) => [c.productType, c.enabled]));
       setCheckEdits(Object.fromEntries(VERIFICATION_TYPES.map((t) => [t, byType.get(t) ?? true])));
       const edits: Record<string, string> = {};
@@ -98,6 +104,8 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
     try {
       const byType = new Map(enabledChecks.map((c) => [c.productType, c.enabled]));
       for (const [productType, enabled] of Object.entries(checkEdits)) {
+        // Locked checks cannot take effect — never write misleading rows.
+        if (deployEnabled[productType] === false) continue;
         if (byType.get(productType) === enabled) continue;
         await apiFetch(`/admin/organizations/${selectedOrgId}/enabled-checks`, {
           method: 'PUT',
@@ -293,26 +301,39 @@ export function OrgManagement({ organizations, token, onReloadOrgs }: OrgManagem
                 <h3 className="text-sm font-semibold text-navy-900">Enabled checks</h3>
                 <p className="text-xs text-slate-500 mt-1">
                   Tick the lookups this organization may use. No row = enabled (global default).
-                  Change applies immediately.
+                  Change applies immediately. Greyed-out checks are disabled deployment-wide
+                  and cannot be enabled per organization.
                 </p>
               </div>
               <div className="p-4">
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {VERIFICATION_TYPES.map((type) => (
-                    <label
-                      key={type}
-                      className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 hover:bg-slate-50 transition-colors motion-reduce:transition-none cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checkEdits[type] ?? true}
-                        onChange={(e) => setCheckEdits((v) => ({ ...v, [type]: e.target.checked }))}
-                        className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-cyan-600"
-                        aria-label={`${type} enabled`}
-                      />
-                      <span className="text-sm text-slate-700 min-w-0 truncate">{type}</span>
-                    </label>
-                  ))}
+                  {VERIFICATION_TYPES.map((type) => {
+                    const locked = deployEnabled[type] === false;
+                    return (
+                      <label
+                        key={type}
+                        title={locked ? 'Disabled deployment-wide — cannot be enabled here' : undefined}
+                        className={`flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 transition-colors motion-reduce:transition-none ${locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-slate-50'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={locked ? false : (checkEdits[type] ?? true)}
+                          disabled={locked}
+                          onChange={(e) => setCheckEdits((v) => ({ ...v, [type]: e.target.checked }))}
+                          className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-cyan-600 disabled:cursor-not-allowed"
+                          aria-label={`${type} enabled${locked ? ' (disabled deployment-wide)' : ''}`}
+                        />
+                        <span className="text-sm text-slate-700 min-w-0 truncate">
+                          {type}
+                          {locked && (
+                            <span className="ml-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                              deployment-off
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <Button

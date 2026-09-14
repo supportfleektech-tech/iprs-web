@@ -44,7 +44,7 @@ Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflo
 
 API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY` or it won't start (see `apps/api/.env.example`).
 
-`ENABLED_CHECKS`, `LIVE_CHECKS`, and `BACKUP_CHECKS` accept only `VerificationType` values from `packages/types/src/index.ts` — unknown names are silently filtered out, so a typo disables checks without an error.
+`ENABLED_CHECKS`, `LIVE_CHECKS`, and `BACKUP_CHECKS` accept only `VerificationType` values from `packages/types/src/index.ts` — unknown names are silently filtered out, so a typo disables checks without an error. `ENABLED_CHECKS` + global `active` form a deployment-wide kill switch: per-org rows can only opt OUT, never enable a deploy-disabled check — the admin UI locks those toggles (`deployEnabled` in `GET /v1/verifications/products`).
 
 ## Verification Products (24)
 

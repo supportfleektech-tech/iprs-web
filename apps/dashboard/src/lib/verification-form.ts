@@ -59,6 +59,10 @@ export interface ProductOption {
   label: string;
   category: string;
   enabled: boolean;
+  /** Deployment-wide availability (ENABLED_CHECKS + global active flag).
+   * Per-org rows can only opt out — never enable a check the deployment
+   * disabled. Optional for backward compatibility; treat missing as true. */
+  deployEnabled?: boolean;
   active: boolean;
   unitPriceKes: number | null;
   backupPriceKes: number | null;

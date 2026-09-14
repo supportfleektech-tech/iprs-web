@@ -216,6 +216,10 @@ model VerificationRequest {
   encryptedInput     String
   encryptedResult    String?
   costMinor          BigInt            @default(0)
+  /// Vendor (SPIN Mobile) share of costMinor. Fleek margin = cost - vendor.
+  vendorCostMinor    BigInt            @default(0)
+  /// Fleek IPRS margin (KES 5 per successful request, else 0).
+  marginMinor        BigInt            @default(0)
   latencyMs          Int?
   errorMessage       String?
   consent            Boolean           @default(false)

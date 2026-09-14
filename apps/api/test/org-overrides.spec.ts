@@ -132,7 +132,7 @@ describe('org overrides (admin-managed availability & pricing)', () => {
     ]);
     const list = await service.products('org1');
     const entry = list.find((p) => p.type === 'iprs_standard');
-    expect(entry?.unitPriceKes).toBe(15);
+    expect(entry?.unitPriceKes).toBe(20);
   });
 
   it('run(): rejects a type the org disabled', async () => {
@@ -156,13 +156,13 @@ describe('org overrides (admin-managed availability & pricing)', () => {
     ]);
     const res = await service.run('org1', { ...baseDto }, 'dashboard');
     expect(res.status).toBe('success');
-    expect(res.cost).toBe(15);
+    expect(res.cost).toBe(20);
   });
 
   it('run(): charges the global tier price without an org override', async () => {
     const res = await service.run('org1', { ...baseDto }, 'dashboard');
     expect(res.status).toBe('success');
-    expect(res.cost).toBe(30);
+    expect(res.cost).toBe(35);
   });
 
   it('run(): falls back to the base product price when no tier matches the volume', async () => {
@@ -174,6 +174,6 @@ describe('org overrides (admin-managed availability & pricing)', () => {
     ]);
     const res = await service.run('org1', { ...baseDto }, 'dashboard');
     expect(res.status).toBe('success');
-    expect(res.cost).toBe(30);
+    expect(res.cost).toBe(35);
   });
 });

@@ -4,7 +4,7 @@ import { CB_CONSENT_REQUIRED_TYPES, VerificationType } from '@fleek/types';
 import type { VerificationBatch } from '@fleek/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { InsufficientFundsException } from '../common/exceptions';
-import { VerificationsService } from './verifications.service';
+import { PLATFORM_MARGIN_MINOR, VerificationsService } from './verifications.service';
 import type { CreateBatchDto, CsvRow } from './bulk.dto';
 
 const MAX_ROWS = 1000;
@@ -99,9 +99,11 @@ export class BatchesService {
     const orgTiers = await this.prisma.client.orgPricingTier.findMany({ where: { orgId } });
     const orgOverride = orgTiers.find((t) => t.productType === dto.type);
     const tier = await this.verifications.getCurrentTier(dto.type, currentVolume);
-    const estimatedPriceMinor = orgOverride
-      ? BigInt(orgOverride.unitPriceMinor)
-      : (tier?.unitPriceMinor ?? basePriceMinor);
+    // Estimates quote the user-facing total: vendor price + margin per row.
+    const estimatedPriceMinor =
+      (orgOverride
+        ? BigInt(orgOverride.unitPriceMinor)
+        : (tier?.unitPriceMinor ?? basePriceMinor)) + PLATFORM_MARGIN_MINOR;
 
     if (!wallet || wallet.balanceMinor < estimatedPriceMinor * BigInt(rows.length)) {
       throw new InsufficientFundsException(

@@ -100,8 +100,44 @@ describe('billing atomicity', () => {
   it('charges the tier matching the locked volume, not the stale pre-read', async () => {
     const res = await service.run('org1', { ...baseDto }, 'dashboard');
     expect(res.status).toBe('success');
-    // Locked volume 600 → 501–2500 band → KES 28 (stale vol 0 would bill 30).
-    expect(res.cost).toBe(28);
+    // Locked volume 600 → 501–2500 band → vendor KES 28 + KES 5 margin = 33
+    // (stale vol 0 would bill 30 + 5 = 35).
+    expect(res.cost).toBe(33);
+  });
+
+  it('persists the vendor/margin split: total = vendor + KES 5', async () => {
+    const res = await service.run('org1', { ...baseDto }, 'dashboard');
+    expect(res.status).toBe('success');
+    const created = client.verificationRequest.create.mock.calls[0][0].data;
+    expect(created.costMinor).toBe(3300n);
+    expect(created.vendorCostMinor).toBe(2800n);
+    expect(created.marginMinor).toBe(500n);
+  });
+
+  it('persists zero split on failed lookups', async () => {
+    (service as unknown as { registry: unknown }).registry = {
+      isEnabled: () => true,
+      hasBackup: () => false,
+      isLive: () => false,
+      resolve: () => {
+        throw new ProviderError('NOT_FOUND', 'no record');
+      },
+    };
+    const res = await service.run('org1', { ...baseDto }, 'dashboard');
+    expect(res.status).toBe('not_found');
+    const created = client.verificationRequest.create.mock.calls[0][0].data;
+    expect(created.costMinor).toBe(BigInt(0));
+    expect(created.vendorCostMinor).toBe(BigInt(0));
+    expect(created.marginMinor).toBe(BigInt(0));
+  });
+
+  it('products() advertises totals (vendor + KES 5), never the split', async () => {
+    const list = await service.products('org1');
+    const entry = list.find((p) => p.type === 'iprs_standard');
+    // Volume 0 → vendor KES 30 + margin = KES 35 total.
+    expect(entry?.unitPriceKes).toBe(35);
+    expect(entry).not.toHaveProperty('vendorCostKes');
+    expect(entry).not.toHaveProperty('marginKes');
   });
 
   it('records primary (not backup) when backup is requested but unconfigured', async () => {
@@ -112,8 +148,8 @@ describe('billing atomicity', () => {
     );
     expect(res.status).toBe('success');
     expect(res.isBackup).toBe(false);
-    // Locked volume 600 → primary band price, not a backup markup.
-    expect(res.cost).toBe(28);
+    // Locked volume 600 → primary band vendor price + margin, not a backup markup.
+    expect(res.cost).toBe(33);
   });
 
   it('does not offer a backup retry when the backup price is unknown', async () => {
@@ -174,8 +210,8 @@ describe('billing atomicity', () => {
       'dashboard',
     );
     expect(res.status).toBe('success');
-    // 120 + 6×4 = KES 144 (the flat KES 120 tier row is the base, not the total).
-    expect(res.cost).toBe(144);
+    // Vendor 120 + 6×4 = 144, + KES 5 margin = KES 149 total.
+    expect(res.cost).toBe(149);
   });
 
   it('refuses when the locked wallet balance is insufficient', async () => {

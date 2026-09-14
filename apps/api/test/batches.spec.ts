@@ -170,10 +170,10 @@ describe('BatchesService.createBatch', () => {
   });
 
   it('estimates from the current volume, not volume zero', async () => {
-    // Org already at volume 600 → KES 28/row (5600 for 2 rows). A volume-0
-    // estimate (KES 50/row = 10000) would wrongly refuse this wallet.
+    // Org already at volume 600 → (KES 28 + 5 margin)/row = 6600 for 2 rows.
+    // A volume-0 estimate (KES 50/row = 10000) would wrongly refuse this wallet.
     deps.client.organizationMonthlyUsage.findUnique.mockResolvedValue({ successCount: 600 });
-    deps.client.wallet.findUnique.mockResolvedValue({ balanceMinor: BigInt(5_700) });
+    deps.client.wallet.findUnique.mockResolvedValue({ balanceMinor: BigInt(6_700) });
     const rows = [{ idNumber: '12345678' }, { idNumber: '87654321' }];
     const summary = await deps.service.createBatch('org1', 'u1', { ...baseDto, rows });
     expect(summary.id).toBe('batch1');

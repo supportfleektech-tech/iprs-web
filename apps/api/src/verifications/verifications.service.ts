@@ -15,6 +15,14 @@ import { InsufficientFundsException } from '../common/exceptions';
 /** Scanned-statement runtime pricing (KES minor): base + per-page. PDF-exact. */
 export const SCANNED_STATEMENT_BASE_MINOR = BigInt(12000);
 export const SCANNED_STATEMENT_PAGE_MINOR = BigInt(400);
+
+/**
+ * Fleek IPRS margin per successful request (KES 5, minor units).
+ * Users are charged vendor price + margin as a single total and never see
+ * the split; the admin revenue report breaks it back out from the persisted
+ * vendorCostMinor/marginMinor columns.
+ */
+export const PLATFORM_MARGIN_MINOR = BigInt(500);
 import { appConfig } from '../config/configuration';
 import { RunVerificationDto } from './dto';
 
@@ -125,8 +133,9 @@ export class VerificationsService {
           orgManaged: orgCheck !== undefined || orgTier !== undefined,
           live: this.registry.isLive(type),
           active: productPricing?.active ?? false,
-          unitPriceKes: unitMinor != null ? Number(unitMinor) / 100 : null,
-          backupPriceKes: backupMinor != null ? Number(backupMinor) / 100 : null,
+          unitPriceKes: unitMinor != null ? Number(unitMinor + PLATFORM_MARGIN_MINOR) / 100 : null,
+          backupPriceKes:
+            backupMinor != null ? Number(backupMinor + PLATFORM_MARGIN_MINOR) / 100 : null,
           currentTier: tier
             ? {
                 minVolume: tier.minVolume,
@@ -306,7 +315,8 @@ export class VerificationsService {
           status = 'failed';
           errorMessage = err.message;
           backupAvailable = true;
-          backupPriceMinor = tierBackupPriceMinor;
+          // Quote the total the retry would charge (vendor backup + margin).
+          backupPriceMinor = tierBackupPriceMinor + PLATFORM_MARGIN_MINOR;
         } else {
           status = 'failed';
           errorMessage = err.message;
@@ -357,9 +367,14 @@ export class VerificationsService {
           : null
         : (lockedTier?.backupPriceMinor ?? null);
 
+      // The user-facing total is vendor price + margin; the split is
+      // persisted beside it for the admin revenue report.
+      let vendorMinor = BigInt(0);
       if (status === 'success') {
-        costMinor = isBackup && lockedBackup ? lockedBackup : lockedUnit;
+        vendorMinor = isBackup && lockedBackup ? lockedBackup : lockedUnit;
+        costMinor = vendorMinor + PLATFORM_MARGIN_MINOR;
       }
+      const marginMinor = status === 'success' ? PLATFORM_MARGIN_MINOR : BigInt(0);
 
       if (costMinor > 0) {
         const lockedWallets = await tx.$queryRaw<{ id: string; balanceMinor: bigint }[]>`
@@ -421,6 +436,8 @@ export class VerificationsService {
           encryptedInput: this.prisma.encrypt(JSON.stringify(inputData)),
           encryptedResult: result ? this.prisma.encrypt(JSON.stringify(result)) : null,
           costMinor,
+          vendorCostMinor: vendorMinor,
+          marginMinor,
           latencyMs: Date.now() - startedAt,
           errorMessage,
           consent: dto.consent,

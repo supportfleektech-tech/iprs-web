@@ -59,9 +59,9 @@ jobs:
       - run: pnpm -w test
 
   e2e:
+    # Runs on PRs and main: integration regressions must be caught before merge.
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, test]
-    if: github.ref == 'refs/heads/main'
     env:
       DATABASE_URL: postgresql://fleek:fleek_dev_password@localhost:5432/fleek_iprs
       JWT_SECRET: ci-test-secret-change-in-prod
@@ -96,7 +96,7 @@ jobs:
       - name: Wait for API and dashboard
         run: |
           for i in $(seq 1 30); do
-            api=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/docs || true)
+            api=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/v1/health/ready || true)
             dash=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/login || true)
             if [ "$api" = "200" ] && [ "$dash" = "200" ]; then exit 0; fi
             sleep 10

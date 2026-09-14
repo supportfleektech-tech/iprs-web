@@ -69,7 +69,11 @@ describe('org overrides (admin-managed availability & pricing)', () => {
     client.productPricing.findMany.mockResolvedValue([
       { type: 'iprs_standard', priceMinor: 3000n, active: true },
     ]);
-    client.productPricing.findUnique.mockResolvedValue({ type: 'iprs_standard', active: true });
+    client.productPricing.findUnique.mockResolvedValue({
+      type: 'iprs_standard',
+      active: true,
+      priceMinor: 3000n,
+    });
     client.productPricingTier.findFirst.mockResolvedValue(TIER);
     client.organizationMonthlyUsage.findMany.mockResolvedValue([]);
     client.organizationMonthlyUsage.findUnique.mockResolvedValue(null);
@@ -143,6 +147,18 @@ describe('org overrides (admin-managed availability & pricing)', () => {
   });
 
   it('run(): charges the global tier price without an org override', async () => {
+    const res = await service.run('org1', { ...baseDto }, 'dashboard');
+    expect(res.status).toBe('success');
+    expect(res.cost).toBe(30);
+  });
+
+  it('run(): falls back to the base product price when no tier matches the volume', async () => {
+    // Gaps (e.g. admin-created) must not 400 billable checks — the base
+    // ProductPricing row is the priced fallback.
+    client.productPricingTier.findFirst.mockResolvedValue(null);
+    client.productPricing.findMany.mockResolvedValue([
+      { type: 'iprs_standard', priceMinor: 3000n, active: true },
+    ]);
     const res = await service.run('org1', { ...baseDto }, 'dashboard');
     expect(res.status).toBe('success');
     expect(res.cost).toBe(30);

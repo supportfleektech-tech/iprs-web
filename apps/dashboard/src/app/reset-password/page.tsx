@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, FieldError, Input, Label } from '@fleek/ui';
+import { BrandMark, Button, FieldError, Input, Label } from '@fleek/ui';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
 
@@ -43,10 +43,11 @@ function ResetForm() {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-      <Link href="/" className="mb-6 block text-center text-2xl font-bold font-display">
-        Fleek<span className="brand-gradient-text">IPRS</span>
+    <div className="w-full max-w-md">
+      <Link href="/" aria-label="Fleek IPRS — home" className="mb-6 flex justify-center">
+        <BrandMark variant="lockup" size={96} />
       </Link>
+      <div className="rounded-2xl bg-white p-8 shadow-2xl">
 
       {done ? (
         <div className="text-center">
@@ -88,6 +89,7 @@ function ResetForm() {
           </form>
         </>
       )}
+      </div>
     </div>
   );
 }

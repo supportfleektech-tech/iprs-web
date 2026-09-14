@@ -40,7 +40,7 @@ Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflo
 | `packages/types`     | Shared verification product/result types — the cross-app contract        |
 | `packages/providers` | `VerificationProvider` interface; `MockProvider` = deterministic sandbox |
 | `packages/database`  | Prisma schema/client + field-level AES-256-GCM encryption                |
-| `packages/ui`        | Shared UI components (Button, Card, Badge, Input, Textarea, StatCard)    |
+| `packages/ui`        | Shared UI components (Button, Card, Badge, Input, Textarea, StatCard, BrandMark) |
 
 API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY` or it won't start (see `apps/api/.env.example`).
 
@@ -62,7 +62,8 @@ API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`
 
 Volume bands: `0-500`, `501-2500`, `2501-5000`, `5001-10000`, `10001-30000`, `30001+`
 
-- SPIN Score uses special bands: `1-1000`, `1001-5000`, `5001-10000`, `10001-20000`, `20001-50000`, `50000-100000`
+- SPIN Score uses special bands: `0-1000`, `1001-5000`, `5001-10000`, `10001-20000`, `20001-50000`, `50001+` (open-ended; tested in `apps/api/test/spin-bands.spec.ts`, data in `packages/database/prisma/tiers.ts`)
+- A tier gap falls back to the base `ProductPricing` price in `run()`/`products()` instead of 400ing — gaps must still be fixed at the data level
 - Identity Standard: 30/28/26/24/22/20 (backup: 45/43/42/38/34/32)
 - Utility: 20/18/16/14/12/10
 - Backup rates apply only on **explicit user toggle** after primary `UPSTREAM_DOWN`
@@ -82,11 +83,12 @@ GET    /v1/payments/bank-details      # NCBA 8402250011 / Paybill 880100
 GET    /v1/exports/verifications      # CSV/XLSX/PDF export
 GET    /v1/exports/verifications/batch/:id
 GET    /v1/exports/wallet/statement
-GET    /v1/verifications/:id/certificate  # PDF certificate
+GET    /v1/exports/verifications/:id/certificate  # PDF certificate (logo-embedded)
 GET/PUT /admin/products/:type/active    # Live product gating (platformAdmin only)
 GET/POST/PUT /admin/pricing/tiers       # Full tier CRUD
 GET/PUT /admin/organizations/:id/enabled-checks  # Enable/disable verification types per org
 GET/POST/PUT /admin/organizations/:id/pricing-tiers # Org-level pricing overrides
+GET    /v1/health                   # Liveness (no deps); /v1/health/ready checks DB (Render + compose use ready)
 ```
 
 ## Key DTOs (`apps/api/src/verifications/dto.ts`)
@@ -107,6 +109,8 @@ Backup: `BACKUP_BASE_URL`, `BACKUP_API_KEY`, `BACKUP_CHECKS`
 Payments: `DARAJA_*`, `STRIPE_SECRET_KEY`, `PAYPAL_CLIENT_ID/SECRET/ENV/CURRENCY`, `PAYBILL_NUMBER=880100`, `PAYBILL_ACCOUNT=8402250011`, `BANK_NAME=NCBA`, `BANK_BRANCH=Uphill`, `ACCOUNT_NAME=SPIN MOBILE LIMITED`
 Mail: `SMTP_HOST/PORT/SECURE/USER/PASS/FROM` (empty ⇒ log-only ConsoleMailer)
 Frontend: `NEXT_PUBLIC_API_URL` (inlined at build), `NEXT_PUBLIC_APP_URL`
+
+Brand: source `transparent-logo.png` (repo root); derivatives in `apps/{web,dashboard}/public/brand/` (`mark.png` = light-safe, `lockup-dark.png` = dark-only); shared `BrandMark` in `@fleek/ui`; gradient accents are logo blue→cyan (`--brand-600/400`), teal = success semantics only
 
 ## Providers & Backup Routing
 

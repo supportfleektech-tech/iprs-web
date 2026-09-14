@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandMark } from '@fleek/ui';
 import { APP_URL } from '@/lib/app-url';
 
 const NAV = [
@@ -12,9 +13,13 @@ function Logo({ dark = false }: { dark?: boolean }) {
   return (
     <Link
       href="/"
-      className={`text-xl font-bold font-display ${dark ? 'text-white' : 'text-navy-900'}`}
+      aria-label="Fleek IPRS — home"
+      className={`flex items-center gap-2.5 text-xl font-bold font-display ${dark ? 'text-white' : 'text-navy-900'}`}
     >
-      Fleek<span className="brand-gradient-text">IPRS</span>
+      <BrandMark variant="mark" size={32} />
+      <span>
+        Fleek<span className="brand-gradient-text">IPRS</span>
+      </span>
     </Link>
   );
 }
@@ -59,7 +64,9 @@ export function SiteFooter() {
     <footer className="bg-navy-950 text-slate-300">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-4">
         <div>
-          <Logo dark />
+          <Link href="/" aria-label="Fleek IPRS — home" className="inline-block">
+            <BrandMark variant="lockup" size={88} />
+          </Link>
           <p className="mt-3 text-sm text-slate-400">
             Identity intelligence for Africa. A product of{' '}
             <a

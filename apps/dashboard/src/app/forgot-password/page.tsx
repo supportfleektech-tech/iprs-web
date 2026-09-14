@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Button, FieldError, Input, Label } from '@fleek/ui';
+import { BrandMark, Button, FieldError, Input, Label } from '@fleek/ui';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
 
@@ -33,10 +33,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-navy-900 hero-grid-bg px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        <Link href="/" className="mb-6 block text-center text-2xl font-bold font-display">
-          Fleek<span className="brand-gradient-text">IPRS</span>
+      <div className="w-full max-w-md">
+        <Link href="/" aria-label="Fleek IPRS — home" className="mb-6 flex justify-center">
+          <BrandMark variant="lockup" size={96} />
         </Link>
+        <div className="rounded-2xl bg-white p-8 shadow-2xl">
 
         {sent ? (
           <div className="text-center">
@@ -82,6 +83,7 @@ export default function ForgotPasswordPage() {
             </p>
           </>
         )}
+        </div>
       </div>
     </main>
   );

@@ -9,7 +9,8 @@ services:
     runtime: docker
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
-    healthCheckPath: /v1/health
+    # Readiness (liveness is /v1/health; readiness verifies the database).
+    healthCheckPath: /v1/health/ready
     plan: free
     autoDeploy: true
     envVars:

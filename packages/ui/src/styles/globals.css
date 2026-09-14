@@ -9,6 +9,10 @@
   --navy-700: #1a3050;
   --teal-500: #00d9b5;
   --teal-400: #2ee6c6;
+  /* IPRS logo gradient (shield mark): blue → cyan. Brand accents use these;
+     teal is reserved for success/info semantics only. */
+  --brand-600: #0792ff;
+  --brand-400: #07f6fd;
   --off-white: #f7f9fb;
 
   --background: var(--off-white);
@@ -16,7 +20,7 @@
 }
 
 .brand-gradient-text {
-  background: linear-gradient(92deg, #00d9b5 0%, #38bdf8 100%);
+  background: linear-gradient(92deg, var(--brand-600) 0%, var(--brand-400) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -24,8 +28,8 @@
 
 .hero-grid-bg {
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(0, 217, 181, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 80% 10%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 20% 30%, rgba(7, 146, 255, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(7, 246, 253, 0.1) 0%, transparent 40%),
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size:

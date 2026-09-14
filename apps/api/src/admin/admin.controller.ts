@@ -1,4 +1,14 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -435,6 +445,13 @@ export class AdminController {
     if (!platformAdmin && targetOrgId !== user.organizationId!) {
       throw new ForbiddenException('Access denied');
     }
+    // Tenancy check: the tier must belong to the targeted organization —
+    // otherwise a guessed tier UUID could overwrite another org's pricing.
+    const existing = await this.prisma.client.orgPricingTier.findFirst({
+      where: { id: tierId, orgId: targetOrgId },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException('Pricing tier not found');
     return this.prisma.client.orgPricingTier.update({
       where: { id: tierId },
       data: {

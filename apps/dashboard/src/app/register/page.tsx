@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button, Input, Label, FieldError } from '@fleek/ui';
+import { BrandMark, Button, Input, Label, FieldError } from '@fleek/ui';
 import { useAuth } from '@/lib/auth';
 
 export default function RegisterPage() {
@@ -40,10 +40,11 @@ export default function RegisterPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-navy-900 hero-grid-bg px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        <Link href="/" className="mb-6 block text-center text-2xl font-bold font-display">
-          Fleek<span className="brand-gradient-text">IPRS</span>
+      <div className="w-full max-w-md">
+        <Link href="/" aria-label="Fleek IPRS — home" className="mb-6 flex justify-center">
+          <BrandMark variant="lockup" size={96} />
         </Link>
+        <div className="rounded-2xl bg-white p-8 shadow-2xl">
         <h1 className="text-lg font-semibold">Create your organization</h1>
         <p className="mt-1 mb-6 text-sm text-slate-500">
           Already registered?{' '}
@@ -92,6 +93,7 @@ export default function RegisterPage() {
             {busy ? 'Creating…' : 'Create account'}
           </Button>
         </form>
+        </div>
       </div>
     </main>
   );

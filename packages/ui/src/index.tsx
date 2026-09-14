@@ -4,6 +4,7 @@ export * from './components/card';
 export * from './components/badge';
 export * from './components/input';
 export * from './components/textarea';
+export * from './components/brand-mark';
 
 import * as React from 'react';
 

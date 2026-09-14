@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient, VerificationType } from '@prisma/client';
+import { SPIN_SCORE_TIERS, type Tier } from './tiers';
 
 const prisma = new PrismaClient();
 
@@ -9,14 +10,6 @@ const prisma = new PrismaClient();
  * Bands: 0-500, 501-2500, 2501-5000, 5001-10000, 10001-30000, 30001+
  * SPIN Score uses: 1-1000, 1001-5000, 5001-10000, 10001-20000, 20001-50000, 50000-100000
  */
-
-interface Tier {
-  productType: VerificationType;
-  minVolume: number;
-  maxVolume: number | null;
-  unitPriceMinor: number;
-  backupPriceMinor: number | null;
-}
 
 const TIERS: Tier[] = [
   // ===== Identity Standard (5 products) =====
@@ -527,51 +520,9 @@ const TIERS: Tier[] = [
   ]),
 
   // ===== SPIN Score Only =====
-  // Special bands: 1-1000:130, 1001-5000:125, 5001-10000:120, 10001-20000:115, 20001-50000:105, 50000-100000:95
-  ...['spin_score_only'].flatMap((type) => [
-    {
-      productType: type as VerificationType,
-      minVolume: 1,
-      maxVolume: 1000,
-      unitPriceMinor: 13000,
-      backupPriceMinor: null,
-    },
-    {
-      productType: type as VerificationType,
-      minVolume: 1001,
-      maxVolume: 5000,
-      unitPriceMinor: 12500,
-      backupPriceMinor: null,
-    },
-    {
-      productType: type as VerificationType,
-      minVolume: 5001,
-      maxVolume: 10000,
-      unitPriceMinor: 12000,
-      backupPriceMinor: null,
-    },
-    {
-      productType: type as VerificationType,
-      minVolume: 10001,
-      maxVolume: 20000,
-      unitPriceMinor: 11500,
-      backupPriceMinor: null,
-    },
-    {
-      productType: type as VerificationType,
-      minVolume: 20001,
-      maxVolume: 50000,
-      unitPriceMinor: 10500,
-      backupPriceMinor: null,
-    },
-    {
-      productType: type as VerificationType,
-      minVolume: 50000,
-      maxVolume: 100000,
-      unitPriceMinor: 9500,
-      backupPriceMinor: null,
-    },
-  ]),
+  // Special bands tile [0, ∞): 0-1000:130, 1001-5000:125, 5001-10000:120,
+  // 10001-20000:115, 20001-50000:105, 50001+:95 (see prisma/tiers.ts — tested).
+  ...SPIN_SCORE_TIERS,
 
   // ===== Scanned Statement =====
   // Formula: 120 + pages*4 (VAT Exclusive) - handled at runtime, not tiered
@@ -615,9 +566,9 @@ export async function seedPricingTiers(client: PrismaClient = prisma) {
   // Also seed the base ProductPricing.active = true for all types
   const allTypes = [...new Set(TIERS.map((t) => t.productType))];
   for (const type of allTypes) {
-    const firstTier = TIERS.find(
-      (t) => t.productType === type && t.minVolume === (type === 'spin_score_only' ? 1 : 0),
-    );
+    const firstTier = TIERS.filter((t) => t.productType === type).sort(
+      (a, b) => a.minVolume - b.minVolume,
+    )[0];
     if (firstTier) {
       await client.productPricing.upsert({
         where: { type },

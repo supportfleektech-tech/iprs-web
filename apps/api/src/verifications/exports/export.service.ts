@@ -1,9 +1,26 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { VerificationRequest } from '@prisma/client';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../../prisma/prisma.service';
 import { VerificationType, VERIFICATION_TYPES } from '@fleek/types';
+
+/**
+ * Locates the IPRS shield mark for PDF headers. Checked locations cover the
+ * compiled layout (`dist/verifications/exports/` → `apps/api/assets/`) and
+ * monorepo dev runs. Returns null when absent — callers fall back to the
+ * text header so PDF generation never breaks on a missing asset.
+ */
+function brandMarkPath(): string | null {
+  const candidates = [
+    join(__dirname, '..', '..', 'assets', 'brand', 'mark.png'),
+    join(process.cwd(), 'apps', 'api', 'assets', 'brand', 'mark.png'),
+    join(process.cwd(), 'assets', 'brand', 'mark.png'),
+  ];
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
 
 interface ExportOptions {
   format: 'csv' | 'xlsx' | 'pdf';
@@ -222,7 +239,7 @@ export class ExportService {
       ? JSON.parse(this.prisma.decrypt(request.encryptedResult))
       : null;
 
-    const certificate = this.generateCertificatePDF(request, input, result);
+    const certificate = await this.generateCertificatePDF(request, input, result);
     const filename = `certificate-${verificationId.slice(0, 8)}-${this.getDateStamp()}.pdf`;
 
     return { buffer: certificate, filename, contentType: 'application/pdf' };
@@ -406,6 +423,11 @@ export class ExportService {
 
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
 
+      const mark = brandMarkPath();
+      if (mark) {
+        doc.image(mark, { fit: [64, 64], align: 'center' });
+        doc.moveDown(0.5);
+      }
       doc.fontSize(18).text('Fleek IPRS — Export Report', { align: 'center' });
       doc.moveDown();
       doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
@@ -467,12 +489,19 @@ export class ExportService {
     >,
     input: Record<string, unknown>,
     result: Record<string, unknown> | null,
-  ): Buffer {
+  ): Promise<Buffer> {
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const chunks: Buffer[] = [];
+    const done = new Promise<Buffer>((resolve) => {
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+    });
 
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-
+    const mark = brandMarkPath();
+    if (mark) {
+      doc.image(mark, { fit: [96, 96], align: 'center' });
+      doc.moveDown(0.5);
+    }
     doc.fontSize(24).text('FLEEK IPRS', { align: 'center' });
     doc.fontSize(14).text('Verification Certificate', { align: 'center' });
     doc.moveDown();
@@ -532,7 +561,7 @@ export class ExportService {
 
     doc.end();
 
-    return Buffer.concat(chunks);
+    return done;
   }
 
   private getTypeLabel(type: VerificationType): string {

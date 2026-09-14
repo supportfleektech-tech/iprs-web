@@ -117,6 +117,33 @@ describe('ExportService', () => {
     });
   });
 
+  describe('generateVerificationCertificate', () => {
+    it('returns a non-empty PDF buffer starting with %PDF', async () => {
+      (service as any).prisma.client.verificationRequest.findFirst = vi.fn().mockResolvedValue({
+        id: 'cert-1',
+        type: 'iprs_standard',
+        status: 'success',
+        source: 'dashboard',
+        costMinor: 3000n,
+        latencyMs: 100,
+        createdAt: new Date(),
+        encryptedInput: 'encrypted-input',
+        encryptedResult: 'encrypted-result',
+        consent: true,
+        consentCollectedBy: 'tester',
+        cbConsent: false,
+        isBackup: false,
+      });
+      const result = await service.generateVerificationCertificate({
+        verificationId: 'cert-1',
+        organizationId: 'org-1',
+      });
+      expect(result.contentType).toBe('application/pdf');
+      expect(result.buffer.length).toBeGreaterThan(1000);
+      expect(result.buffer.subarray(0, 4).toString()).toBe('%PDF');
+    });
+  });
+
   describe('getSubject', () => {
     it('should extract subject from various input types', () => {
       const service = new ExportService({} as any);

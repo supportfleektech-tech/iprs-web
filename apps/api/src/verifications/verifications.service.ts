@@ -92,7 +92,9 @@ export class VerificationsService {
         const enabled = globalEnabled && (orgCheck ?? true);
         // Org pricing override (set in admin) replaces global tier prices.
         const orgTier = overrides.tiers.get(type);
-        const unitMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : (tier?.unitPriceMinor ?? null);
+        const unitMinor = orgTier
+          ? BigInt(orgTier.unitPriceMinor)
+          : (tier?.unitPriceMinor ?? productPricing?.priceMinor ?? null);
         const backupMinor = orgTier
           ? orgTier.backupPriceMinor != null
             ? BigInt(orgTier.backupPriceMinor)
@@ -237,18 +239,19 @@ export class VerificationsService {
     });
     const currentVolume = usage?.successCount ?? 0;
 
-    // Get tier pricing (org override from admin wins over global tiers)
+    // Get tier pricing (org override from admin wins over global tiers).
+    // A missing tier (e.g. an admin-created gap) falls back to the base
+    // product price instead of 400ing a billable check.
     const tier = await this.getCurrentTier(dto.type, currentVolume);
-    if (!tier) {
-      throw new BadRequestException(`No pricing tier configured for ${dto.type}`);
-    }
     const orgTier = overrides.tiers.get(dto.type);
-    const unitPriceMinor = orgTier ? BigInt(orgTier.unitPriceMinor) : tier.unitPriceMinor;
+    const unitPriceMinor = orgTier
+      ? BigInt(orgTier.unitPriceMinor)
+      : (tier?.unitPriceMinor ?? productPricing.priceMinor);
     const tierBackupPriceMinor = orgTier
       ? orgTier.backupPriceMinor != null
         ? BigInt(orgTier.backupPriceMinor)
         : null
-      : tier.backupPriceMinor;
+      : (tier?.backupPriceMinor ?? null);
 
     // Determine if using backup
     const useBackup = dto.useBackup === true;

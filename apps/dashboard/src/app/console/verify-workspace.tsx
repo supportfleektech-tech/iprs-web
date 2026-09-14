@@ -55,6 +55,25 @@ export function VerifyWorkspace() {
     void fetchProducts();
   }, [fetchProducts]);
 
+  // Re-fetch when the user returns to the tab or the catalog is updated by an admin.
+  // Admin changes (PUT /admin/organizations/:id/enabled-checks) are immediate server-side;
+  // we poll the catalog every 60s and on focus/visibility so the user never needs a hard refresh.
+  useEffect(() => {
+    if (!token) return;
+    const onFocus = () => void fetchProducts();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void fetchProducts();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    const id = window.setInterval(() => void fetchProducts(), 60_000);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(id);
+    };
+  }, [token, fetchProducts]);
+
   const selectedProduct = useMemo(
     () => products.find((p) => p.type === selectedType) ?? null,
     [products, selectedType],
@@ -174,6 +193,9 @@ export function VerifyWorkspace() {
             <span className="h-2 w-2 rounded-full bg-teal-500" aria-hidden="true" />{' '}
             {products.filter((p) => p.enabled && p.active).length} of {products.length} available
           </span>
+          <Button size="sm" variant="secondary" onClick={() => void fetchProducts()} className="h-9" aria-label="Refresh product catalog">
+            Refresh
+          </Button>
         </div>
       </div>
 

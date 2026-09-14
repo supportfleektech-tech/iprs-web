@@ -115,6 +115,24 @@ export default function ConsoleOverviewPage() {
     void loadOverview();
   }, [loadOverview, retryKey]);
 
+  // Keep product availability fresh: admin org toggles are immediate server-side.
+  // Re-fetch on focus/visibility and poll every 60s so the org user sees catalog changes without a hard refresh.
+  useEffect(() => {
+    if (!token) return;
+    const onFocus = () => void loadOverview();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void loadOverview();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    const id = window.setInterval(() => void loadOverview(), 60_000);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(id);
+    };
+  }, [token, loadOverview]);
+
   if (!stats && loading) {
     return (
       <div className="py-10">

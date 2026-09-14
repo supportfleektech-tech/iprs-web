@@ -15,6 +15,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { VerificationType, type VerificationResponse } from '@fleek/types';
 import { Auth, CurrentUser } from '../auth/auth.decorators';
 import { AnyAuthGuard } from '../auth/api-key.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { VerificationsService } from './verifications.service';
 import { ListVerificationsQuery, RunVerificationDto } from './dto';
@@ -32,6 +33,7 @@ export class VerificationsController {
   constructor(private readonly verifications: VerificationsService) {}
 
   @Get('products')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'List verification products with pricing & availability' })
   async products(@CurrentUser() user: JwtPayload | null) {
     return this.verifications.products(user?.organizationId ?? undefined);

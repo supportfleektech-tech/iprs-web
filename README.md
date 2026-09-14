@@ -79,7 +79,7 @@ that boots Postgres → API → dashboard and exercises the happy path in a real
 - `apps/api/Dockerfile` — multi-stage NestJS image (runs migrations with `prisma migrate deploy`).
 - `Dockerfile.next` — standalone-output Next.js image used for both web and dashboard via `APP` arg.
 - **Vercel (live, Git-connected)** — pushes to `main` auto-deploy both frontends:
-  - Marketing site: https://iprs-web.vercel.app (`fleek3/iprs-web`, rootDirectory `apps/web`)
+  - Marketing site: https://iprs-web-v2.vercel.app (`fleek3/iprs-web-v2`, Git-connected, auto-deploys on push to `main`)
   - Console: https://iprs-dashboard.vercel.app (`fleek3/iprs-dashboard`, rootDirectory `apps/dashboard`)
   - Manual CLI (prebuilt from repo root — do NOT link inside app dirs): `vercel deploy --prebuilt --prod`
 - API production (Render blueprint `render.yaml` or VPS `deploy/deploy.sh`) — frontends need `NEXT_PUBLIC_API_URL` pointed at it and a rebuild.

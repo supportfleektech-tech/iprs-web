@@ -43,6 +43,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <Link href="/" aria-label="Fleek IPRS — home" className="mb-6 flex justify-center">
           <BrandMark variant="lockup" size={96} />
+          <span className="sr-only">Fleek IPRS</span>
         </Link>
         <div className="rounded-2xl bg-white p-8 shadow-2xl">
         <h1 className="text-lg font-semibold">Create your organization</h1>

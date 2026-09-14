@@ -1,6 +1,6 @@
 # Fleek IPRS
 
-[![CI](https://github.com/fleektech/fleek-iprs/actions/workflows/ci.yml/badge.svg)](https://github.com/fleektech/fleek-iprs/actions/workflows/ci.yml)
+[![CI](https://github.com/supportfleektech-tech/iprs-web/actions/workflows/ci.yml/badge.svg)](https://github.com/supportfleektech-tech/iprs-web/actions/workflows/ci.yml)
 
 **Instant identity verification for Africa — by [Fleektech LTD](https://fleektech.co.ke)**
 
@@ -78,13 +78,11 @@ that boots Postgres → API → dashboard and exercises the happy path in a real
 - `docker-compose.prod.yml` — Postgres + api + web + dashboard behind one compose project.
 - `apps/api/Dockerfile` — multi-stage NestJS image (runs migrations with `prisma migrate deploy`).
 - `Dockerfile.next` — standalone-output Next.js image used for both web and dashboard via `APP` arg.
-- Vercel (live, CLI prebuilt/remote flow from repo root — do NOT link inside app dirs):
+- **Vercel (live, Git-connected)** — pushes to `main` auto-deploy both frontends:
   - Marketing site: https://iprs-web.vercel.app (`fleek3/iprs-web`, rootDirectory `apps/web`)
   - Console: https://iprs-dashboard.vercel.app (`fleek3/iprs-dashboard`, rootDirectory `apps/dashboard`)
-  - Dashboard deploys must build workspace deps first (`turbo run build` scope — plain
-    `next build` fails on `@fleek/types`); remote `vercel deploy --prod` handles this.
-- API production (Render blueprint `render.yaml` or VPS `deploy/deploy.sh`) is the remaining
-  step — frontends then need `NEXT_PUBLIC_API_URL` pointed at it and a rebuild.
+  - Manual CLI (prebuilt from repo root — do NOT link inside app dirs): `vercel deploy --prebuilt --prod`
+- API production (Render blueprint `render.yaml` or VPS `deploy/deploy.sh`) — frontends need `NEXT_PUBLIC_API_URL` pointed at it and a rebuild.
 
 Required production env (see `.env.example`s): `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY`,
 `CORS_ORIGINS`, `ENABLED_CHECKS`, `NEXT_PUBLIC_API_URL`.
@@ -107,7 +105,7 @@ configuration only:
 Bulk CSV verification, wallet billing, audit trails and admin approvals all work end-to-end
 in sandbox mode today.
 
-## Deployment
+## Self-hosted deployment
 
 See [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) — DNS records, TLS via certbot,
 `deploy/deploy.sh`, nginx configs for all three domains, backups.
@@ -125,5 +123,3 @@ M-Pesa Daraja wallet top-ups · CRB checks · KYB (business registry) · face ma
 bulk CSV verification runs · live NRB/aggregator adapters.
 
 © 2026 Fleektech LTD
-
-# iprs-deploy-fix

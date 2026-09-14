@@ -137,7 +137,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} Fleektech LTD. All rights reserved.
+        <p>© {new Date().getFullYear()} Fleektech LTD. All rights reserved. · Kenya DPA 2019 compliant · AES-256-GCM encrypted</p>
       </div>
     </footer>
   );

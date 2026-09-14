@@ -14,7 +14,8 @@ pnpm exec playwright test --workers=1     # E2E (see prerequisites below; --work
 ```
 
 - Run one package: `pnpm --filter @fleek/api <script>` (names: `@fleek/{web,dashboard,api,types,providers,database,ui}`).
-- Unit tests (Vitest) exist only in `apps/api` and `packages/providers`.
+- Unit tests (Vitest) live in `apps/api` (`test/*.spec.ts`), `apps/dashboard` (`src/lib/*.test.ts`), and `packages/providers` (`test/*.spec.ts`).
+- Focused runs: `pnpm --filter @fleek/api exec vitest run test/<name>.spec.ts`, `pnpm --filter @fleek/dashboard exec vitest run src/lib/<name>.test.ts`, `pnpm --filter @fleek/providers exec vitest run test/providers.spec.ts`.
 - API runs **from compiled output**: `node apps/api/dist/main.js`. Use `scripts/start-api.sh` / `scripts/start-dashboard.sh` — detached, idempotent, logs+pids under `/tmp/opencode/`.
 
 ## E2E prerequisites
@@ -27,6 +28,8 @@ Playwright has **no webServer config** and retries=0 — all services must alrea
 
 Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflows/ci.yml`) shows the canonical boot order.
 
+- `scripts/start-dashboard.sh` runs `next dev`, not a production server; heavy routes cold-compile on first hit, so E2E assertions must wait on readiness explicitly rather than assuming instant render.
+
 ## Layout & boundaries
 
 | Path                 | Role                                                                     |
@@ -37,9 +40,11 @@ Targets `http://localhost:3001` (dashboard), chromium only. CI (`.github/workflo
 | `packages/types`     | Shared verification product/result types — the cross-app contract        |
 | `packages/providers` | `VerificationProvider` interface; `MockProvider` = deterministic sandbox |
 | `packages/database`  | Prisma schema/client + field-level AES-256-GCM encryption                |
-| `packages/ui`        | Shared UI components (Button, Card, Badge, Input, Label, StatCard)       |
+| `packages/ui`        | Shared UI components (Button, Card, Badge, Input, Textarea, StatCard)    |
 
 API loads `apps/api/.env` via dotenv at boot; needs `DATABASE_URL`, `JWT_SECRET`, `FIELD_ENCRYPTION_KEY` or it won't start (see `apps/api/.env.example`).
+
+`ENABLED_CHECKS`, `LIVE_CHECKS`, and `BACKUP_CHECKS` accept only `VerificationType` values from `packages/types/src/index.ts` — unknown names are silently filtered out, so a typo disables checks without an error.
 
 ## Verification Products (24)
 
@@ -118,6 +123,7 @@ Frontend: `NEXT_PUBLIC_API_URL` (inlined at build), `NEXT_PUBLIC_APP_URL`
 
 MockProvider is deterministic (FNV-1a hash) — same input = same output.
 AggregatorAdapter expects SPIN-compatible endpoints under `/kenya/*`.
+`ProviderError` codes (`NOT_FOUND`, `UPSTREAM_DOWN`, `INVALID_INPUT`, `UNKNOWN`) map upstream HTTP statuses consistently.
 
 ## Gotchas
 
@@ -133,13 +139,15 @@ AggregatorAdapter expects SPIN-compatible endpoints under `/kenya/*`.
 - Seeded platform admin: `admin@fleektech.co.ke` / `Admin123!` (re-seeding resets this password); new orgs get KES 5,000 credit.
 - **Fail-fast config** — throws if `JWT_SECRET`/`FIELD_ENCRYPTION_KEY`/`DATABASE_URL` missing in production (no dev fallbacks).
 - `normalizeKePhone` utility in `apps/api/src/common/phone.ts` — single source for phone formatting.
+- `scripts/start-api.sh` sources `apps/api/.env` only if present and exports named vars; never re-pass them via `env VAR="$VAR"` — an unset var would arrive as `""` and defeat `??` defaults (this crashed `listen()` on empty `PORT`).
+- `PORT` is empty-safe (`Number(process.env.PORT) || 4000` in both `main.ts` and `configuration.ts`); don't revert to `??`.
 
 ## Dashboard Build Blocker
 
 Dashboard uses Next.js 14.2.33 but requires `@next/swc-linux-x64-gnu@14.2.33` binary. Network issues prevent pnpm install of correct binary. Workaround when network available:
 
 ```bash
-cd apps/dashboard && pnpm add -D @next/swx-linux-x64-gnu@14.2.33
+cd apps/dashboard && pnpm add -D @next/swc-linux-x64-gnu@14.2.33
 NEXT_IGNORE_INCORRECT_LOCKFILE=1 pnpm build
 ```
 
@@ -155,36 +163,15 @@ Both Dockerfiles encode fixes from a crash-loop incident — don't simplify them
 
 ## Deployment
 
-Two targets coexist:
+Three targets coexist — don't conflate them:
 
-- **Self-hosted prod** (api.fleekiprs.co.ke + currently all domains): Docker Compose project `fleek-iprs-prod` driven by `./deploy/deploy.sh` (`deploy.sh tls` issues certs). nginx configs in `deploy/nginx/`; `nginx/` holds runtime TLS certs/webroot and is gitignored. API runs with `TRUST_PROXY=true` behind nginx. Prod migrations = `prisma migrate deploy` (never `migrate dev`); manual one-off: `docker compose -p fleek-iprs-prod -f docker-compose.prod.yml run --rm api node packages/database/node_modules/prisma/build/index.js migrate deploy --schema packages/database/prisma/schema.prisma`. See `deploy/DEPLOYMENT.md`.
+- **Render hosts the production API** (`fleek-iprs-api`, Docker service per `render.yaml`, health check `/v1/health`). Production currently uses **Supabase Postgres**, not the optional Render Postgres in `render.yaml`. The container entrypoint (`apps/api/docker-entrypoint.sh`) runs `prisma migrate deploy` + idempotent seed on every boot.
 - **Vercel hosts both frontends** (`iprs-web`, `iprs-dashboard` projects): monorepo setup with `rootDirectory=apps/<app>` set per project plus per-app `vercel.json` (`framework: nextjs`). Deploy via CLI prebuilt flow **from repo root** (linking inside an app dir breaks uploads — build traces reference files above the app directory).
+- **Self-hosted prod** (api.fleekiprs.co.ke + currently all domains): Docker Compose project `fleek-iprs-prod` driven by `./deploy/deploy.sh` (`deploy.sh tls` issues certs). nginx configs in `deploy/nginx/`; `nginx/` holds runtime TLS certs/webroot and is gitignored. API runs with `TRUST_PROXY=true` behind nginx. Prod migrations = `prisma migrate deploy` (never `migrate dev`); manual one-off: `docker compose -p fleek-iprs-prod -f docker-compose.prod.yml run --rm api node packages/database/node_modules/prisma/build/index.js migrate deploy --schema packages/database/prisma/schema.prisma`. See `deploy/DEPLOYMENT.md`.
 
 ## Git
 
 CI gates every push to `main` and PRs; direct pushes to `main` are the current norm.
-
-## Recent Fixes (verified)
-
-- All workspace `pnpm -w typecheck` passes (10/10 packages)
-- All workspace `pnpm -w lint` passes with 0 errors (3 warnings in API only, pre-existing)
-- Admin org UI implemented: `GET/PUT /admin/organizations/:id/enabled-checks` and `GET/POST/PUT /admin/organizations/:id/pricing-tiers`
-- Provider test spec fixed: corrected method names and enum references (removed stale test, fixed `iprsIdLookup` → `iprsStandardLookup`, `IPRS_ID` → `IPRS_STANDARD`)
-- API `selectTierInMemory` static method added to `verifications.service.ts` for in-memory tier selection
-- API payments gateway lint fixes: removed unused variables, prefixed unused params
-- Dashboard console lint fixes: removed unused imports
-- Web pricing page lint fix: removed unused import
-- Fixed `packages/providers/test/providers.spec.ts` test syntax (`it 'single-quote'` → `it("double-quote")`)
-
-## Architecture
-
-This is a credential-gated monorepo: all third-party integrations are disabled by default. Empty env vars ⇒ sandbox/mock behavior. Real services activate by configuration only. The `ProviderRegistry` in `packages/providers` routes each verification type to live upstream, backup provider, or the deterministic `MockProvider` based on `ENABLED_CHECKS`, `LIVE_CHECKS`, and `BACKUP_CHECKS` env vars.
-
-Field-level AES-256-GCM encryption via Prisma means rotating `FIELD_ENCRYPTION_KEY` silently breaks decryption of existing data (key format: `v1:iv:tag:data`). The `ProviderError` codes (`NOT_FOUND`, `UPSTREAM_DOWN`, `INVALID_INPUT`, `UNKNOWN`) map upstream HTTP statuses consistently.
-
-CB consent is required for 8 verification types (Metropol, CreditInfo, BRS, Motor Vehicle). Backup is an explicit opt-in — the API returns `backupAvailable: true, backupPrice` on primary failure; user must click "Retry with backup" to activate.
-
-No other API keys (ANTHROPIC, OPENAI, etc.) are read. If Gemini semantic extraction is needed, set `GEMINI_API_KEY` or `GOOGLE_API_KEY`.
 
 ## Compliance posture (Kenya DPA 2019)
 
@@ -192,9 +179,8 @@ No other API keys (ANTHROPIC, OPENAI, etc.) are read. If Gemini semantic extract
 - PII results encrypted at rest (AES-256-GCM field-level)
 - Role-based access control, full audit log, no PII in logs
 
-## Roadmap
+## Status
 
-M-Pesa Daraja wallet top-ups · CRB checks · KYB (business registry) · face match + liveness ·
-bulk CSV verification runs · live NRB/aggregator adapters.
+Code-complete; live behavior is config-gated, not code-gated. Upstream, backup, Daraja, Stripe, PayPal, and SMTP integrations all exist and activate purely via env vars (empty ⇒ sandbox/mock). Don't re-implement them — wire credentials instead.
 
 © 2026 Fleektech LTD
